@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>年金受給開始年齢 損益分岐点</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',sans-serif;
+  background:#eef2f7;color:#1e293b;padding:16px;min-height:100vh;
+}
+.wrap{max-width:840px;margin:0 auto}
+h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
+.sub{font-size:11px;color:#64748b;margin-bottom:14px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+
+/* Controls */
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:540px){.controls{grid-template-columns:1fr}}
+.ctrl label{font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px}
+.srow{display:flex;align-items:center;gap:10px}
+.srow input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
+.sval{font-size:22px;font-weight:700;color:#1d4ed8;min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+.ssub{font-size:10px;color:#94a3b8;margin-top:4px}
+
+/* Chart */
+.chart-wrap{position:relative;height:370px}
+
+/* Timeline */
+.sec-title{font-size:13px;font-weight:700;color:#334155;margin-bottom:12px}
+.timeline{display:flex;flex-direction:column;gap:6px}
+.period{
+  display:flex;align-items:center;gap:0;
+  border-radius:8px;overflow:hidden;
+  border-left:4px solid;
+}
+.period .age-col{
+  font-size:12px;color:#475569;
+  padding:9px 12px;min-width:190px;flex-shrink:0;
+  border-right:1px solid rgba(0,0,0,.07);
+  background:rgba(255,255,255,.6);
+}
+.period .winner-col{
+  font-size:13px;font-weight:700;
+  padding:9px 14px;
+}
+@media(max-width:480px){
+  .period{flex-direction:column;align-items:flex-start}
+  .period .age-col{border-right:none;border-bottom:1px solid rgba(0,0,0,.07);min-width:0;width:100%}
+}
+.foot{font-size:10px;color:#94a3b8;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>年金受給開始年齢別 損益分岐点シミュレーター</h1>
+  <p class="sub">65歳開始（緑色・破線）を基準とした累積受取総額の比較 ／ 運用益課税 20.315% 考慮</p>
+
+  <div class="card">
+    <div class="controls">
+      <div class="ctrl">
+        <label>想定利回り（名目）</label>
+        <div class="srow">
+          <input type="range" id="rSlider" min="0" max="10" step="0.1" value="0">
+          <span class="sval"><span id="rVal">0.0</span>%</span>
+        </div>
+        <div class="ssub">税引後: <span id="rAfter">0.00</span>%（課税率 20.315%）</div>
+      </div>
+      <div class="ctrl">
+        <label>投資期間終了年齢（この年齢まで年金を全額運用）</label>
+        <div class="srow">
+          <input type="range" id="iSlider" min="60" max="80" step="1" value="65">
+          <span class="sval"><span id="iVal">65</span>歳</span>
+        </div>
+        <div class="ssub">以降は年金を生活費に充当。運用残高は継続運用。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title">有利な受給開始年齢の推移（累積受取総額ベース）</div>
+    <div class="timeline" id="timeline"></div>
+    <p class="foot">
+      繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率: 0.7%/月（最大84%増）｜運用益課税: 20.315%<br>
+      ※ NISA利用時は税引前の数値を参考にしてください。物価スライド・加給年金・在職老齢年金等は未考慮。
+    </p>
+  </div>
+</div>
+
+<script>
+/* ── Constants ───────────────────────────── */
+const TAX=0.20315, MINA=60, MAXA=100, CALCA=140;
+const MAPM=(CALCA-MINA)*12;
+
+const SC=[
+  {age:60,label:'60歳開始',color:'#2563eb',bg:'#eff6ff',dashed:false},
+  {age:65,label:'65歳開始',color:'#059669',bg:'#ecfdf5',dashed:true },
+  {age:70,label:'70歳開始',color:'#d97706',bg:'#fffbeb',dashed:false},
+  {age:75,label:'75歳開始',color:'#dc2626',bg:'#fef2f2',dashed:false},
+];
+
+/* ── Pension rate ────────────────────────── */
+function pRate(a){
+  if(a<65)return 1-0.004*(65-a)*12;
+  if(a>65)return Math.min(1+0.007*(a-65)*12,1.84);
+  return 1;
+}
+
+/* ── Wealth array (monthly) ─────────────── */
+function calcW(sa,nr,ia){
+  const mr=Math.pow(1+nr*(1-TAX),1/12)-1;
+  const mp=pRate(sa)/12;
+  const sm=(sa-MINA)*12, im=(ia-MINA)*12;
+  let pool=0,spent=0;
+  const w=new Float64Array(MAPM+1);
+  for(let m=0;m<=MAPM;m++){
+    w[m]=spent+pool;           // 記録：この月の年金受取り前の残高
+    if(m>=sm){
+      if(m<im){pool=(pool+mp)*(1+mr);}
+      else     {spent+=mp; pool*=(1+mr);}
+    }
+  }
+  return w;
+}
+
+/* ── Formatting ─────────────────────────── */
+function fmtAge(a){
+  const y=Math.floor(a), m=Math.round((a-y)*12);
+  if(m<=0)  return `${y}歳`;
+  if(m>=12) return `${y+1}歳`;
+  return `${y}歳${m}ヶ月`;
+}
+
+/* ── Overall leader timeline ─────────────
+   Returns [{start, end, idx}] sorted by start age.
+   idx = index into SC array of who leads in that period.
+────────────────────────────────────────── */
+function leaderTimeline(ws){
+  const periods=[];
+  let leader=-1;
+
+  for(let m=0;m<=MAPM;m++){
+    // Find argmax across all scenarios
+    let best=0;
+    for(let i=1;i<ws.length;i++) if(ws[i][m]>ws[best][m]) best=i;
+
+    if(best!==leader){
+      let transAge=MINA+m/12;
+
+      if(leader!==-1 && m>0){
+        // Interpolate precise crossover between old leader and new best
+        const p=ws[leader][m-1]-ws[best][m-1];
+        const c=ws[leader][m]  -ws[best][m];
+        if(p>0 && (p-c)>1e-10){
+          const f=Math.max(0,Math.min(1,p/(p-c)));
+          transAge=MINA+(m-1+f)/12;
+        }
+        periods[periods.length-1].end=transAge;
+      } else {
+        // Very first period — start at MINA
+        transAge=MINA;
+      }
+
+      periods.push({start:transAge, end:CALCA, idx:best});
+      leader=best;
+    }
+  }
+  return periods;
+}
+
+/* ── Marker plugin ───────────────────────
+   Draws vertical dashed lines + circles at leader-transition ages.
+────────────────────────────────────────── */
+const markerPlugin={
+  id:'mpl',
+  afterDatasetsDraw(chart){
+    const markers=chart.options.plugins?.mpl?.data;
+    if(!markers||!markers.length)return;
+    const{ctx,scales:{x,y}}=chart;
+    ctx.save();
+    [...markers].sort((a,b)=>a.age-b.age).forEach((mk,idx)=>{
+      if(mk.age<x.min||mk.age>x.max)return;
+      const px=x.getPixelForValue(mk.age);
+      const py=y.getPixelForValue(mk.wealth);
+      // Vertical dash
+      ctx.beginPath(); ctx.setLineDash([3,4]);
+      ctx.strokeStyle=mk.color+'99'; ctx.lineWidth=1;
+      ctx.moveTo(px,y.top); ctx.lineTo(px,y.bottom); ctx.stroke();
+      ctx.setLineDash([]);
+      // Outer ring
+      ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
+      ctx.fillStyle='#fff'; ctx.fill();
+      ctx.strokeStyle=mk.color; ctx.lineWidth=2.5; ctx.stroke();
+      // Inner dot
+      ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2);
+      ctx.fillStyle=mk.color; ctx.fill();
+      // Age label (staggered to avoid overlap)
+      const lx=Math.max(x.left+28,Math.min(px,x.right-28));
+      const ly=y.top+12+(idx%2)*14;
+      ctx.fillStyle=mk.color;
+      ctx.font='bold 10px "Helvetica Neue","Hiragino Sans",sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(fmtAge(mk.age),lx,ly);
+    });
+    ctx.restore();
+  }
+};
+Chart.register(markerPlugin);
+
+/* ── Main render ─────────────────────────── */
+let myChart=null;
+
+function render(){
+  const nr=Number(document.getElementById('rSlider').value)/100;
+  const ia=Number(document.getElementById('iSlider').value);
+
+  // Update labels
+  document.getElementById('rVal').textContent   =(nr*100).toFixed(1);
+  document.getElementById('rAfter').textContent =(nr*(1-TAX)*100).toFixed(2);
+  document.getElementById('iVal').textContent   =ia;
+
+  // Compute wealth arrays
+  const ws=SC.map(s=>calcW(s.age,nr,ia));
+
+  // Overall leader timeline
+  const periods=leaderTimeline(ws);
+
+  // Markers: placed at each leader-change transition (periods[1].start, periods[2].start, ...)
+  const markers=periods.slice(1).flatMap(p=>{
+    if(p.start>=MAXA) return [];
+    const m=Math.min(Math.round((p.start-MINA)*12), MAPM);
+    const wealth=ws[p.idx][m];
+    return[{age:p.start, wealth, color:SC[p.idx].color}];
+  });
+
+  // Chart datasets — use {x,y} so linear x-axis displays correctly
+  const chartAges=Array.from({length:MAXA-MINA+1},(_,j)=>MINA+j);
+  const datasets=SC.map((sc,i)=>({
+    label:sc.label,
+    data:chartAges.map(a=>({x:a, y:+(ws[i][(a-MINA)*12].toFixed(3))})),
+    borderColor:sc.color,
+    backgroundColor:'transparent',
+    borderWidth:2.5,
+    pointRadius:0,
+    tension:0,
+    borderDash:sc.dashed?[7,4]:[],
+  }));
+
+  if(!myChart){
+    myChart=new Chart(document.getElementById('chart'),{
+      type:'line',
+      data:{datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false, animation:{duration:200},
+        interaction:{mode:'index', intersect:false},
+        scales:{
+          x:{
+            type:'linear', min:MINA, max:MAXA,
+            ticks:{
+              stepSize:5,
+              callback:v=>`${v}歳`,   // v is the actual numeric age here
+              font:{size:11}, color:'#64748b', maxRotation:0,
+            },
+            grid:{color:'#f1f5f9'},
+          },
+          y:{
+            min:0,
+            ticks:{font:{size:11}, color:'#64748b'},
+            grid:{color:'#f1f5f9'},
+            title:{display:true, text:'累積受取総額（年金年額＝1基準）', font:{size:11}, color:'#64748b'},
+          },
+        },
+        plugins:{
+          tooltip:{
+            callbacks:{
+              title:items=>`${items[0].parsed.x}歳`,
+              label:item =>`${item.dataset.label}：${item.parsed.y.toFixed(2)}年分`,
+            },
+            titleFont:{size:12}, bodyFont:{size:11},
+          },
+          legend:{labels:{font:{size:12}, boxWidth:28, padding:14}},
+          mpl:{data:markers},
+        },
+      },
+    });
+  } else {
+    myChart.data.datasets=datasets;
+    myChart.options.plugins.mpl.data=markers;
+    myChart.update('none');
+  }
+
+  /* ── Build timeline rows (100歳以内のみ表示) ── */
+  const visiblePeriods=periods.filter(p=>p.start<MAXA);
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=visiblePeriods.map((p,i)=>{
+    const sc=SC[p.idx];
+    const isFirst=(i===0);
+    const isLast =(i===visiblePeriods.length-1);
+    // 終端が100歳を超える場合は「〇歳以降（100歳まで）」と表示
+    const endCapped=Math.min(p.end, MAXA);
+
+    let rangeText;
+    if(isFirst && isLast){
+      rangeText=`〜${MAXA}歳まで`;
+    } else if(isFirst){
+      rangeText=`〜${fmtAge(endCapped)}まで`;
+    } else if(isLast){
+      rangeText=p.end>MAXA
+        ? `${fmtAge(p.start)}〜${MAXA}歳`
+        : `${fmtAge(p.start)}以降`;
+    } else {
+      rangeText=`${fmtAge(p.start)}〜${fmtAge(endCapped)}`;
+    }
+
+    return `<div class="period" style="border-color:${sc.color};background:${sc.bg}">
+      <span class="age-col">${rangeText}</span>
+      <span class="winner-col" style="color:${sc.color}">${sc.label}が最も有利</span>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('rSlider').addEventListener('input',render);
+document.getElementById('iSlider').addEventListener('input',render);
+render();
+</script>
+</body>
+</html>

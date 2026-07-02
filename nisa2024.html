@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NISA利用状況（2024年12月末）</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: sans-serif; font-size: 14px; color: #222; background: #fff; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
+  h1 { font-size: 17px; font-weight: 500; margin-bottom: 0.3rem; }
+  .note { font-size: 11px; color: #666; line-height: 1.7; margin-bottom: 1.5rem; }
+  .note a { text-decoration: underline; }
+  .note a:hover { color: #185FA5; }
+  .section-label { font-size: 12px; font-weight: 500; color: #555; margin: 1.5rem 0 0.4rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -1px; }
+  .table-scroll table { min-width: 480px; }
+  thead th { border-bottom: 1.5px solid #ccc; padding: 7px 6px; text-align: right; font-weight: 500; color: #555; white-space: nowrap; }
+  thead th:first-child { text-align: left; }
+  tbody td { padding: 6px 6px; border-bottom: 0.5px solid #e5e5e5; text-align: right; vertical-align: middle; }
+  tbody td:first-child { text-align: left; }
+  .total-row td { background: #f5f5f3; font-weight: 500; border-top: 1.5px solid #ccc; }
+  .ref-row td { background: #fafaf7; color: #777; border-top: 1px dashed #ccc; font-size: 12px; }
+  .highlight-row td { background: #f0f4f9; }
+  .pct { font-weight: 500; }
+  .cum { font-size: 11px; color: #888; display: block; }
+  .cum-note { font-size: 11px; color: #888; margin-top: 0.4rem; }
+  .ref-label { font-size: 11px; color: #aaa; margin-top: 1.2rem; padding-top: 0.3rem; border-top: 1px dashed #ddd; }
+
+  /* 円グラフセクション */
+  .chart-section { margin-top: 2rem; padding: 1.4rem 1.6rem; background: #f9f9f7; border-radius: 8px; border: 1px solid #e5e5e0; }
+  .chart-section h2 { font-size: 14px; font-weight: 500; margin: 0 0 1rem; color: #333; }
+  .chart-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1.4rem; margin-bottom: 1.4rem; }
+  .chart-controls label { font-size: 13px; color: #444; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+  .chart-controls select { font-size: 13px; padding: 5px 9px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+  .chart-controls input[type=checkbox] { width: 15px; height: 15px; accent-color: #378ADD; cursor: pointer; }
+
+  /* トグルスイッチ */
+  .toggle-label { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
+  .toggle-label input[type=checkbox] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: relative; width: 44px; height: 26px; flex-shrink: 0;
+    background: #ccc; border-radius: 13px;
+    transition: background 0.25s ease;
+  }
+  .toggle-label input:checked + .toggle-track { background: #378ADD; }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: transform 0.25s ease;
+  }
+  .toggle-label input:checked + .toggle-track .toggle-thumb { transform: translateX(18px); }
+  .toggle-text { font-size: 13px; color: #444; }
+  .chart-body { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
+  .chart-canvas-wrap { position: relative; width: 500px; height: 500px; max-width: 100%; aspect-ratio: 1 / 1; }
+  .chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
+
+  .chart-center-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none; line-height: 1.4;
+  }
+  .chart-center-label .center-age { font-size: 18px; font-weight: 600; color: #333; }
+
+  .chart-legend-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, auto); gap: 8px 32px; font-size: 12px; justify-content: center; }
+  .chart-legend-list li { display: flex; align-items: center; gap: 6px; }
+  .chart-legend-list .swatch { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+  .chart-legend-list .leg-label { color: #444; white-space: nowrap; min-width: 150px; }
+  .chart-legend-list .leg-pct { font-weight: 500; color: #222; min-width: 38px; text-align: right; }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    h1 { font-size: 15px; }
+    table { font-size: 11.5px; }
+    thead th { padding: 5px 4px; }
+    tbody td { padding: 5px 4px; }
+    .cum { font-size: 10px; }
+    .chart-section { padding: 1rem 0.8rem; }
+    .chart-controls { gap: 0.8rem; }
+    .chart-body { align-items: stretch; }
+    .chart-canvas-wrap { width: 100%; height: auto; }
+    .chart-center-label .center-age { font-size: 15px; }
+    .chart-legend-list { grid-template-columns: 1fr; gap: 6px; width: 100%; max-width: 100%; }
+    .chart-legend-list li { width: 100%; }
+    .chart-legend-list .leg-label { min-width: 0; white-space: normal; flex: 1; }
+  }
+</style>
+</head>
+<body>
+<h1>NISA利用状況（2024年12月末時点）</h1>
+
+<div class="section-label">▼ 年代別サマリー</div>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:14%;text-align:left">年代</th>
+      <th>総人口</th><th>NISA口座数</th><th>口座保有率</th><th>口座未開設率</th>
+    </tr>
+  </thead>
+  <tbody id="summary-body"></tbody>
+</table>
+</div>
+
+<div class="section-label" style="margin-top:2rem">▼ 買付額別の人口比（20〜50代・20〜59歳）</div>
+<p class="cum-note">小数字（↑XX%）は「この区分<strong>以上</strong>の人の割合」の累計です</p>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:26%;text-align:left">区分（年間買付額）</th>
+      <th>20代</th><th>30代</th><th>40代</th><th>50代</th><th>20〜50代合計</th>
+    </tr>
+  </thead>
+  <tbody id="table-body-working"></tbody>
+</table>
+</div>
+
+<p class="ref-label">▼ 参考：その他の年代（買付額別・人口比）</p>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:26%;text-align:left">区分（年間買付額）</th>
+      <th>10代 ※</th><th>60代</th><th>70代</th><th>80歳以上</th>
+    </tr>
+  </thead>
+  <tbody id="table-body-ref"></tbody>
+</table>
+</div>
+<p style="font-size:11px;color:#aaa;margin-top:0.3rem">※ 10代の総人口は18〜19歳の推計値（注記参照）</p>
+
+<!-- 円グラフ -->
+<div class="chart-section">
+  <h2>▼ 円グラフ</h2>
+  <div class="chart-controls">
+    <label>年代：
+      <select id="ageSelect">
+        <option value="10代">10代</option>
+        <option value="20代" selected>20代</option>
+        <option value="30代">30代</option>
+        <option value="40代">40代</option>
+        <option value="50代">50代</option>
+        <option value="60代">60代</option>
+        <option value="70代">70代</option>
+        <option value="80歳以上">80歳以上</option>
+        <option value="現役世代合計">20〜50代合計（20〜59歳）</option>
+      </select>
+    </label>
+    <label class="toggle-label">
+      <span class="toggle-text">口座未開設・買付なしを含む</span>
+      <input type="checkbox" id="chkInactive" checked>
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+      </span>
+    </label>
+  </div>
+  <div class="chart-body">
+    <div class="chart-canvas-wrap">
+      <canvas id="pieChart"></canvas>
+      <div class="chart-center-label">
+        <div class="center-age" id="centerAge"></div>
+      </div>
+    </div>
+    <ul class="chart-legend-list" id="chartLegend"></ul>
+  </div>
+</div>
+
+<script>
+// ── データ ──
+const pop = {
+  '10代': Math.round(2123*(5493/5351))*1000,
+  '20代':   (6268+6517)*1000,
+  '30代':   (6374+6931)*1000,
+  '40代':   (7660+8846)*1000,
+  '50代':   (9729+8444)*1000,
+  '60代':   (7522+7299)*1000,
+  '70代':   (8343+7754)*1000,
+  '80歳以上': (6106+3945+2082+633+90)*1000,
+};
+const accounts = {
+  '10代':119782,'20代':2950112,'30代':4486512,'40代':4923179,
+  '50代':4951402,'60代':3770942,'70代':2839669,'80歳以上':1544862,
+};
+const nisaData = {
+  '10代': {'0':69417,  '60':37544,  '120':5290,  '180':2204,  '240':2875,  '300':1477,  '360':1476 },
+  '20代':   {'0':1029015,'60':1463698,'120':222451,'180':85751, '240':73461, '300':56882, '360':74205 },
+  '30代':   {'0':1343927,'60':1952538,'120':430687,'180':198163,'240':199421,'300':167256,'360':289698},
+  '40代':   {'0':1572313,'60':1948471,'120':442580,'180':215507,'240':288006,'300':206643,'360':368112},
+  '50代':   {'0':1688428,'60':1824360,'120':427755,'180':209245,'240':375660,'300':217815,'360':360187},
+  '60代':   {'0':1495766,'60':1067832,'120':307628,'180':158569,'240':485996,'300':182076,'360':245675},
+  '70代':   {'0':1579624,'60':500823, '120':189025,'180':109100,'240':502965,'300':80609, '360':85529 },
+  '80歳以上':{'0':1331766,'60':110252,'120':54231, '180':37059, '240':206919,'300':13021, '360':15665 },
+};
+const nisaTotal={};
+Object.keys(nisaData).forEach(a=>{ nisaTotal[a]=Object.values(nisaData[a]).reduce((s,v)=>s+v,0); });
+
+const workingAges=['20代','30代','40代','50代'];
+const workingPop=workingAges.reduce((s,a)=>s+pop[a],0);
+const workingNisaData={'0':0,'60':0,'120':0,'180':0,'240':0,'300':0,'360':0};
+workingAges.forEach(a=>Object.keys(workingNisaData).forEach(k=>{workingNisaData[k]+=nisaData[a][k];}));
+const workingNisaTotal=Object.values(workingNisaData).reduce((s,v)=>s+v,0);
+
+const categories=[
+  {label:'300万円超（上限まで）', key:'360',color:'#4B9B00'},
+  {label:'240万円超〜300万円以下',key:'300',color:'#8DB500'},
+  {label:'180万円超〜240万円以下',key:'240',color:'#C8A800'},
+  {label:'120万円超〜180万円以下',key:'180',color:'#E08500'},
+  {label:'60万円超〜120万円以下', key:'120',color:'#C45E00'},
+  {label:'0円超〜60万円以下',     key:'60', color:'#7D3C00'},
+  {label:'0円（買付なし）',       key:'0',  color:'#D3D1C7'},
+  {label:'口座未開設',            key:'none',color:'#B4B2A9'},
+];
+
+// ── テーブル描画 ──
+(function buildSummary(){
+  const sb=document.getElementById('summary-body');
+  let tp=0,ta=0,tn=0;
+  ['10代','20代','30代','40代','50代','60代','70代','80歳以上'].forEach(age=>{
+    const isRef=age==='10代';
+    const tr=document.createElement('tr'); if(isRef)tr.className='ref-row';
+    const p=pop[age],a=accounts[age],n=nisaTotal[age];
+    tr.innerHTML=`<td>${age}${isRef?' ※':''}</td><td>${(p/10000).toFixed(1)}万人</td><td>${(a/10000).toFixed(1)}万口座</td><td class="pct">${(a/p*100).toFixed(1)}%</td><td style="color:#888">${((p-n)/p*100).toFixed(1)}%</td>`;
+    sb.appendChild(tr);
+    if(!isRef){tp+=p;ta+=a;tn+=n;}
+  });
+  const tr=document.createElement('tr');tr.className='total-row';
+  tr.innerHTML=`<td>20〜59歳 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td><td style="color:#888">${((tp-tn)/tp*100).toFixed(1)}%</td>`;
+  sb.appendChild(tr);
+})();
+(function buildTables(){
+  function build(tbodyId,ages,showTotal){
+    const tbody=document.getElementById(tbodyId);
+    const totalPop=ages.reduce((s,a)=>s+pop[a],0);
+    const cum={total:0};ages.forEach(a=>cum[a]=0);
+    categories.forEach(cat=>{
+      const tr=document.createElement('tr');
+      if(cat.key==='none')tr.className='highlight-row';
+      let rowTotal=0,cells=`<td>${cat.label}</td>`;
+      ages.forEach(age=>{
+        const val=cat.key==='none'?pop[age]-nisaTotal[age]:nisaData[age][cat.key];
+        rowTotal+=val;cum[age]+=val;
+        cells+=`<td><span class="pct">${(val/pop[age]*100).toFixed(1)}%</span><span class="cum">↑${(cum[age]/pop[age]*100).toFixed(1)}%</span></td>`;
+      });
+      if(showTotal){
+        cum.total+=rowTotal;
+        cells+=`<td><span class="pct">${(rowTotal/totalPop*100).toFixed(1)}%</span><span class="cum">↑${(cum.total/totalPop*100).toFixed(1)}%</span></td>`;
+      }
+      tr.innerHTML=cells;tbody.appendChild(tr);
+    });
+  }
+  build('table-body-working',workingAges,true);
+  build('table-body-ref',['10代','60代','70代','80歳以上'],false);
+})();
+
+// ── Chart.js 円グラフ ──
+function getChartDatasets(age, inclInactive) {
+  const isW = age==='現役世代合計';
+  const p   = isW ? workingPop : pop[age];
+  const nd  = isW ? workingNisaData : nisaData[age];
+  const nt  = isW ? workingNisaTotal : nisaTotal[age];
+
+  const filtered = categories.filter(c=>{
+    if(!inclInactive && (c.key==='none'||c.key==='0')) return false;
+    return true;
+  });
+
+  const vals   = filtered.map(c=> c.key==='none' ? p-nt : nd[c.key]);
+  const total  = vals.reduce((s,v)=>s+v,0);
+  const labels = filtered.map(c=>c.label);
+  const colors = filtered.map(c=>c.color);
+  const pcts   = vals.map(v=>(v/total*100));
+
+  return { labels, colors, vals, pcts, total };
+}
+
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+Chart.register(ChartDataLabels);
+let chart = null;
+
+function updateCenterLabel(age) {
+  const displayAge = age === '現役世代合計' ? '20〜50代' : age;
+  document.getElementById('centerAge').textContent = displayAge;
+}
+
+function updateLegendList(labels, colors, pcts) {
+  const ul = document.getElementById('chartLegend');
+  ul.innerHTML = '';
+  labels.forEach((label, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="swatch" style="background:${colors[i]}"></span><span class="leg-label">${label}</span><span class="leg-pct">${pcts[i].toFixed(1)}%</span>`;
+    ul.appendChild(li);
+  });
+}
+
+function updateChart() {
+  const age         = document.getElementById('ageSelect').value;
+  const inclInactive= document.getElementById('chkInactive').checked;
+  const { labels, colors, pcts } = getChartDatasets(age, inclInactive);
+
+  updateCenterLabel(age);
+  updateLegendList(labels, colors, pcts);
+
+  if (chart) {
+    chart.data.labels         = labels;
+    chart.data.datasets[0].data            = pcts;
+    chart.data.datasets[0].backgroundColor = colors;
+    chart.data.datasets[0].hoverBackgroundColor = colors.map(c=>c);
+    chart.update();
+  } else {
+    chart = new Chart(pieCtx, {
+      type: 'doughnut',
+      plugins: [ChartDataLabels],
+      data: {
+        labels,
+        datasets: [{
+          data: pcts,
+          backgroundColor: colors,
+          hoverBackgroundColor: colors,
+          borderColor: '#fff',
+          borderWidth: 2,
+          hoverOffset: 14,
+        }]
+      },
+      options: {
+        animation: { animateRotate: true, animateScale: false, duration: 600, easing: 'easeInOutQuart' },
+        cutout: '28%',
+        plugins: {
+          datalabels: {
+            color: (ctx) => {
+              const bg = ctx.dataset.backgroundColor[ctx.dataIndex];
+              return (bg === '#D3D1C7' || bg === '#B4B2A9') ? '#555' : '#fff';
+            },
+            font: (ctx) => {
+              const w = ctx.chart.width;
+              const size = w < 320 ? 9 : w < 420 ? 10.5 : 12;
+              return { size, weight: 'bold', family: 'sans-serif' };
+            },
+            formatter(value, ctx) {
+              const w = ctx.chart.width;
+              const threshold = w < 320 ? 6 : w < 420 ? 4 : 3;
+              if (value < threshold) return '';
+              const label = ctx.chart.data.labels[ctx.dataIndex];
+              return label + '\n' + value.toFixed(1) + '%';
+            },
+            textAlign: 'center',
+            anchor: 'center',
+            align: 'center',
+            clip: false,
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                return `  ${ctx.label}：${ctx.parsed.toFixed(1)}%`;
+              }
+            },
+            bodyFont: { size: 13 },
+            padding: 10,
+            backgroundColor: 'rgba(30,30,30,0.85)',
+          }
+        },
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+      }
+    });
+  }
+}
+
+document.getElementById('ageSelect').addEventListener('change', updateChart);
+document.getElementById('chkInactive').addEventListener('change', updateChart);
+updateChart();
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (chart) chart.update(); }, 150);
+});
+</script>
+
+<p class="note" style="margin-top:2.5rem; border-top:1px solid #e5e5e5; padding-top:1rem;">
+  出典：<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener" style="color:#378ADD;">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener" style="color:#378ADD;">総務省「人口推計 2024年12月報（2024年7月1日現在確定値）」</a><br>
+  ※ 人口は<strong>総人口</strong>（2024年7月1日確定値）を使用。NISA口座数は2024年12月末時点。<br>
+  ※ 「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出（内訳合計には廃止口座の取引を含むため口座数より若干多く、口座保有率と未開設率の合計は100%にならない）。<br>
+  ※ 買付額区分は2024年1月〜12月中の年間利用状況による（廃止口座の取引を含む）。<br>
+  ※ 10代の総人口は、18・19歳の日本人人口（2,123千人）に15〜19歳の総人口／日本人人口比（5,493÷5,351）を乗じて推計（約2,179千人）。
+</p>
+</body>
+</html>
