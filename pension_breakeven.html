@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="年金受給開始年齢（60〜75歳）ごとの累積受取総額を、運用利回りと投資期間終了年齢を変えながら比較できるシミュレーター。">
 <title>年金受給開始年齢 損益分岐点</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -20,10 +21,21 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:540px){.controls{grid-template-columns:1fr}}
 .ctrl label{font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px}
+.ctrl-head{display:flex;align-items:center;gap:14px;margin-bottom:7px}
+.ctrl-head label{margin-bottom:0}
 .srow{display:flex;align-items:center;gap:10px}
 .srow input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
 .sval{font-size:22px;font-weight:700;color:#1d4ed8;min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
 .ssub{font-size:10px;color:#94a3b8;margin-top:4px}
+
+/* Tax toggle (inline, next to 想定利回り) */
+.ctrl-head label.tax-inline{display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8;font-weight:600;cursor:pointer;white-space:nowrap}
+.switch{position:relative;width:26px;height:15px;flex-shrink:0}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch-track{position:absolute;inset:0;background:#cbd5e1;border-radius:8px;transition:background .2s}
+.switch input:checked + .switch-track{background:#1d4ed8}
+.switch-thumb{position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.switch input:checked + .switch-track .switch-thumb{transform:translateX(11px)}
 
 /* Chart */
 .chart-wrap{position:relative;height:370px}
@@ -56,17 +68,26 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 <body>
 <div class="wrap">
   <h1>年金受給開始年齢別 損益分岐点シミュレーター</h1>
-  <p class="sub">65歳開始（緑色・破線）を基準とした累積受取総額の比較 ／ 運用益課税 20.315% 考慮</p>
+  <p class="sub">65歳開始（緑色）を基準とした累積受取総額の比較</p>
 
   <div class="card">
     <div class="controls">
       <div class="ctrl">
-        <label>想定利回り（名目）</label>
+        <div class="ctrl-head">
+          <label>想定利回り（名目）</label>
+          <label class="tax-inline">
+            <span class="switch">
+              <input type="checkbox" id="taxToggle" checked>
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </span>
+            課税あり
+          </label>
+        </div>
         <div class="srow">
           <input type="range" id="rSlider" min="0" max="10" step="0.1" value="0">
           <span class="sval"><span id="rVal">0.0</span>%</span>
         </div>
-        <div class="ssub">税引後: <span id="rAfter">0.00</span>%（課税率 20.315%）</div>
+        <div class="ssub">税引後: <span id="rAfter">0.00</span>%<span id="rTaxNote">（課税率 20.315%）</span></div>
       </div>
       <div class="ctrl">
         <label>投資期間終了年齢（この年齢まで年金を全額運用）</label>
@@ -80,14 +101,14 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
   </div>
 
   <div class="card">
-    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="受給開始年齢別（60歳・65歳・70歳・75歳）の累積受取総額の推移。詳細は下の表を参照"></canvas></div>
   </div>
 
   <div class="card">
     <div class="sec-title">有利な受給開始年齢の推移（累積受取総額ベース）</div>
     <div class="timeline" id="timeline"></div>
     <p class="foot">
-      繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率: 0.7%/月（最大84%増）｜運用益課税: 20.315%<br>
+      繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率: 0.7%/月（最大84%増）｜運用益課税: 20.315%（上のトグルでON/OFF切替可）<br>
       ※ NISA利用時は税引前の数値を参考にしてください。物価スライド・加給年金・在職老齢年金等は未考慮。
     </p>
   </div>
@@ -95,12 +116,12 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 
 <script>
 /* ── Constants ───────────────────────────── */
-const TAX=0.20315, MINA=60, MAXA=100, CALCA=140;
+const TAX_RATE=0.20315, MINA=60, MAXA=100, CALCA=140;
 const MAPM=(CALCA-MINA)*12;
 
 const SC=[
   {age:60,label:'60歳開始',color:'#2563eb',bg:'#eff6ff',dashed:false},
-  {age:65,label:'65歳開始',color:'#059669',bg:'#ecfdf5',dashed:true },
+  {age:65,label:'65歳開始',color:'#059669',bg:'#ecfdf5',dashed:false},
   {age:70,label:'70歳開始',color:'#d97706',bg:'#fffbeb',dashed:false},
   {age:75,label:'75歳開始',color:'#dc2626',bg:'#fef2f2',dashed:false},
 ];
@@ -113,8 +134,8 @@ function pRate(a){
 }
 
 /* ── Wealth array (monthly) ─────────────── */
-function calcW(sa,nr,ia){
-  const mr=Math.pow(1+nr*(1-TAX),1/12)-1;
+function calcW(sa,nr,ia,tax){
+  const mr=Math.pow(1+nr*(1-tax),1/12)-1;
   const mp=pRate(sa)/12;
   const sm=(sa-MINA)*12, im=(ia-MINA)*12;
   let pool=0,spent=0;
@@ -219,14 +240,17 @@ let myChart=null;
 function render(){
   const nr=Number(document.getElementById('rSlider').value)/100;
   const ia=Number(document.getElementById('iSlider').value);
+  const taxOn=document.getElementById('taxToggle').checked;
+  const tax=taxOn?TAX_RATE:0;
 
   // Update labels
   document.getElementById('rVal').textContent   =(nr*100).toFixed(1);
-  document.getElementById('rAfter').textContent =(nr*(1-TAX)*100).toFixed(2);
+  document.getElementById('rAfter').textContent =(nr*(1-tax)*100).toFixed(2);
+  document.getElementById('rTaxNote').textContent=taxOn?`（課税率 ${(TAX_RATE*100).toFixed(3)}%）`:'（非課税）';
   document.getElementById('iVal').textContent   =ia;
 
   // Compute wealth arrays
-  const ws=SC.map(s=>calcW(s.age,nr,ia));
+  const ws=SC.map(s=>calcW(s.age,nr,ia,tax));
 
   // Overall leader timeline
   const periods=leaderTimeline(ws);
@@ -248,6 +272,7 @@ function render(){
     backgroundColor:'transparent',
     borderWidth:2.5,
     pointRadius:0,
+    pointStyle:sc.dashed?'dash':'line',
     tension:0,
     borderDash:sc.dashed?[7,4]:[],
   }));
@@ -284,7 +309,7 @@ function render(){
             },
             titleFont:{size:12}, bodyFont:{size:11},
           },
-          legend:{labels:{font:{size:12}, boxWidth:28, padding:14}},
+          legend:{labels:{font:{size:12}, usePointStyle:true, boxWidth:36, boxHeight:8, padding:14}},
           mpl:{data:markers},
         },
       },
@@ -327,6 +352,7 @@ function render(){
 
 document.getElementById('rSlider').addEventListener('input',render);
 document.getElementById('iSlider').addEventListener('input',render);
+document.getElementById('taxToggle').addEventListener('change',render);
 render();
 </script>
 </body>
