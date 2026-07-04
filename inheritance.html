@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。">
+<title>二次相続シミュレーター</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',sans-serif;
+  background:#eef2f7;color:#1e293b;padding:16px;min-height:100vh;
+}
+.wrap{max-width:840px;margin:0 auto}
+h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
+.sub{font-size:11px;color:#64748b;margin-bottom:14px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.sec-title{font-size:13px;font-weight:700;color:#334155;margin-bottom:12px}
+
+/* ---- 家族の図 ---- */
+.family{display:flex;flex-direction:column;align-items:center}
+.couple{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative}
+.person{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:12px 14px;border-radius:12px;border:2px solid #cbd5e1;background:#f8fafc;
+  width:158px;position:relative;
+}
+.person.me{border-color:#1d4ed8;background:#eff6ff}
+.person.sp{border-color:#db2777;background:#fdf2f8}
+.person.child{border-color:#059669;background:#ecfdf5;width:96px;padding:10px 8px}
+.person .plabel{font-size:12px;font-weight:700;color:#334155}
+.person.me .plabel{color:#1d4ed8}
+.person.sp .plabel{color:#db2777}
+.person.child .plabel{color:#059669;font-size:11px}
+.avatar{width:44px;height:44px}
+.person.child .avatar{width:34px;height:34px}
+.asset-in{display:flex;align-items:center;gap:5px}
+.asset-in input{
+  width:104px;padding:6px 7px;font-size:18px;font-weight:700;text-align:right;
+  border:1px solid #cbd5e1;border-radius:7px;font-variant-numeric:tabular-nums;color:#1e293b;
+}
+.asset-in input:focus{outline:2px solid #93c5fd;border-color:#1d4ed8}
+.asset-in .unit{font-size:12px;color:#64748b;font-weight:600}
+.marriage{
+  width:56px;height:2px;background:#94a3b8;margin-top:52px;flex-shrink:0;position:relative;
+}
+.marriage::after{content:'';position:absolute;top:4px;left:0;width:100%;height:2px;background:#94a3b8}
+.remove-btn{
+  position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;
+  border:none;background:#64748b;color:#fff;font-size:13px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.remove-btn:hover{background:#dc2626}
+.add-spouse{
+  width:158px;min-height:120px;border:2px dashed #cbd5e1;border-radius:12px;background:none;
+  color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.add-spouse:hover{border-color:#db2777;color:#db2777;background:#fdf2f8}
+.add-spouse .plus{font-size:24px;line-height:1}
+.tree-v{width:2px;height:22px;background:#94a3b8}
+.children-row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;align-items:stretch}
+.add-child{
+  width:96px;border:2px dashed #cbd5e1;border-radius:12px;background:none;
+  color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:92px;
+}
+.add-child:hover{border-color:#059669;color:#059669;background:#ecfdf5}
+.add-child .plus{font-size:20px;line-height:1}
+.fam-note{font-size:10px;color:#94a3b8;margin-top:10px;text-align:center}
+
+/* ---- スライダー ---- */
+.srow{display:flex;align-items:center;gap:10px}
+.srow input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
+.sval{font-size:22px;font-weight:700;color:#1d4ed8;min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.split-bar{display:flex;height:26px;border-radius:7px;overflow:hidden;margin-top:10px;font-size:11px;font-weight:700;color:#fff}
+.split-bar .seg{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:width .1s}
+.seg.sp-seg{background:#db2777}
+.seg.ch-seg{background:#059669}
+.split-legend{display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-top:6px;font-variant-numeric:tabular-nums}
+.reset-link{
+  border:none;background:none;color:#1d4ed8;font-size:11px;font-weight:600;cursor:pointer;
+  text-decoration:underline;padding:0;margin-left:auto;
+}
+.slider-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.slider-head label{font-size:11px;font-weight:600;color:#475569}
+.best-hint{font-size:11px;color:#475569;margin-top:12px;padding:8px 10px;background:#f1f5f9;border-radius:8px;line-height:1.6}
+.best-hint b{color:#1d4ed8}
+.best-hint button{
+  border:1px solid #1d4ed8;background:#fff;color:#1d4ed8;font-size:11px;font-weight:600;
+  border-radius:6px;padding:2px 10px;cursor:pointer;margin-left:8px;
+}
+.best-hint button:hover{background:#eff6ff}
+
+/* ---- 結果 ---- */
+.results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.results{grid-template-columns:1fr}}
+.res-box{border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px}
+.res-box h3{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.res-box.first h3{color:#1d4ed8}
+.res-box.second h3{color:#db2777}
+.badge{font-size:9px;font-weight:700;color:#fff;border-radius:4px;padding:2px 6px}
+.first .badge{background:#1d4ed8}
+.second .badge{background:#db2777}
+.rline{display:flex;justify-content:space-between;font-size:12px;color:#475569;padding:3px 0;font-variant-numeric:tabular-nums}
+.rline .v{font-weight:600;color:#1e293b}
+.rline.total{border-top:1px solid #e2e8f0;margin-top:6px;padding-top:8px;font-weight:700}
+.rline.total .v{font-size:16px}
+.first .rline.total .v{color:#1d4ed8}
+.second .rline.total .v{color:#db2777}
+.rline.dim,.rline.dim .v{color:#94a3b8;font-weight:400}
+.grand{
+  margin-top:14px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);border-radius:10px;
+  padding:14px 18px;color:#fff;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;
+}
+.grand .glabel{font-size:12px;font-weight:600;opacity:.85}
+.grand .gval{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.grand .gval small{font-size:13px;font-weight:600;margin-left:2px}
+.grand.keep{background:linear-gradient(135deg,#065f46,#059669);margin-top:8px}
+.grand .per-child{font-size:12px;font-weight:600;margin-left:8px;opacity:.9;display:inline-flex;align-items:baseline;gap:2px}
+.pc-num{font-size:15px;font-weight:700}
+.grand .per-child .pc-num{font-size:26px}
+.first .pc-num{color:#1d4ed8}
+.second .pc-num{color:#db2777}
+#legendCh .pc-num{color:#059669}
+.zero-note{font-size:11px;color:#059669;font-weight:600;margin-top:4px}
+
+/* ---- グラフ ---- */
+.chart-wrap{position:relative;height:300px}
+
+.foot{font-size:10px;color:#94a3b8;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>二次相続シミュレーター</h1>
+  <p class="sub">一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較</p>
+
+  <!-- 家族構成 -->
+  <div class="card">
+    <div class="sec-title">家族構成と資産額</div>
+    <div class="family">
+      <div class="couple">
+        <div class="person me">
+          <svg class="avatar" viewBox="0 0 48 48" fill="#1d4ed8"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
+          <span class="plabel">自分（被相続人）</span>
+          <span class="asset-in"><input type="number" id="assetMe" value="3000" min="0" step="100"><span class="unit">万円</span></span>
+        </div>
+        <div class="marriage" id="marriageLine"></div>
+        <div id="spouseSlot"></div>
+      </div>
+      <div class="tree-v" id="treeV"></div>
+      <div class="children-row" id="childrenRow"></div>
+      <p class="fam-note">配偶者・子はクリックで追加／×で削除できます（子は1〜6人）</p>
+    </div>
+  </div>
+
+  <!-- 遺産分割スライダー -->
+  <div class="card" id="splitCard">
+    <div class="sec-title">一次相続の遺産分割</div>
+    <div class="slider-head">
+      <label>配偶者の取得割合</label>
+      <button class="reset-link" id="resetBtn">法定相続分に戻す</button>
+    </div>
+    <div class="srow">
+      <input type="range" id="spShare" min="0" max="100" step="1" value="50">
+      <span class="sval" id="spShareVal">50%</span>
+    </div>
+    <div class="split-bar">
+      <div class="seg sp-seg" id="segSp"></div>
+      <div class="seg ch-seg" id="segCh"></div>
+    </div>
+    <div class="split-legend">
+      <span id="legendSp">配偶者 1,500万円</span>
+      <span id="legendCh">子 1,500万円</span>
+    </div>
+    <div class="best-hint" id="bestHint"></div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card">
+    <div class="sec-title">相続税の試算結果</div>
+    <div class="results">
+      <div class="res-box first">
+        <h3><span class="badge">一次</span>自分が亡くなったとき</h3>
+        <div id="firstDetail"></div>
+      </div>
+      <div class="res-box second" id="secondBox">
+        <h3><span class="badge">二次</span>配偶者が亡くなったとき</h3>
+        <div id="secondDetail"></div>
+      </div>
+    </div>
+    <div class="grand">
+      <span class="glabel" id="grandLabel">一次＋二次の相続税合計</span>
+      <span class="gval" id="grandVal">0<small>万円</small></span>
+    </div>
+    <div class="grand keep">
+      <span class="glabel" id="keepLabel">最終的に子に残せる金額（総資産−税額合計）</span>
+      <span class="gval" id="keepVal">0<small>万円</small></span>
+    </div>
+  </div>
+
+  <!-- グラフ -->
+  <div class="card" id="chartCard">
+    <div class="sec-title">配偶者の取得割合と税額の関係</div>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <p class="foot">
+    ※ 相続税の速算表（平成27年1月1日以後）に基づく簡易試算です。基礎控除は「3,000万円＋600万円×法定相続人の数」。<br>
+    ※ 配偶者の税額軽減（1億6,000万円または法定相続分のいずれか大きい額まで非課税）を適用しています。<br>
+    ※ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額」とし、子が均等に相続する前提です。<br>
+    ※ 生命保険の非課税枠、小規模宅地等の特例、債務・葬式費用、未成年者・障害者控除、相次相続控除などは考慮していません。実際の申告は税理士にご相談ください。
+  </p>
+</div>
+
+<script>
+'use strict';
+
+/* ---------- 状態 ---------- */
+const state = {
+  hasSpouse: true,
+  nChildren: 1,
+  spSharePct: 50,   // 一次相続で配偶者が取得する割合(%)
+  userMoved: false, // スライダーを手動調整したか
+};
+
+/* ---------- 相続税計算（単位:万円） ---------- */
+const BRACKETS = [
+  [1000, .10, 0], [3000, .15, 50], [5000, .20, 200], [10000, .30, 700],
+  [20000, .40, 1700], [30000, .45, 2700], [60000, .50, 4200], [Infinity, .55, 7200],
+];
+function taxOnShare(x) {
+  if (x <= 0) return 0;
+  for (const [lim, rate, ded] of BRACKETS) if (x <= lim) return x * rate - ded;
+}
+// 相続税の総額（法定相続分で按分して税率適用）
+function totalTax(estate, hasSpouse, nChildren) {
+  const heirs = (hasSpouse ? 1 : 0) + nChildren;
+  if (heirs === 0) return 0;
+  const taxable = Math.max(0, estate - (3000 + 600 * heirs));
+  if (taxable === 0) return 0;
+  let t = 0;
+  if (hasSpouse) {
+    if (nChildren > 0) {
+      t += taxOnShare(taxable / 2);
+      t += taxOnShare(taxable / 2 / nChildren) * nChildren;
+    } else {
+      t += taxOnShare(taxable);
+    }
+  } else {
+    t += taxOnShare(taxable / nChildren) * nChildren;
+  }
+  return t;
+}
+// 一次＋二次をまとめて計算
+function simulate(assetMe, assetSp, hasSpouse, nChildren, spPct) {
+  const r = {};
+  r.total1 = totalTax(assetMe, hasSpouse, nChildren);
+  if (hasSpouse) {
+    const spAcq = assetMe * spPct / 100;              // 配偶者の取得額
+    const statFrac = nChildren > 0 ? 0.5 : 1;         // 配偶者の法定相続分
+    const spTaxRaw = assetMe > 0 ? r.total1 * spAcq / assetMe : 0;
+    const reliefCap = Math.max(16000, assetMe * statFrac); // 配偶者の税額軽減の上限
+    const relief = assetMe > 0 ? r.total1 * Math.min(spAcq, reliefCap) / assetMe : 0;
+    r.spAcq = spAcq;
+    r.spTax = Math.max(0, spTaxRaw - relief);
+    r.chTax1 = Math.max(0, r.total1 - spTaxRaw);      // 子は残り割合を取得
+    r.first = r.spTax + r.chTax1;
+    r.estate2 = Math.max(0, assetSp + spAcq - r.spTax);
+    r.second = totalTax(r.estate2, false, nChildren);
+  } else {
+    r.spAcq = 0; r.spTax = 0;
+    r.chTax1 = r.total1;
+    r.first = r.total1;
+    r.estate2 = 0; r.second = 0;
+  }
+  r.grand = r.first + r.second;
+  return r;
+}
+
+/* ---------- ユーティリティ ---------- */
+const $ = id => document.getElementById(id);
+const fmt = v => Math.round(v).toLocaleString('ja-JP');
+function statutoryPct() { return state.hasSpouse && state.nChildren > 0 ? 50 : 100; }
+function getAssetMe() { return Math.max(0, +$('assetMe').value || 0); }
+function getAssetSp() {
+  const el = $('assetSp');
+  return el ? Math.max(0, +el.value || 0) : 0;
+}
+
+/* ---------- 家族の図の描画 ---------- */
+function renderFamily() {
+  const slot = $('spouseSlot');
+  if (state.hasSpouse) {
+    const prev = getAssetSp() || 3000;
+    slot.innerHTML = `
+      <div class="person sp">
+        <button class="remove-btn" id="delSpouse" title="配偶者を削除">×</button>
+        <svg class="avatar" viewBox="0 0 48 48" fill="#db2777"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
+        <span class="plabel">配偶者</span>
+        <span class="asset-in"><input type="number" id="assetSp" value="${prev}" min="0" step="100"><span class="unit">万円</span></span>
+      </div>`;
+    $('delSpouse').onclick = () => { state.hasSpouse = false; state.userMoved = false; renderFamily(); update(); };
+    $('assetSp').oninput = update;
+    $('marriageLine').style.visibility = 'visible';
+  } else {
+    slot.innerHTML = `
+      <button class="add-spouse" id="addSpouse">
+        <span class="plus">＋</span><span>配偶者を追加</span>
+      </button>`;
+    $('addSpouse').onclick = () => { state.hasSpouse = true; state.userMoved = false; renderFamily(); update(); };
+    $('marriageLine').style.visibility = 'hidden';
+  }
+
+  const row = $('childrenRow');
+  let html = '';
+  for (let i = 0; i < state.nChildren; i++) {
+    html += `
+      <div class="person child">
+        ${state.nChildren > 1 ? `<button class="remove-btn" data-del-child title="子を削除">×</button>` : ''}
+        <svg class="avatar" viewBox="0 0 48 48" fill="#059669"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
+        <span class="plabel">子${state.nChildren > 1 ? i + 1 : ''}</span>
+      </div>`;
+  }
+  if (state.nChildren < 6) {
+    html += `<button class="add-child" id="addChild"><span class="plus">＋</span><span>子を追加</span></button>`;
+  }
+  row.innerHTML = html;
+  row.querySelectorAll('[data-del-child]').forEach(btn => {
+    btn.onclick = () => { state.nChildren--; state.userMoved = false; renderFamily(); update(); };
+  });
+  const addBtn = $('addChild');
+  if (addBtn) addBtn.onclick = () => { state.nChildren++; state.userMoved = false; renderFamily(); update(); };
+}
+
+/* ---------- グラフ ---------- */
+let chart = null;
+const markerPlugin = {
+  id: 'marker',
+  afterDatasetsDraw(c) {
+    const { top, bottom } = c.chartArea;
+    const ctx = c.ctx;
+
+    // 合計が最小になる範囲（緑の帯）とラベル
+    if (state.bestLo != null && !(state.bestLo === 0 && state.bestHi === 100)) {
+      const xLo = c.scales.x.getPixelForValue(state.bestLo);
+      const xHi = c.scales.x.getPixelForValue(state.bestHi);
+      ctx.save();
+      ctx.fillStyle = 'rgba(5,150,105,.10)';
+      ctx.fillRect(xLo, top, Math.max(xHi - xLo, 2), bottom - top);
+      ctx.strokeStyle = '#059669'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(xLo, top); ctx.lineTo(xLo, bottom); ctx.stroke();
+      if (xHi - xLo > 2) { ctx.beginPath(); ctx.moveTo(xHi, top); ctx.lineTo(xHi, bottom); ctx.stroke(); }
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#059669';
+      ctx.font = '700 11px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const cx = Math.min(Math.max((xLo + xHi) / 2, c.chartArea.left + 40), c.chartArea.right - 40);
+      ctx.fillText(`合計最小 ${state.bestText}`, cx, top + 4);
+      ctx.restore();
+    }
+
+    // 現在のスライダー位置（オレンジの点線）
+    const x = c.scales.x.getPixelForValue(state.spSharePct);
+    ctx.save();
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+function renderChart(assetMe, assetSp) {
+  const card = $('chartCard');
+  if (!(state.hasSpouse && state.nChildren > 0)) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const labels = [], d1 = [], d2 = [], dg = [];
+  for (let p = 0; p <= 100; p++) {
+    const r = simulate(assetMe, assetSp, true, state.nChildren, p);
+    labels.push(p); d1.push(r.first); d2.push(r.second); dg.push(r.grand);
+  }
+  const data = {
+    labels,
+    datasets: [
+      { label: '一次相続の税額', data: d1, borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', borderWidth: 2, pointRadius: 0, tension: .15 },
+      { label: '二次相続の税額', data: d2, borderColor: '#db2777', backgroundColor: '#db2777', borderWidth: 2, pointRadius: 0, tension: .15 },
+      { label: '合計', data: dg, borderColor: '#0f172a', backgroundColor: '#0f172a', borderWidth: 3, pointRadius: 0, tension: .15 },
+    ]
+  };
+  if (chart) { chart.data = data; chart.update('none'); return; }
+  chart = new Chart($('chart'), {
+    type: 'line',
+    data,
+    plugins: [markerPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          title: { display: true, text: '配偶者の取得割合（％）', font: { size: 10 } },
+          ticks: {
+            font: { size: 10 }, autoSkip: false, maxRotation: 0,
+            callback: v => v % 10 === 0 ? v + '%' : null,
+          },
+          grid: { display: false },
+        },
+        y: {
+          title: { display: true, text: '税額（万円）', font: { size: 10 } },
+          ticks: { font: { size: 10 }, callback: v => v.toLocaleString('ja-JP') },
+          beginAtZero: true,
+        }
+      },
+      plugins: {
+        legend: { labels: { font: { size: 11 }, boxWidth: 14, boxHeight: 3 } },
+        tooltip: {
+          callbacks: {
+            title: items => `配偶者の取得割合 ${items[0].label}%`,
+            label: item => `${item.dataset.label}: ${fmt(item.parsed.y)}万円`,
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ---------- 画面更新 ---------- */
+function update() {
+  const assetMe = getAssetMe();
+  const assetSp = getAssetSp();
+
+  // 配偶者なし、または子がいない（＝分割の余地がない）ときはスライダー非表示
+  const showSplit = state.hasSpouse && state.nChildren > 0;
+  $('splitCard').style.display = showSplit ? '' : 'none';
+  $('secondBox').style.display = state.hasSpouse ? '' : 'none';
+  $('grandLabel').textContent = state.hasSpouse ? '一次＋二次の相続税合計' : '相続税の合計';
+
+  if (!state.userMoved) state.spSharePct = statutoryPct();
+  const pct = state.hasSpouse ? state.spSharePct : 0;
+  $('spShare').value = pct;
+  $('spShareVal').textContent = pct + '%';
+
+  const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct);
+
+  // 分割バー
+  if (showSplit) {
+    const spAmt = assetMe * pct / 100, chAmt = assetMe - spAmt;
+    $('segSp').style.width = pct + '%';
+    $('segCh').style.width = (100 - pct) + '%';
+    $('segSp').textContent = pct >= 15 ? `配偶者 ${pct}%` : '';
+    $('segCh').textContent = pct <= 85 ? `子 ${100 - pct}%` : '';
+    $('legendSp').textContent = `配偶者 ${fmt(spAmt)}万円`;
+    $('legendCh').innerHTML = `子 ${fmt(chAmt)}万円` + (state.nChildren > 1 ? `（1人あたり <b class="pc-num">${fmt(chAmt / state.nChildren)}万円</b>）` : '');
+
+    // 合計が最小になる割合（同額が続く場合は範囲で表示）
+    const grands = [];
+    let bestV = Infinity;
+    for (let p = 0; p <= 100; p++) {
+      const v = simulate(assetMe, assetSp, true, state.nChildren, p).grand;
+      grands.push(v);
+      if (v < bestV) bestV = v;
+    }
+    const EPS = 1e-6;
+    let lo = 0; while (grands[lo] > bestV + EPS) lo++;
+    let hi = lo; while (hi < 100 && grands[hi + 1] <= bestV + EPS) hi++;
+    let rangeText, jumpP;
+    if (lo === 0 && hi === 100) { rangeText = 'どの割合でも同額'; jumpP = statutoryPct(); }
+    else if (lo === hi)   { rangeText = `${lo}%`;          jumpP = lo; }
+    else if (lo === 0)    { rangeText = `${hi}%以下`;      jumpP = hi; }
+    else if (hi === 100)  { rangeText = `${lo}%以上`;      jumpP = lo; }
+    else                  { rangeText = `${lo}%〜${hi}%`;  jumpP = lo; }
+    state.bestLo = lo; state.bestHi = hi; state.bestText = rangeText;
+    if (lo === 0 && hi === 100) {
+      $('bestHint').innerHTML =
+        `合計税額は配偶者の取得割合によらず <b>${fmt(bestV)}万円</b> です`;
+    } else {
+      $('bestHint').innerHTML =
+        `合計税額が最小になるのは配偶者の取得割合 <b>${rangeText}</b> のとき（合計 <b>${fmt(bestV)}万円</b>）` +
+        `<button id="jumpBest">この割合にする</button>`;
+      $('jumpBest').onclick = () => { state.spSharePct = jumpP; state.userMoved = true; update(); };
+    }
+  }
+
+  // 一次相続の内訳
+  const heirs1 = (state.hasSpouse ? 1 : 0) + state.nChildren;
+  const ded1 = 3000 + 600 * heirs1;
+  let h1 = `
+    <div class="rline dim"><span>遺産総額</span><span class="v">${fmt(assetMe)}万円</span></div>
+    <div class="rline dim"><span>基礎控除（法定相続人${heirs1}人）</span><span class="v">−${fmt(ded1)}万円</span></div>`;
+  if (state.hasSpouse && state.nChildren > 0) {
+    h1 += `
+    <div class="rline"><span>配偶者の税額（軽減後）</span><span class="v">${fmt(r.spTax)}万円</span></div>
+    <div class="rline"><span>子の税額 合計${state.nChildren > 1 ? `（1人 <b class="pc-num">${fmt(r.chTax1 / state.nChildren)}万円</b>）` : ''}</span><span class="v">${fmt(r.chTax1)}万円</span></div>`;
+  } else if (state.hasSpouse) {
+    h1 += `<div class="rline"><span>配偶者の税額（軽減後）</span><span class="v">${fmt(r.spTax)}万円</span></div>`;
+  }
+  h1 += `<div class="rline total"><span>一次相続の税額</span><span class="v">${fmt(r.first)}万円</span></div>`;
+  if (assetMe <= ded1) h1 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
+  $('firstDetail').innerHTML = h1;
+
+  // 二次相続の内訳
+  if (state.hasSpouse) {
+    const ded2 = 3000 + 600 * state.nChildren;
+    let h2 = `
+      <div class="rline dim"><span>配偶者の固有資産</span><span class="v">${fmt(assetSp)}万円</span></div>
+      <div class="rline dim"><span>一次相続での取得額</span><span class="v">＋${fmt(r.spAcq)}万円</span></div>
+      <div class="rline dim"><span>一次相続で納めた税額</span><span class="v">−${fmt(r.spTax)}万円</span></div>
+      <div class="rline"><span>二次相続の遺産額</span><span class="v">${fmt(r.estate2)}万円</span></div>
+      <div class="rline dim"><span>基礎控除（法定相続人${state.nChildren}人）</span><span class="v">−${fmt(ded2)}万円</span></div>
+      <div class="rline total"><span>二次相続の税額${state.nChildren > 1 ? `（1人 <b class="pc-num">${fmt(r.second / state.nChildren)}万円</b>）` : ''}</span><span class="v">${fmt(r.second)}万円</span></div>`;
+    if (r.estate2 <= ded2) h2 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
+    $('secondDetail').innerHTML = h2;
+  }
+
+  // 合計
+  $('grandVal').innerHTML = `${fmt(r.grand)}<small>万円</small>`;
+
+  // 最終的に残せる金額（総資産 − 税額合計）
+  const totalAsset = assetMe + (state.hasSpouse ? assetSp : 0);
+  const keepAmt = Math.max(0, totalAsset - r.grand);
+  $('keepLabel').textContent = state.hasSpouse
+    ? '最終的に子に残せる金額（総資産−税額合計）'
+    : '最終的に残せる金額（遺産総額−税額）';
+  let keepHtml = `${fmt(keepAmt)}<small>万円</small>`;
+  if (state.nChildren > 1) {
+    keepHtml += `<span class="per-child">（1人あたり <b class="pc-num">${fmt(keepAmt / state.nChildren)}</b><small>万円</small>）</span>`;
+  }
+  $('keepVal').innerHTML = keepHtml;
+
+  renderChart(assetMe, assetSp);
+  if (chart && state.hasSpouse) chart.draw();
+}
+
+/* ---------- イベント ---------- */
+$('assetMe').oninput = update;
+$('spShare').oninput = e => {
+  state.spSharePct = +e.target.value;
+  state.userMoved = true;
+  update();
+};
+$('resetBtn').onclick = () => { state.userMoved = false; update(); };
+
+renderFamily();
+update();
+</script>
+</body>
+</html>
