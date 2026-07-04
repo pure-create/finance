@@ -1,8 +1,8 @@
   * { box-sizing: border-box; }
   body { font-family: sans-serif; font-size: 14px; color: #222; background: #fff; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
   h1 { font-size: 17px; font-weight: 500; margin-bottom: 0.3rem; }
-  .note { font-size: 11px; color: #666; line-height: 1.7; margin-bottom: 1.5rem; }
-  .note a { text-decoration: underline; }
+  .note { font-size: 11px; color: #666; line-height: 1.7; margin: 2.5rem 0 1.5rem; border-top: 1px solid #e5e5e5; padding-top: 1rem; }
+  .note a { color: #378ADD; text-decoration: underline; }
   .note a:hover { color: #185FA5; }
   .section-label { font-size: 12px; font-weight: 500; color: #555; margin: 1.5rem 0 0.4rem; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }

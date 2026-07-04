@@ -6,14 +6,14 @@
 <title>NISA利用状況（2024年12月末）</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<link rel="stylesheet" href="nisa-common.css">
+<link rel="stylesheet" href="nisa-common.css?v=2">
 </head>
 <body>
 <h1>NISA利用状況（2024年12月末時点）</h1>
 
 <!-- 円グラフ -->
 <div class="chart-section">
-  <h2>▼ 円グラフ</h2>
+  <h2>▼ 年間買付額の分布（年代別）</h2>
   <div class="chart-controls">
     <div class="age-select-wrap">
       <span class="age-select-icon">▼</span>
@@ -39,7 +39,7 @@
   </div>
   <div class="chart-body">
     <div class="chart-canvas-wrap">
-      <canvas id="pieChart"></canvas>
+      <canvas id="pieChart" role="img" aria-label="選択した年代の年間買付額分布を示す円グラフ（内訳は下の凡例リストを参照）"></canvas>
       <div class="chart-center-label">
         <div class="center-age" id="centerAge"></div>
       </div>
@@ -116,10 +116,10 @@ const nisaData = {
   '80歳以上':{'0':1331766,'60':110252,'120':54231, '180':37059, '240':206919,'300':13021, '360':15665 },
 };
 </script>
-<script src="nisa-common.js"></script>
+<script src="nisa-common.js?v=2"></script>
 
-<p class="note" style="margin-top:2.5rem; border-top:1px solid #e5e5e5; padding-top:1rem;">
-  出典：<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener" style="color:#378ADD;">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener" style="color:#378ADD;">総務省「人口推計 2024年12月報（2024年7月1日現在確定値）」</a><br>
+<p class="note">
+  出典：<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2024年12月報（2024年7月1日現在確定値）」</a><br>
   ※ 人口は<strong>総人口</strong>（2024年7月1日確定値）を使用。NISA口座数は2024年12月末時点。<br>
   ※ 「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出（内訳合計には廃止口座の取引を含むため口座数より若干多く、口座保有率と未開設率の合計は100%にならない）。<br>
   ※ 買付額区分は2024年1月〜12月中の年間利用状況による（廃止口座の取引を含む）。<br>

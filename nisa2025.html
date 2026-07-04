@@ -6,14 +6,14 @@
 <title>NISA利用状況（2025年12月末）</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
-<link rel="stylesheet" href="nisa-common.css">
+<link rel="stylesheet" href="nisa-common.css?v=2">
 </head>
 <body>
 <h1>NISA利用状況（2025年12月末時点）</h1>
 
 <!-- 円グラフ -->
 <div class="chart-section">
-  <h2>▼ 円グラフ</h2>
+  <h2>▼ 年間買付額の分布（年代別）</h2>
   <div class="chart-controls">
     <div class="age-select-wrap">
       <span class="age-select-icon">▼</span>
@@ -39,7 +39,7 @@
   </div>
   <div class="chart-body">
     <div class="chart-canvas-wrap">
-      <canvas id="pieChart"></canvas>
+      <canvas id="pieChart" role="img" aria-label="選択した年代の年間買付額分布を示す円グラフ（内訳は下の凡例リストを参照）"></canvas>
       <div class="chart-center-label">
         <div class="center-age" id="centerAge"></div>
       </div>
@@ -54,7 +54,7 @@
   <thead>
     <tr>
       <th style="width:14%;text-align:left">年代</th>
-      <th>総人口</th><th>NISA口座数</th><th>口座保有率</th><th>口座未開設率</th>
+      <th>総人口</th><th>NISA口座数</th><th>口座保有率</th><th>前年比</th><th>口座未開設率</th>
     </tr>
   </thead>
   <tbody id="summary-body"></tbody>
@@ -115,13 +115,31 @@ const nisaData = {
   '70代':   {'0':1571243,'60':638909, '120':200260,'180':107962,'240':434342,'300':77250, '360':104973},
   '80歳以上':{'0':1218171,'60':137423, '120':56090, '180':35673, '240':178241,'300':12604, '360':20095 },
 };
+// 前年（2024年12月末時点）の総人口・NISA口座数。年代別サマリーの「前年比」列に使用
+const prevYear = {
+  pop: {
+    '10代': Math.round(2123*(5493/5351))*1000,
+    '20代':   (6268+6517)*1000,
+    '30代':   (6374+6931)*1000,
+    '40代':   (7660+8846)*1000,
+    '50代':   (9729+8444)*1000,
+    '60代':   (7522+7299)*1000,
+    '70代':   (8343+7754)*1000,
+    '80歳以上': (6106+3945+2082+633+90)*1000,
+  },
+  accounts: {
+    '10代':119782,'20代':2950112,'30代':4486512,'40代':4923179,
+    '50代':4951402,'60代':3770942,'70代':2839669,'80歳以上':1544862,
+  },
+};
 </script>
-<script src="nisa-common.js"></script>
+<script src="nisa-common.js?v=2"></script>
 
-<p class="note" style="margin-top:2.5rem; border-top:1px solid #e5e5e5; padding-top:1rem;">
-  出典：<a href="https://www.fsa.go.jp/policy/nisa/20260703.html" target="_blank" rel="noopener" style="color:#378ADD;">金融庁「NISA口座の利用状況調査（2025年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20250&month=24101212" target="_blank" rel="noopener" style="color:#378ADD;">総務省「人口推計 2025年12月報（2025年7月1日現在確定値）」</a><br>
+<p class="note">
+  出典：<a href="https://www.fsa.go.jp/policy/nisa/20260703.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2025年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20250&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2025年12月報（2025年7月1日現在確定値）」</a><br>
   ※ 人口は<strong>総人口</strong>（2025年7月1日確定値）を使用。NISA口座数は2025年12月末時点。<br>
   ※ 「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出（内訳合計には廃止口座の取引を含むため口座数より若干多く、口座保有率と未開設率の合計は100%にならない）。<br>
+  ※ 「前年比」は2024年12月末時点の口座保有率（<a href="nisa2024.html">2024年版</a>と同じデータから算出）との差（ポイント）。<br>
   ※ 買付額区分は2025年1月〜12月中の年間利用状況による（廃止口座の取引を含む）。<br>
   ※ 10代の総人口は、18・19歳の日本人人口（2,123千人、2024年10月1日現在。2025年10月1日現在は2025年国勢調査に伴い未公表）に15〜19歳の総人口／日本人人口比（5,483÷5,327）を乗じて推計（約2,185千人）。
 </p>

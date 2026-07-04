@@ -25,17 +25,32 @@ const categories=[
 // ── テーブル描画 ──
 (function buildSummary(){
   const sb=document.getElementById('summary-body');
-  let tp=0,ta=0,tn=0;
+  // prevYear（前年の pop / accounts）が定義されているページでは「前年比」列を追加する
+  const hasPrev = typeof prevYear !== 'undefined';
+  function deltaCell(rate, prevRate){
+    const d=rate-prevRate;
+    return `<td><span class="pct">${d>=0?'+':''}${d.toFixed(1)}pt</span><span class="cum">前年 ${prevRate.toFixed(1)}%</span></td>`;
+  }
+  let tp=0,ta=0,tn=0,ptp=0,pta=0;
   ['10代','20代','30代','40代','50代','60代','70代','80歳以上'].forEach(age=>{
     const isRef=age==='10代';
     const tr=document.createElement('tr'); if(isRef)tr.className='ref-row';
     const p=pop[age],a=accounts[age],n=nisaTotal[age];
-    tr.innerHTML=`<td>${age}${isRef?' ※':''}</td><td>${(p/10000).toFixed(1)}万人</td><td>${(a/10000).toFixed(1)}万口座</td><td class="pct">${(a/p*100).toFixed(1)}%</td><td style="color:#888">${((p-n)/p*100).toFixed(1)}%</td>`;
+    let cells=`<td>${age}${isRef?' ※':''}</td><td>${(p/10000).toFixed(1)}万人</td><td>${(a/10000).toFixed(1)}万口座</td><td class="pct">${(a/p*100).toFixed(1)}%</td>`;
+    if(hasPrev)cells+=deltaCell(a/p*100, prevYear.accounts[age]/prevYear.pop[age]*100);
+    cells+=`<td style="color:#888">${((p-n)/p*100).toFixed(1)}%</td>`;
+    tr.innerHTML=cells;
     sb.appendChild(tr);
-    if(!isRef){tp+=p;ta+=a;tn+=n;}
+    if(!isRef){
+      tp+=p;ta+=a;tn+=n;
+      if(hasPrev){ptp+=prevYear.pop[age];pta+=prevYear.accounts[age];}
+    }
   });
   const tr=document.createElement('tr');tr.className='total-row';
-  tr.innerHTML=`<td>20〜59歳 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td><td style="color:#888">${((tp-tn)/tp*100).toFixed(1)}%</td>`;
+  let cells=`<td>20〜59歳 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td>`;
+  if(hasPrev)cells+=deltaCell(ta/tp*100, pta/ptp*100);
+  cells+=`<td style="color:#888">${((tp-tn)/tp*100).toFixed(1)}%</td>`;
+  tr.innerHTML=cells;
   sb.appendChild(tr);
 })();
 (function buildTables(){
@@ -115,7 +130,6 @@ function updateChart() {
     chart.data.labels         = labels;
     chart.data.datasets[0].data            = pcts;
     chart.data.datasets[0].backgroundColor = colors;
-    chart.data.datasets[0].hoverBackgroundColor = colors.map(c=>c);
     chart.update();
   } else {
     chart = new Chart(pieCtx, {
@@ -126,7 +140,6 @@ function updateChart() {
         datasets: [{
           data: pcts,
           backgroundColor: colors,
-          hoverBackgroundColor: colors,
           borderColor: '#fff',
           borderWidth: 2,
           hoverOffset: 14,
