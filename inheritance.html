@@ -20,7 +20,9 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .sec-title{font-size:13px;font-weight:700;color:#334155;margin-bottom:12px}
 
 /* ---- 家族の図 ---- */
-.family{display:flex;flex-direction:column;align-items:center}
+.family{display:flex;flex-direction:column;align-items:center;position:relative}
+.tree-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.family .couple,.family .children-row{position:relative;z-index:1}
 .couple{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative}
 .person{
   display:flex;flex-direction:column;align-items:center;gap:6px;
@@ -60,8 +62,9 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 }
 .add-spouse:hover{border-color:#db2777;color:#db2777;background:#fdf2f8}
 .add-spouse .plus{font-size:24px;line-height:1}
-.tree-v{width:2px;height:22px;background:#94a3b8}
-.children-row{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;align-items:stretch}
+.children-row{display:flex;justify-content:center;gap:12px;align-items:stretch;margin-top:28px;max-width:100%}
+.person.child,.add-child,.child-spacer{flex:0 1 auto;min-width:0}
+.child-spacer{width:96px;visibility:hidden}
 .add-child{
   width:96px;border:2px dashed #cbd5e1;border-radius:12px;background:none;
   color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;
@@ -70,24 +73,73 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .add-child:hover{border-color:#059669;color:#059669;background:#ecfdf5}
 .add-child .plus{font-size:20px;line-height:1}
 .fam-note{font-size:10px;color:#64748b;margin-top:10px;text-align:center}
+@media(max-width:600px){
+  .couple{align-self:stretch}
+  .couple>.person{width:auto;flex:1 1 0;min-width:0;max-width:158px;padding:12px 8px}
+  #spouseSlot{flex:1 1 0;min-width:0;max-width:158px;display:flex}
+  #spouseSlot .person,#spouseSlot .add-spouse{width:100%;max-width:none}
+  .marriage{width:28px}
+  .couple .asset-in{width:100%;justify-content:center}
+  .couple .asset-in input{width:auto;flex:1 1 50px;min-width:0;max-width:104px}
+  .children-row{gap:6px}
+  .person.child{padding:8px 2px;border-radius:10px}
+  .person.child .avatar{width:22px;height:22px}
+  .person.child .plabel{font-size:10px}
+  .person.child .remove-btn{width:17px;height:17px;font-size:10px;top:-7px;right:-6px}
+  .add-child{font-size:10px;min-height:64px;gap:3px;padding:0 2px}
+  .add-child .plus{font-size:16px}
+}
 .oku{font-size:10px;color:#64748b;font-variant-numeric:tabular-nums;min-height:13px}
 
 /* ---- ヘッダー ---- */
 .head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
 .head-row .sub{margin-bottom:0}
 .share-btn{
-  border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:11px;font-weight:600;
+  position:relative;border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:11px;font-weight:600;
   border-radius:7px;padding:5px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;
 }
 .share-btn:hover{border-color:#1d4ed8;color:#1d4ed8}
+.share-btn .tipbox{left:auto;right:-4px}
+.share-btn .tipbox::before{left:auto;right:18px}
+@media(max-width:600px){
+  .head-row{flex-direction:column;align-items:flex-start}
+  .share-btn{white-space:normal}
+  .share-btn .tipbox{right:auto;left:0}
+  .share-btn .tipbox::before{right:auto;left:14px}
+}
 
 /* ---- 二次相続の前提 ---- */
 .assume-row{display:grid;grid-template-columns:1fr 1.35fr;gap:18px}
 @media(max-width:600px){.assume-row{grid-template-columns:1fr}}
-.assume>label{display:block;font-size:11px;font-weight:600;color:#475569;margin-bottom:6px}
+.assume label{display:block;font-size:11px;font-weight:600;color:#475569;margin-bottom:6px}
 .assume-note{font-size:10px;color:#64748b;margin-top:5px;line-height:1.5}
 .year-row{display:flex;align-items:center;gap:10px;height:34px}
 .year-row input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
+.assume.off .year-row{opacity:.45}
+.assume.off input[type=range]{cursor:default}
+.assume.off .assume-note{color:#475569}
+.assume-label-row{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.assume-label-row label{margin-bottom:0}
+.term{font-size:11px;font-weight:700;color:#334155}
+.help{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;border:1px solid #94a3b8;background:#fff;
+  color:#64748b;font-size:10px;font-weight:700;cursor:help;flex-shrink:0;margin-right:2px;
+}
+.help:hover,.help:focus-visible{border-color:#1d4ed8;color:#1d4ed8}
+.tipbox{
+  position:absolute;top:calc(100% + 8px);left:-12px;width:302px;max-width:74vw;
+  background:#1e293b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;
+  padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
+  visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+.tipbox::before{
+  content:'';position:absolute;bottom:100%;left:14px;
+  border:6px solid transparent;border-bottom-color:#1e293b;
+}
+.help:hover .tipbox,.help:focus-visible .tipbox,
+.share-btn:hover .tipbox,.share-btn:focus-visible .tipbox{visibility:visible;opacity:1}
 .yval{font-size:14px;font-weight:700;color:#1e293b;min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---- スライダー（割合バーと一体化） ---- */
@@ -124,7 +176,9 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .slider-head label{font-size:11px;font-weight:600;color:#475569}
 .best-hint{font-size:11px;color:#475569;margin-top:12px;padding:8px 10px;background:#f1f5f9;border-radius:8px;line-height:1.6}
 .best-hint b{color:#1e293b}
-.best-hint.worst{margin-top:8px}
+.best-hint .hint-title{font-weight:700;color:#334155;margin-bottom:3px}
+.best-hint .tilde{margin:0 10px;color:#94a3b8}
+.best-hint .hint-item{display:inline-block}
 .best-hint .tag{
   display:inline-block;font-weight:700;font-size:10px;padding:1px 7px;border-radius:10px;margin-right:2px;
 }
@@ -182,13 +236,14 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
       <h1>二次相続シミュレーター</h1>
       <p class="sub">一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較</p>
     </div>
-    <button class="share-btn" id="shareBtn">共有リンクをコピー</button>
+    <button class="share-btn" id="shareBtn" aria-describedby="shareTip"><span id="shareLabel">試算結果を共有</span><span class="tipbox" id="shareTip" role="tooltip">このURLを開くと、同じ条件の試算結果がそのまま表示されます。家族や税理士との共有に便利です。</span></button>
   </div>
 
   <!-- 家族構成 -->
   <div class="card">
     <div class="sec-title">家族構成と資産額</div>
-    <div class="family">
+    <div class="family" id="famBox">
+      <svg class="tree-svg" id="treeSvg" aria-hidden="true" focusable="false"></svg>
       <div class="couple">
         <div class="person me">
           <svg class="avatar" viewBox="0 0 48 48" fill="#1d4ed8" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
@@ -199,7 +254,6 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
         <div class="marriage" id="marriageLine"></div>
         <div id="spouseSlot"></div>
       </div>
-      <div class="tree-v" id="treeV"></div>
       <div class="children-row" id="childrenRow"></div>
       <p class="fam-note">配偶者・子はクリックで追加／×で削除できます（子は1〜6人）</p>
     </div>
@@ -215,13 +269,17 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
         <span class="oku" id="okuDelta"></span>
         <p class="assume-note">生活費の取り崩しは −（マイナス）、貯蓄の増加は ＋ で入力</p>
       </div>
-      <div class="assume">
-        <label for="yearsGap">一次相続から二次相続までの年数</label>
+      <div class="assume" id="yearsAssume">
+        <div class="assume-label-row">
+          <span class="term">相次相続</span>
+          <span class="help" tabindex="0" aria-label="相次相続とは" aria-describedby="soujiTip">？<span class="tipbox" id="soujiTip" role="tooltip">相次相続（そうじそうぞく）＝一次相続から10年以内に二次相続が起きて、相続が相次ぐこと。この場合「相次相続控除」により、一次相続で配偶者が納めた相続税の一部を二次相続の税額から差し引けます。控除できる額は経過1年ごとに10%ずつ減ります。</span></span>
+          <label for="yearsGap">一次相続から二次相続までの年数</label>
+        </div>
         <div class="year-row">
           <input type="range" id="yearsGap" min="0" max="10" step="1" value="10">
           <span class="yval" id="yearsVal">10年以上</span>
         </div>
-        <p class="assume-note">10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します</p>
+        <p class="assume-note" id="yearsNote">10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します</p>
       </div>
     </div>
   </div>
@@ -248,7 +306,6 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
       <span id="legendCh">子 1,500万円</span>
     </div>
     <div class="best-hint" id="bestHint"></div>
-    <div class="best-hint worst" id="worstHint"></div>
   </div>
 
   <!-- 結果 -->
@@ -286,7 +343,7 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
     ※ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br>
     ※ 相次相続控除は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br>
     ※ 生命保険の非課税枠、小規模宅地等の特例、債務・葬式費用、未成年者・障害者控除などは考慮していません。実際の申告は税理士にご相談ください。<br>
-    ※ 入力内容はこのブラウザに自動保存されます。「共有リンクをコピー」で現在の条件をURLとして共有できます。
+    ※ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、現在の入力内容をそのまま再現できるURLがコピーされ、家族や税理士との共有に使えます。
   </p>
 </div>
 
@@ -467,7 +524,9 @@ function renderFamily() {
       </div>`;
   }
   if (state.nChildren < 6) {
-    html += `<button class="add-child" id="addChild"><span class="plus" aria-hidden="true">＋</span><span>子を追加</span></button>`;
+    // 追加ボタンと同幅のスペーサーで左右を釣り合わせ、子の中心を＝の真下に保つ
+    html = `<span class="child-spacer" aria-hidden="true"></span>` + html
+      + `<button class="add-child" id="addChild"><span class="plus" aria-hidden="true">＋</span><span>子を追加</span></button>`;
   }
   row.innerHTML = html;
   row.querySelectorAll('[data-del-child]').forEach(btn => {
@@ -475,7 +534,48 @@ function renderFamily() {
   });
   const addBtn = $('addChild');
   if (addBtn) addBtn.onclick = () => { state.nChildren++; state.userMoved = false; renderFamily(); update(); };
+  drawTree();
 }
+
+/* 婚姻線（＝）の真下から横線を渡し、各子へ縦線を落とす。実座標を測るので
+   子の増減・「子を追加」ボタンによる位置ずれ・折り返しにも追従する */
+function drawTree() {
+  const fam = $('famBox'), svg = $('treeSvg');
+  const fr = fam.getBoundingClientRect();
+  if (!fr.width) return;
+  svg.setAttribute('viewBox', `0 0 ${fr.width} ${fr.height}`);
+  let ax, ay;
+  if (state.hasSpouse) {
+    const m = $('marriageLine').getBoundingClientRect();
+    ax = m.left + m.width / 2 - fr.left;
+    ay = m.top + 6 - fr.top; // ＝の下側の線のすぐ下
+  } else {
+    const me = fam.querySelector('.person.me').getBoundingClientRect();
+    ax = me.left + me.width / 2 - fr.left;
+    ay = me.bottom - fr.top;
+  }
+  const kids = [...fam.querySelectorAll('.person.child')].map(el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - fr.left, y: r.top - fr.top };
+  }).sort((a, b) => a.y - b.y || a.x - b.x);
+  const rows = [];
+  kids.forEach(k => {
+    const row = rows.find(r => Math.abs(r.y - k.y) < 8);
+    if (row) row.kids.push(k); else rows.push({ y: k.y, kids: [k] });
+  });
+  let d = '', prevY = ay;
+  rows.forEach((row, i) => {
+    const busY = row.y - (i === 0 ? 14 : 9);
+    d += `M${ax} ${prevY}V${busY}`;
+    const xs = row.kids.map(k => k.x).concat(ax);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    if (maxX - minX > 0.5) d += `M${minX} ${busY}H${maxX}`;
+    row.kids.forEach(k => { d += `M${k.x} ${busY}V${k.y}`; });
+    prevY = busY;
+  });
+  svg.innerHTML = `<path d="${d}" stroke="#94a3b8" stroke-width="2" fill="none"/>`;
+}
+new ResizeObserver(() => drawTree()).observe(document.getElementById('famBox'));
 
 /* ---------- グラフ ---------- */
 let chart = null;
@@ -602,6 +702,22 @@ function update() {
 
   const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct, spDelta, years);
 
+  // 相次相続控除の適用可能性の表示
+  // 配偶者に一次の税額が出るのは取得額が max(1.6億, 法定相続分) を超えるときだけ
+  if (state.hasSpouse) {
+    const neverApplies = assetMe <= 16000; // どの取得割合でも配偶者の税額は0
+    $('yearsGap').disabled = neverApplies;
+    $('yearsAssume').classList.toggle('off', neverApplies);
+    if (neverApplies) {
+      $('yearsNote').textContent = '遺産が1.6億円以下の場合、一次相続で配偶者に税額が発生せず、相次相続控除は影響しません';
+    } else if (r.spTax < 1e-9) {
+      const thPct = Math.floor(Math.max(16000, assetMe / 2) / assetMe * 100) + 1;
+      $('yearsNote').textContent = `現在の取得割合では一次相続で配偶者に税額が発生しません（${thPct}%以上で相次相続控除が影響）`;
+    } else {
+      $('yearsNote').textContent = '10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します';
+    }
+  }
+
   // 0〜100%を一括計算（最適割合ヒントとグラフで共用）
   let sweep = null;
   if (showSplit) {
@@ -649,15 +765,14 @@ function update() {
     if (lo === 0 && hi === 100) {
       $('bestHint').innerHTML =
         `合計税額は配偶者の取得割合によらず <b>${fmt(bestV)}万円</b> です`;
-      $('worstHint').style.display = 'none';
     } else {
       $('bestHint').innerHTML =
-        `合計税額 <span class="tag min">最小</span>：<b>${rangeText}</b>のとき（<b>${fmt(bestV)}万円</b>）` +
-        `<button id="jumpBest">この割合にする</button>`;
+        `<div class="hint-title">合計税額</div>` +
+        `<span class="hint-item"><span class="tag min">最小</span><b>${fmt(bestV)}万円</b>（配偶者${rangeText}）</span>` +
+        `<button id="jumpBest">この割合にする</button>` +
+        `<span class="tilde">〜</span>` +
+        `<span class="hint-item"><span class="tag max">最大</span><b>${fmt(worstV)}万円</b>（配偶者${worstRangeText}）</span>`;
       $('jumpBest').onclick = () => { state.spSharePct = jumpP; state.userMoved = true; update(); };
-      $('worstHint').style.display = '';
-      $('worstHint').innerHTML =
-        `合計税額 <span class="tag max">最大</span>：<b>${worstRangeText}</b>のとき（<b>${fmt(worstV)}万円</b>）`;
     }
   }
 
@@ -734,11 +849,11 @@ $('shareBtn').onclick = () => {
   for (const k in s) params.set(k, s[k]);
   const url = location.href.split(/[?#]/)[0] + '?' + params.toString();
   const flash = msg => {
-    const b = $('shareBtn');
+    const b = $('shareLabel');
     b.textContent = msg;
-    setTimeout(() => { b.textContent = '共有リンクをコピー'; }, 1600);
+    setTimeout(() => { b.textContent = '試算結果を共有'; }, 1600);
   };
-  copyText(url).then(() => flash('コピーしました ✓'), () => flash('コピーできませんでした'));
+  copyText(url).then(() => flash('試算結果のURLをコピーしました ✓'), () => flash('コピーできませんでした'));
 };
 
 /* ---------- 初期化 ---------- */

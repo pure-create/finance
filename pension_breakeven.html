@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="年金受給開始年齢（60〜75歳）ごとの累積受取総額を、運用利回りと投資期間終了年齢を変えながら比較できるシミュレーター">
+<meta name="description" content="年金受給開始年齢（60〜75歳）ごとの累積受取総額を、運用利回りと投資期間終了年齢を変えながら比較できるシミュレーター。">
 <title>年金受給開始年齢 損益分岐点</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
@@ -16,6 +16,33 @@ body{
 h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .sub{font-size:11px;color:#64748b;margin-bottom:14px}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+
+/* Header row with share button */
+.head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+.head-row .sub{margin-bottom:0}
+.share-btn{
+  position:relative;border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:11px;font-weight:600;
+  border-radius:7px;padding:5px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;
+}
+.share-btn:hover{border-color:#1d4ed8;color:#1d4ed8}
+.share-btn .tipbox{
+  position:absolute;top:calc(100% + 8px);right:-4px;left:auto;width:260px;max-width:74vw;
+  background:#1e293b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;
+  padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
+  visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+.share-btn .tipbox::before{
+  content:'';position:absolute;bottom:100%;right:18px;left:auto;
+  border:6px solid transparent;border-bottom-color:#1e293b;
+}
+.share-btn:hover .tipbox,.share-btn:focus-visible .tipbox{visibility:visible;opacity:1}
+@media(max-width:600px){
+  .head-row{flex-direction:column;align-items:flex-start}
+  .share-btn{white-space:normal}
+  .share-btn .tipbox{right:auto;left:0}
+  .share-btn .tipbox::before{right:auto;left:14px}
+}
 
 /* Controls */
 .controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -67,8 +94,13 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 </head>
 <body>
 <div class="wrap">
-  <h1>年金受給開始年齢別 損益分岐点シミュレーター</h1>
-  <p class="sub">65歳開始（緑色）を基準とした累積受取総額の比較</p>
+  <div class="head-row">
+    <div>
+      <h1>年金受給開始年齢別 損益分岐点シミュレーター</h1>
+      <p class="sub">65歳開始（緑色）を基準とした累積受取総額の比較</p>
+    </div>
+    <button class="share-btn" id="shareBtn" aria-describedby="shareTip"><span id="shareLabel">試算結果を共有</span><span class="tipbox" id="shareTip" role="tooltip">このURLを開くと、同じ条件の試算結果がそのまま表示されます。</span></button>
+  </div>
 
   <div class="card">
     <div class="controls">
@@ -353,6 +385,46 @@ function render(){
 document.getElementById('rSlider').addEventListener('input',render);
 document.getElementById('iSlider').addEventListener('input',render);
 document.getElementById('taxToggle').addEventListener('change',render);
+
+/* ---------- 共有 ---------- */
+function collectState(){
+  return {
+    r: document.getElementById('rSlider').value,
+    i: document.getElementById('iSlider').value,
+    t: document.getElementById('taxToggle').checked ? 1 : 0,
+  };
+}
+function copyText(t){
+  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise((res,rej)=>{
+    const ta=document.createElement('textarea');
+    ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy') ? res() : rej(new Error('copy failed')); }
+    finally{ ta.remove(); }
+  });
+}
+document.getElementById('shareBtn').addEventListener('click',()=>{
+  const params=new URLSearchParams();
+  const s=collectState();
+  for(const k in s) params.set(k,s[k]);
+  const url=location.href.split(/[?#]/)[0]+'?'+params.toString();
+  const flash=msg=>{
+    const b=document.getElementById('shareLabel');
+    b.textContent=msg;
+    setTimeout(()=>{ b.textContent='試算結果を共有'; },1600);
+  };
+  copyText(url).then(()=>flash('試算結果のURLをコピーしました ✓'), ()=>flash('コピーできませんでした'));
+});
+
+/* ---------- 初期化（URLパラメータがあれば復元） ---------- */
+(function loadFromURL(){
+  const q=new URLSearchParams(location.search);
+  if(q.has('r')) document.getElementById('rSlider').value=q.get('r');
+  if(q.has('i')) document.getElementById('iSlider').value=q.get('i');
+  if(q.has('t')) document.getElementById('taxToggle').checked=q.get('t')==='1';
+})();
+
 render();
 </script>
 </body>
