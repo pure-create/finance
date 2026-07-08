@@ -59,6 +59,26 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .ctrl label{font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px}
 .ctrl-head{display:flex;align-items:center;gap:14px;margin-bottom:7px}
 .ctrl-head label{margin-bottom:0}
+
+/* Help tooltip icon */
+.help{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;border:1px solid #94a3b8;background:#fff;
+  color:#64748b;font-size:10px;font-weight:700;cursor:help;flex-shrink:0;vertical-align:middle;margin-left:5px;
+}
+.help:hover,.help:focus-visible{border-color:#1d4ed8;color:#1d4ed8}
+.help .tipbox{
+  position:absolute;top:calc(100% + 8px);left:-12px;width:260px;max-width:74vw;
+  background:#1e293b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;
+  padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
+  visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+.help .tipbox::before{
+  content:'';position:absolute;bottom:100%;left:14px;
+  border:6px solid transparent;border-bottom-color:#1e293b;
+}
+.help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
 .srow{display:flex;align-items:center;gap:10px}
 .srow input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
 .sval{font-size:22px;font-weight:700;color:#1d4ed8;min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
@@ -98,7 +118,7 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
   .period{flex-direction:column;align-items:flex-start}
   .period .age-col{border-right:none;border-bottom:1px solid rgba(0,0,0,.07);min-width:0;width:100%}
 }
-.foot{font-size:10px;color:#94a3b8;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;line-height:1.7}
+.foot{font-size:12px;color:#94a3b8;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;line-height:1.7}
 </style>
 </head>
 <body>
@@ -115,7 +135,7 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
     <div class="controls">
       <div class="ctrl">
         <div class="ctrl-head">
-          <label>想定利回り（名目）</label>
+          <label>想定利回り<span class="help" tabindex="0" aria-label="想定利回りについて" aria-describedby="yieldTip">？<span class="tipbox" id="yieldTip" role="tooltip">名目の想定利回りです。0.0%〜10.0%の範囲で設定できます。NISAなど非課税口座での運用を想定している場合は、右の「課税あり」のチェックを外してください。</span></span></label>
           <label class="tax-inline">
             <span class="switch">
               <input type="checkbox" id="taxToggle" checked>
@@ -131,7 +151,7 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
         <div class="ssub">税引後: <span id="rAfter">0.00</span>%<span id="rTaxNote">（課税率 20.315%）</span></div>
       </div>
       <div class="ctrl">
-        <label>投資期間終了年齢（この年齢まで年金を全額運用）</label>
+        <label>投資期間終了年齢<span class="help" tabindex="0" aria-label="投資期間終了年齢について" aria-describedby="endAgeTip">？<span class="tipbox" id="endAgeTip" role="tooltip">設定した年齢までは年金を全額運用に回します。投資期間終了後は、65歳から受給を開始した場合の受給額との差額を運用資産から取り崩して充当し、残った運用残高は引き続き運用を続けます。</span></span></label>
         <div class="srow">
           <input type="range" id="iSlider" min="60" max="80" step="1" value="65">
           <span class="sval"><span id="iVal">65</span>歳</span>
@@ -149,8 +169,9 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
     <div class="sec-title">有利な受給開始年齢の推移（累積受取総額ベース）</div>
     <div class="timeline" id="timeline"></div>
     <p class="foot">
-      繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率: 0.7%/月（最大84%増）｜運用益課税: 20.315%（上のトグルでON/OFF切替可）<br>
-      ※ NISA利用時は税引前の数値を参考にしてください。物価スライド・加給年金・在職老齢年金等は未考慮。
+      繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率: 0.7%/月（最大84%増）<br>
+      65歳受給開始の年金額を100%とすると、各受給開始年齢の年金額は60歳：76%、70歳：142%、75歳：184%になります。<br>
+      ※ 物価スライド・加給年金・在職老齢年金等は未考慮。
     </p>
   </div>
 </div>
