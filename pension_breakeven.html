@@ -36,14 +36,15 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .share-btn:hover{border-color:#1d4ed8;color:#1d4ed8}
 .share-btn .tipbox{
   position:absolute;top:calc(100% + 8px);right:-4px;left:auto;width:260px;max-width:74vw;
-  background:#1e293b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;
+  background:#fff;color:#1e293b;font-size:12px;font-weight:400;line-height:1.7;
+  border:1px solid #e2e8f0;
   padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
   visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  box-shadow:0 4px 16px rgba(0,0,0,.14);
 }
 .share-btn .tipbox::before{
   content:'';position:absolute;bottom:100%;right:18px;left:auto;
-  border:6px solid transparent;border-bottom-color:#1e293b;
+  border:6px solid transparent;border-bottom-color:#fff;
 }
 .share-btn:hover .tipbox,.share-btn:focus-visible .tipbox{visibility:visible;opacity:1}
 @media(max-width:600px){
@@ -69,14 +70,15 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .help:hover,.help:focus-visible{border-color:#1d4ed8;color:#1d4ed8}
 .help .tipbox{
   position:absolute;top:calc(100% + 8px);left:-12px;width:260px;max-width:74vw;
-  background:#1e293b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;
+  background:#fff;color:#1e293b;font-size:12px;font-weight:400;line-height:1.7;
+  border:1px solid #e2e8f0;
   padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
   visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  box-shadow:0 4px 16px rgba(0,0,0,.14);
 }
 .help .tipbox::before{
   content:'';position:absolute;bottom:100%;left:14px;
-  border:6px solid transparent;border-bottom-color:#1e293b;
+  border:6px solid transparent;border-bottom-color:#fff;
 }
 .help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
 .srow{display:flex;align-items:center;gap:10px}
@@ -151,12 +153,12 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
         <div class="ssub">税引後: <span id="rAfter">0.00</span>%<span id="rTaxNote">（課税率 20.315%）</span></div>
       </div>
       <div class="ctrl">
-        <label>投資期間終了年齢<span class="help" tabindex="0" aria-label="投資期間終了年齢について" aria-describedby="endAgeTip">？<span class="tipbox" id="endAgeTip" role="tooltip">設定した年齢までは年金を全額運用に回します。投資期間終了後は、65歳から受給を開始した場合の受給額との差額を運用資産から取り崩して充当し、残った運用残高は引き続き運用を続けます。</span></span></label>
+        <label>投資期間終了年齢<span class="help" tabindex="0" aria-label="投資期間終了年齢について" aria-describedby="endAgeTip">？<span class="tipbox" id="endAgeTip" role="tooltip">設定した年齢までは年金を全額運用に回します。投資期間終了後は、65歳受給開始時の年金額を生活費の基準とし、実際の年金額がこれより少ない場合は不足分を運用残高から取り崩して充当します（残高がなくなれば、以降は実際の年金額のみで生活）。多い場合は超過分を運用残高に上乗せして運用を続けます。</span></span></label>
         <div class="srow">
           <input type="range" id="iSlider" min="60" max="80" step="1" value="65">
           <span class="sval"><span id="iVal">65</span>歳</span>
         </div>
-        <div class="ssub">以降は年金を生活費に充当。運用残高は継続運用。</div>
+        <div class="ssub">以降は基準額（65歳受給時）との過不足を運用残高で調整。</div>
       </div>
     </div>
   </div>
@@ -199,14 +201,25 @@ function pRate(a){
 function calcW(sa,nr,ia,tax){
   const mr=Math.pow(1+nr*(1-tax),1/12)-1;
   const mp=pRate(sa)/12;
+  const base=pRate(65)/12;   // 生活費の基準＝65歳受給開始時の年金額
   const sm=(sa-MINA)*12, im=(ia-MINA)*12;
   let pool=0,spent=0;
   const w=new Float64Array(MAPM+1);
   for(let m=0;m<=MAPM;m++){
     w[m]=spent+pool;           // 記録：この月の年金受取り前の残高
     if(m>=sm){
-      if(m<im){pool=(pool+mp)*(1+mr);}
-      else     {spent+=mp; pool*=(1+mr);}
+      if(m<im){
+        pool=(pool+mp)*(1+mr);
+      } else if(mp>=base){
+        // 基準額を超える分（繰下げの増加分）は運用に上乗せ
+        spent+=base;
+        pool=(pool+(mp-base))*(1+mr);
+      } else {
+        // 基準額に満たない分（繰上げの減少分）は運用残高から取り崩して充当
+        const draw=Math.min(base-mp,pool);
+        spent+=mp+draw;
+        pool=(pool-draw)*(1+mr);
+      }
     }
   }
   return w;

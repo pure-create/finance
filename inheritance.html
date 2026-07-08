@@ -138,14 +138,15 @@ h1{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 .help:hover,.help:focus-visible{border-color:#1d4ed8;color:#1d4ed8}
 .tipbox{
   position:absolute;top:calc(100% + 8px);left:-12px;width:302px;max-width:74vw;
-  background:#1e293b;color:#fff;font-size:12px;font-weight:400;line-height:1.7;
+  background:#fff;color:#1e293b;font-size:12px;font-weight:400;line-height:1.7;
+  border:1px solid #e2e8f0;
   padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
   visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  box-shadow:0 4px 16px rgba(0,0,0,.14);
 }
 .tipbox::before{
   content:'';position:absolute;bottom:100%;left:14px;
-  border:6px solid transparent;border-bottom-color:#1e293b;
+  border:6px solid transparent;border-bottom-color:#fff;
 }
 .help:hover .tipbox,.help:focus-visible .tipbox,
 .share-btn:hover .tipbox,.share-btn:focus-visible .tipbox{visibility:visible;opacity:1}
