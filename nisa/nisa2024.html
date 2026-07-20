@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BJ9WKQKN9V"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-BJ9WKQKN9V');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="金融庁「NISA口座の利用状況調査（2024年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布。">
+<title>NISA利用状況（2024年12月末）</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="nisa-common.css?v=2">
+</head>
+<body>
+<h1>NISA利用状況（2024年12月末時点）</h1>
+<p class="note" style="margin:0 0 1.2rem;border-top:none;padding-top:0;">最新データは<a href="nisa2025.html">2025年12月末時点の利用状況</a>をご覧ください。</p>
+
+<!-- 円グラフ -->
+<div class="chart-section">
+  <h2>▼ 年間買付額の分布（年代別）</h2>
+  <div class="chart-controls">
+    <div class="age-select-wrap">
+      <span class="age-select-icon">▼</span>
+      <select id="ageSelect">
+        <option value="10代">10代</option>
+        <option value="20代" selected>20代</option>
+        <option value="30代">30代</option>
+        <option value="40代">40代</option>
+        <option value="50代">50代</option>
+        <option value="60代">60代</option>
+        <option value="70代">70代</option>
+        <option value="80歳以上">80歳以上</option>
+        <option value="現役世代合計">20〜50代合計（20〜59歳）</option>
+      </select>
+    </div>
+    <label class="toggle-label">
+      <span class="toggle-text">口座未開設・買付なしを含む</span>
+      <input type="checkbox" id="chkInactive" checked>
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+      </span>
+    </label>
+  </div>
+  <div class="chart-body">
+    <div class="chart-canvas-wrap">
+      <canvas id="pieChart" role="img" aria-label="選択した年代の年間買付額分布を示す円グラフ（内訳は下の凡例リストを参照）"></canvas>
+      <div class="chart-center-label">
+        <div class="center-age" id="centerAge"></div>
+      </div>
+    </div>
+    <ul class="chart-legend-list" id="chartLegend"></ul>
+  </div>
+</div>
+
+<div class="section-label">▼ 年代別サマリー</div>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:14%;text-align:left">年代</th>
+      <th>総人口</th><th>NISA口座数</th><th>口座保有率</th><th>口座未開設率</th>
+    </tr>
+  </thead>
+  <tbody id="summary-body"></tbody>
+</table>
+</div>
+
+<div class="section-label" style="margin-top:2rem">▼ 買付額別の人口比（20〜50代・20〜59歳）</div>
+<p class="cum-note">小数字（↑XX%）は「この区分<strong>以上</strong>の人の割合」の累計です</p>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:26%;text-align:left">区分（年間買付額）</th>
+      <th>20代</th><th>30代</th><th>40代</th><th>50代</th><th>20〜50代合計</th>
+    </tr>
+  </thead>
+  <tbody id="table-body-working"></tbody>
+</table>
+</div>
+
+<p class="ref-label">▼ 参考：その他の年代（買付額別・人口比）</p>
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="width:26%;text-align:left">区分（年間買付額）</th>
+      <th>10代 ※</th><th>60代</th><th>70代</th><th>80歳以上</th>
+    </tr>
+  </thead>
+  <tbody id="table-body-ref"></tbody>
+</table>
+</div>
+<p style="font-size:11px;color:#aaa;margin-top:0.3rem">※ 10代の総人口は18〜19歳の推計値（注記参照）</p>
+
+<script>
+// ── データ ──
+const pop = {
+  '10代': Math.round(2123*(5493/5351))*1000,
+  '20代':   (6268+6517)*1000,
+  '30代':   (6374+6931)*1000,
+  '40代':   (7660+8846)*1000,
+  '50代':   (9729+8444)*1000,
+  '60代':   (7522+7299)*1000,
+  '70代':   (8343+7754)*1000,
+  '80歳以上': (6106+3945+2082+633+90)*1000,
+};
+const accounts = {
+  '10代':119782,'20代':2950112,'30代':4486512,'40代':4923179,
+  '50代':4951402,'60代':3770942,'70代':2839669,'80歳以上':1544862,
+};
+const nisaData = {
+  '10代': {'0':69417,  '60':37544,  '120':5290,  '180':2204,  '240':2875,  '300':1477,  '360':1476 },
+  '20代':   {'0':1029015,'60':1463698,'120':222451,'180':85751, '240':73461, '300':56882, '360':74205 },
+  '30代':   {'0':1343927,'60':1952538,'120':430687,'180':198163,'240':199421,'300':167256,'360':289698},
+  '40代':   {'0':1572313,'60':1948471,'120':442580,'180':215507,'240':288006,'300':206643,'360':368112},
+  '50代':   {'0':1688428,'60':1824360,'120':427755,'180':209245,'240':375660,'300':217815,'360':360187},
+  '60代':   {'0':1495766,'60':1067832,'120':307628,'180':158569,'240':485996,'300':182076,'360':245675},
+  '70代':   {'0':1579624,'60':500823, '120':189025,'180':109100,'240':502965,'300':80609, '360':85529 },
+  '80歳以上':{'0':1331766,'60':110252,'120':54231, '180':37059, '240':206919,'300':13021, '360':15665 },
+};
+</script>
+<script src="nisa-common.js?v=2"></script>
+
+<p class="note">
+  出典：<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2024年12月報（2024年7月1日現在確定値）」</a><br>
+  ※ 人口は<strong>総人口</strong>（2024年7月1日確定値）を使用。NISA口座数は2024年12月末時点。<br>
+  ※ 「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出（内訳合計には廃止口座の取引を含むため口座数より若干多く、口座保有率と未開設率の合計は100%にならない）。<br>
+  ※ 買付額区分は2024年1月〜12月中の年間利用状況による（廃止口座の取引を含む）。<br>
+  ※ 10代の総人口は、18・19歳の日本人人口（2,123千人）に15〜19歳の総人口／日本人人口比（5,493÷5,351）を乗じて推計（約2,179千人）。
+</p>
+</body>
+</html>
