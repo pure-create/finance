@@ -1,0 +1,54 @@
+
+body {
+	font-size: 77%;
+}
+
+h1 {
+	color: black;
+	background: none;
+	box-shadow: none;
+	padding: 0;
+}
+
+h2 {
+	border: none;
+	font-weight: normal;
+	color: black;
+	background: white;
+	box-shadow: none;
+}
+
+th, td {
+	border: 1px solid black;
+}
+
+th {
+	background: white;
+}
+
+input, select {
+	color: black;
+	background: white;
+	border: none;
+	border-bottom: 1px solid gray;
+}
+
+div#tyosei_result {
+	background: white;
+	border: 1px solid black;
+}
+
+input#tyosei_price, span.numeric {
+	background: none;
+	border: none;
+	color: black;
+	font-weight: normal;
+}
+
+tr.calc_memo {
+	background: #FFF;
+}
+
+div.toolbar, div.noscript-warning {
+	display: none;
+}
