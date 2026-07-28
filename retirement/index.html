@@ -17,7 +17,7 @@
 <link rel="stylesheet" type="text/css" href="./css/main.css?v=20260728h">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260728c" media="print">
 <script src="./js/qrcode.js?v=20260728b"></script>
-<script src="./js/retire.js?v=20260728d"></script>
+<script src="./js/retire.js?v=20260728e"></script>
 <title>退職手当計算サイト</title>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <div class='container'><div class='question'><label><input type='checkbox' id='middle_year'>年度途中採用</label></div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>
 </div>
 <div class="basis-row">
-<label for='salary'>基本給:</label><input id='salary' inputmode='numeric' autocomplete='off'>円（月額）
+<label for='salary'>給料月額:</label><input id='salary' inputmode='numeric' autocomplete='off'>円
 </div>
 調整月額:
 <div class='table-scroll'>
@@ -55,7 +55,8 @@
 		<th>
 			<div class='question'>直近5年のうちの月数</div>
 			<div class='explain'>
-				直近5年(60か月・休職期間を除く)のうち、上記区分であった月数を入力してください。<br />
+				直近60か月を基準に入力してください。<br />
+				休職等の取扱いは自治体により異なる場合があります。<br />
 			</div>
 		</th>
 <script>
@@ -71,7 +72,7 @@
 <div id='msg'>
 	<span id='msg_birth' class='msg_input'>・生年（生まれた年度）を選択してください。</span><br />
 	<span id='msg_hire' class='msg_input'>・採用年度を選択してください。</span><br />
-	<span id='msg_salary' class='msg_input'>・基本給（月額）を入力してください。</span><br />
+	<span id='msg_salary' class='msg_input'>・給料月額を入力してください。</span><br />
 	<span id='msg_age_warning' class='warning' style='display:none;'></span>
 </div>
 <div class='table-scroll'>
@@ -200,9 +201,9 @@
 </table>
 </div>
 <div id='footer'>
-本シミュレーターは、地方公務員の一般的な退職手当制度を参考に、退職日の給料月額を算定基礎額、退職前60か月を調整額の算定基準として試算しています。<br />
-当サイトで提供する情報については正確な情報であるように努めておりますが、完全に正確であることを保証するものではありません。実際の退職手当は自治体の条例・規則、退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
-所得税の計算方法については<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>国税庁タックスアンサー No.1420 退職金を受け取ったとき（退職所得）</a>に基づき計算しています。<br />
+当サイトで提供する情報については正確な情報であるように努めておりますが、完全に正確であることを保証するものではありません。<br />
+実際の退職手当は自治体の条例・規則、退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
+所得税については<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>国税庁タックスアンサー No.1420 退職金を受け取ったとき（退職所得）</a>に基づき計算しています。<br />
 </div>
 
 </body>

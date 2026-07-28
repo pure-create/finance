@@ -568,7 +568,7 @@ function calc(){
 			result += "</tr>";
 			memo = "";
 
-			var baseSalaryMemo = "<span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(基本給月額)";
+			var baseSalaryMemo = "<span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(給料月額)";
 
 			if(age + i < 60){
 				memo += "自己都合: " + baseSalaryMemo + " × <span class='numeric'>" + getRate(own_rate, duration + i) + "</span>(支給率) ＋ ";
