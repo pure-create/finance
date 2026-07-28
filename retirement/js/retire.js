@@ -36,9 +36,6 @@ var compulsory_rate = new Array(
 	47.709, 47.709, 47.709, 47.709, 47.709
 );
 
-// 地域手当加算割合（条例上、地域手当月額の100分の15を算定基礎額に加算するのが一般的）
-var REGIONAL_ALLOWANCE_ADD_RATE = 0.15;
-
 // 支給率配列の範囲外アクセスを防ぐ（範囲を超えた場合は最終値＝頭打ち後の率を使う）
 function getRate(arr, years){
 	var idx = Math.max(0, Math.min(years, arr.length - 1));
@@ -143,14 +140,11 @@ function serializeState(){
 	var hireYearEl = document.getElementById('hireYear');
 	var middleYearEl = document.getElementById('middle_year');
 	var salaryEl = document.getElementById('salary');
-	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	if(birthYearEl.value) params.set('by', birthYearEl.value);
 	if(hireYearEl.value) params.set('hy', hireYearEl.value);
 	if(middleYearEl.checked) params.set('mid', '1');
 	var salRaw = (salaryEl.value || '').toString().replace(/,/g, '').trim();
 	if(salRaw) params.set('sal', salRaw);
-	var regRaw = (regionalAllowanceEl.value || '').toString().replace(/,/g, '').trim();
-	if(regRaw) params.set('reg', regRaw);
 	for(var i = 1; i <= 8; i++){
 		var v = document.getElementById('tyosei' + i).value;
 		if(v) params.set('t' + i, v);
@@ -194,17 +188,12 @@ function applyStateFromParams(params){
 	var hireYearEl = document.getElementById('hireYear');
 	var middleYearEl = document.getElementById('middle_year');
 	var salaryEl = document.getElementById('salary');
-	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	if(params.has('by')) birthYearEl.value = params.get('by');
 	if(params.has('hy')) hireYearEl.value = params.get('hy');
 	if(params.get('mid') === '1') middleYearEl.checked = true;
 	if(params.has('sal')){
 		salaryEl.value = params.get('sal');
 		formatSalaryDisplay(salaryEl);
-	}
-	if(params.has('reg')){
-		regionalAllowanceEl.value = params.get('reg');
-		formatSalaryDisplay(regionalAllowanceEl);
 	}
 	for(var i = 1; i <= 8; i++){
 		if(params.has('t' + i)) document.getElementById('tyosei' + i).value = params.get('t' + i);
@@ -246,7 +235,6 @@ function clearAll(){
 	document.getElementById('hireYear').value = '';
 	document.getElementById('middle_year').checked = false;
 	document.getElementById('salary').value = '';
-	document.getElementById('regional_allowance').value = '';
 	for(var i = 1; i <= 8; i++){
 		document.getElementById('tyosei' + i).value = '';
 	}
@@ -276,7 +264,7 @@ window.addEventListener('load', function(){
 		el.addEventListener('change', calc);
 	});
 
-	[document.getElementById('salary'), document.getElementById('regional_allowance')].forEach(function(el){
+	[document.getElementById('salary')].forEach(function(el){
 		if(!el) return;
 		el.addEventListener('focus', function(){ unformatSalaryForEdit(el); });
 		el.addEventListener('blur', function(){ formatSalaryDisplay(el); });
@@ -336,13 +324,21 @@ window.addEventListener('load', function(){
 		explainEl.style.display = 'block';
 		var triggerRect = triggerEl.getBoundingClientRect();
 		var explainRect = explainEl.getBoundingClientRect();
+
+		// テーブル内のツールチップは、テーブル自体の幅（枠）を超えて
+		// 表からはみ出さないよう、テーブルの範囲内に収める
+		var boundsEl = triggerEl.closest('table') || document.body;
+		var boundsRect = boundsEl.getBoundingClientRect();
+		var minLeft = Math.max(margin, boundsRect.left);
+		var maxRight = Math.min(window.innerWidth - margin, boundsRect.right);
+
 		var left = triggerRect.left;
 		var top = triggerRect.bottom + margin;
-		if(left + explainRect.width > window.innerWidth - margin){
-			left = window.innerWidth - margin - explainRect.width;
+		if(left + explainRect.width > maxRight){
+			left = maxRight - explainRect.width;
 		}
-		if(left < margin){
-			left = margin;
+		if(left < minLeft){
+			left = minLeft;
 		}
 		if(top + explainRect.height > window.innerHeight - margin){
 			top = triggerRect.top - explainRect.height - margin;
@@ -445,7 +441,6 @@ function calc(){
 	var birthYearEl = document.getElementById('birthYear');
 	var hireYearEl = document.getElementById('hireYear');
 	var salaryEl = document.getElementById('salary');
-	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	var msgBirthEl = document.getElementById('msg_birth');
 	var msgHireEl = document.getElementById('msg_hire');
 	var msgSalaryEl = document.getElementById('msg_salary');
@@ -456,11 +451,7 @@ function calc(){
 
 	var salaryRaw = (salaryEl.value || '').toString().replace(/,/g, '').trim();
 	var salaryValue = salaryRaw ? Number(salaryRaw) : 0;
-	var regionalAllowanceRaw = (regionalAllowanceEl.value || '').toString().replace(/,/g, '').trim();
-	var regionalAllowanceValue = regionalAllowanceRaw ? Number(regionalAllowanceRaw) : 0;
-	// 算定基礎額 = 基本給月額 + 地域手当月額 × 100分の15
-	var regionalAllowanceAdd = Math.floor(regionalAllowanceValue * REGIONAL_ALLOWANCE_ADD_RATE);
-	var baseSalaryValue = salaryValue + regionalAllowanceAdd;
+	var baseSalaryValue = salaryValue;
 
 	// 最初の画面で、「～が入力されていません。」の各項目が入力されればOK等を表示する
 	if(birthYearEl.value){
@@ -577,12 +568,7 @@ function calc(){
 			result += "</tr>";
 			memo = "";
 
-			var baseSalaryMemo;
-			if(regionalAllowanceAdd > 0){
-				baseSalaryMemo = "(<span class='numeric'>" + salaryValue.toLocaleString() + "</span>(基本給月額) + <span class='numeric'>" + regionalAllowanceAdd.toLocaleString() + "</span>(地域手当加算額 ※地域手当月額×100分の15) = <span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(算定基礎額))";
-			}else{
-				baseSalaryMemo = "<span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(基本給月額)";
-			}
+			var baseSalaryMemo = "<span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(基本給月額)";
 
 			if(age + i < 60){
 				memo += "自己都合: " + baseSalaryMemo + " × <span class='numeric'>" + getRate(own_rate, duration + i) + "</span>(支給率) ＋ ";

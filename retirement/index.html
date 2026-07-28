@@ -14,10 +14,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="地方公務員向けの退職手当（退職金）を年度ごとに試算できる無料計算サイトです。所得税・住民税を差し引いた手取額も自動計算します。">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260728g">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260728h">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260728c" media="print">
 <script src="./js/qrcode.js?v=20260728b"></script>
-<script src="./js/retire.js?v=20260728b"></script>
+<script src="./js/retire.js?v=20260728d"></script>
 <title>退職手当計算サイト</title>
 </head>
 <body>
@@ -44,7 +44,6 @@
 </div>
 <div class="basis-row">
 <label for='salary'>基本給:</label><input id='salary' inputmode='numeric' autocomplete='off'>円（月額）
-<label for='regional_allowance'>地域手当:</label><input id='regional_allowance' inputmode='numeric' autocomplete='off'>円（月額）<div class='container'><div class='question help-icon' aria-label='地域手当について'>？</div><div class='explain'>多くの地方公務員等退職手当条例では、算定基礎額は「給料月額＋地域手当の月額×100分の15」とされています。該当する地域手当があれば月額を入力してください（任意・未入力の場合は0として計算します）。</div></div>
 </div>
 調整月額:
 <div class='table-scroll'>
@@ -114,7 +113,7 @@
 			<th class='own price'>
 				<div class='question'>退職手当</div>
 				<div class='explain'>
-					基本的な計算式は、算定基礎額（給料月額＋地域手当月額×100分の15）× 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					基本的な計算式は、退職日の給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
@@ -155,7 +154,7 @@
 			<th class='price'>
 				<div class='question'>退職手当</div>
 				<div class='explain'>
-					基本的な計算式は、算定基礎額（給料月額＋地域手当月額×100分の15）× 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					基本的な計算式は、退職日の給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
@@ -201,9 +200,9 @@
 </table>
 </div>
 <div id='footer'>
-当サイトで提供する情報については正確な情報であるように努めておりますが、完全に正確であることを保証するものではありません。<br />
-将来の計算結果については、入力された基本給等の情報から現在の制度に基づいて試算したものであり、昇給等については一切考慮していません。<br />
-所得税の計算方法については<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>国税庁タックスアンサー No.1420 退職金を受け取ったとき（退職所得）</a>を参照してください。<br />
+本シミュレーターは、地方公務員の一般的な退職手当制度を参考に、退職日の給料月額を算定基礎額、退職前60か月を調整額の算定基準として試算しています。<br />
+当サイトで提供する情報については正確な情報であるように努めておりますが、完全に正確であることを保証するものではありません。実際の退職手当は自治体の条例・規則、退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
+所得税の計算方法については<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>国税庁タックスアンサー No.1420 退職金を受け取ったとき（退職所得）</a>に基づき計算しています。<br />
 </div>
 
 </body>
