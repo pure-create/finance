@@ -14,20 +14,24 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="地方公務員向けの退職手当（退職金）を年度ごとに試算できる無料計算サイトです。所得税・住民税を差し引いた手取額も自動計算します。">
-<link rel="stylesheet" type="text/css" href="./css/main.css">
-<link rel="stylesheet" type="text/css" href="./css/print.css" media="print">
-<script src="./js/retire.js?v=20260727"></script>
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260728g">
+<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260728c" media="print">
+<script src="./js/qrcode.js?v=20260728b"></script>
+<script src="./js/retire.js?v=20260728b"></script>
 <title>退職手当計算サイト</title>
 </head>
 <body>
 <noscript>
 	<div class="noscript-warning">このサイトの計算機能はJavaScriptを使用しています。ブラウザの設定でJavaScriptを有効にしてご利用ください。</div>
 </noscript>
-<h1>退職手当計算サイト（地方公務員）</h1>
-<div class='toolbar'>
-	<button type='button' id='clearBtn'>入力をクリア</button>
-	<button type='button' id='shareBtn'>共有リンクをコピー</button>
-	<span id='shareMsg' class='share-msg' aria-live='polite'></span>
+<div class='header-row'>
+	<h1>退職手当計算サイト（地方公務員）</h1>
+	<div class='toolbar'>
+		<button type='button' id='clearBtn'>入力をクリア</button>
+		<button type='button' id='shareBtn'>共有リンクをコピー</button>
+		<span id='shareMsg' class='share-msg' aria-live='polite'></span>
+		<span id='shareQr' class='share-qr' aria-hidden='true'></span>
+	</div>
 </div>
 
 <h2>計算の基準</h2>
@@ -36,9 +40,12 @@
 <select id="birthYear"><option value="" disabled selected>===選択===</option></select>年度
 <label for="hireYear">採用年:</label>
 <select id="hireYear"><option value="" disabled selected>===選択===</option></select>年度
+<div class='container'><div class='question'><label><input type='checkbox' id='middle_year'>年度途中採用</label></div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>
 </div>
-(<div class='container'><div class='question'><label><input type='checkbox' id='middle_year'>年度途中採用</label></div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>)
-　<label for='salary'>基本給:</label><input id='salary' inputmode='numeric' autocomplete='off'>円（月額）<br />
+<div class="basis-row">
+<label for='salary'>基本給:</label><input id='salary' inputmode='numeric' autocomplete='off'>円（月額）
+<label for='regional_allowance'>地域手当:</label><input id='regional_allowance' inputmode='numeric' autocomplete='off'>円（月額）<div class='container'><div class='question help-icon' aria-label='地域手当について'>？</div><div class='explain'>多くの地方公務員等退職手当条例では、算定基礎額は「給料月額＋地域手当の月額×100分の15」とされています。該当する地域手当があれば月額を入力してください（任意・未入力の場合は0として計算します）。</div></div>
+</div>
 調整月額:
 <div class='table-scroll'>
 <table id='tyosei-table'>
@@ -107,7 +114,7 @@
 			<th class='own price'>
 				<div class='question'>退職手当</div>
 				<div class='explain'>
-					基本的な計算式は、給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					基本的な計算式は、算定基礎額（給料月額＋地域手当月額×100分の15）× 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
@@ -148,7 +155,7 @@
 			<th class='price'>
 				<div class='question'>退職手当</div>
 				<div class='explain'>
-					基本的な計算式は、給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					基本的な計算式は、算定基礎額（給料月額＋地域手当月額×100分の15）× 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>

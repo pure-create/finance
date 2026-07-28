@@ -1,12 +1,19 @@
 
 body {
 	font-size: 77%;
+	background: none;
+}
+
+table {
+	background: none;
+	box-shadow: none;
 }
 
 h1 {
 	color: black;
 	background: none;
 	box-shadow: none;
+	border: none;
 	padding: 0;
 }
 
@@ -22,8 +29,9 @@ th, td {
 	border: 1px solid black;
 }
 
-th {
+th, th.own {
 	background: white;
+	color: black;
 }
 
 input, select {
@@ -49,6 +57,6 @@ tr.calc_memo {
 	background: #FFF;
 }
 
-div.toolbar, div.noscript-warning {
+div.toolbar button, span.share-msg, div.noscript-warning {
 	display: none;
 }

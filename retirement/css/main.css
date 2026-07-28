@@ -52,6 +52,15 @@ table {
 	margin: 4px 0;
 }
 
+div.header-row {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 0 0 20px;
+}
+
 h1 {
 	display: block;
 	width: fit-content;
@@ -65,7 +74,7 @@ h1 {
 	border-bottom: 3px solid var(--color-primary);
 	border-radius: 0;
 	padding: 0 2px 10px;
-	margin: 0 0 20px;
+	margin: 0;
 }
 
 h2 {
@@ -192,6 +201,10 @@ input#tyosei_price {
 	width: 130px;
 }
 
+input#salary, input#regional_allowance {
+	width: 130px;
+}
+
 input#tyosei_price, span.numeric {
 	font-size: 14px;
 	background: none;
@@ -310,11 +323,27 @@ div.question:focus-visible {
 	border-radius: 2px;
 }
 
-div.basis-row {
+div.question.help-icon {
+	border-bottom: none;
 	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--color-primary-soft);
+	color: var(--color-primary-dark);
+	font-size: 12px;
+	font-weight: 700;
+	vertical-align: middle;
+}
+
+div.basis-row {
+	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 6px 4px;
+	margin: 6px 0;
 }
 
 div.noscript-warning {
@@ -332,7 +361,6 @@ div.toolbar {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
-	margin: 12px 0;
 }
 
 div.toolbar button {
@@ -358,17 +386,35 @@ div.toolbar button:focus-visible {
 	outline-offset: 2px;
 }
 
+span.share-qr {
+	display: inline-block;
+	width: 72px;
+	height: 72px;
+	line-height: 0;
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	box-shadow: var(--shadow-sm);
+	padding: 4px;
+}
+
+span.share-qr svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
 span.share-msg {
 	font-size: 12px;
 	color: var(--color-success);
 }
 
 div.explain {
-	margin: 10px;
+	margin: 0;
 	line-height: 150%;
 	font-size: 13px;
 	text-align: left;
-	position: absolute;
+	position: fixed;
 	min-width: 200px;
 	max-width: min(360px, 88vw);
 	background: var(--color-surface);
@@ -406,10 +452,13 @@ div#footer a:hover {
 		font-size: 13px;
 	}
 
+	span.share-qr {
+		display: none;
+	}
+
 	h1 {
 		font-size: 17px;
 		padding: 0 2px 8px;
-		margin-bottom: 14px;
 	}
 
 	h2 {
@@ -431,6 +480,10 @@ div#footer a:hover {
 	}
 
 	input#tyosei_price {
+		width: 110px;
+	}
+
+	input#salary, input#regional_allowance {
 		width: 110px;
 	}
 

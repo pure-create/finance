@@ -36,6 +36,9 @@ var compulsory_rate = new Array(
 	47.709, 47.709, 47.709, 47.709, 47.709
 );
 
+// 地域手当加算割合（条例上、地域手当月額の100分の15を算定基礎額に加算するのが一般的）
+var REGIONAL_ALLOWANCE_ADD_RATE = 0.15;
+
 // 支給率配列の範囲外アクセスを防ぐ（範囲を超えた場合は最終値＝頭打ち後の率を使う）
 function getRate(arr, years){
 	var idx = Math.max(0, Math.min(years, arr.length - 1));
@@ -140,16 +143,40 @@ function serializeState(){
 	var hireYearEl = document.getElementById('hireYear');
 	var middleYearEl = document.getElementById('middle_year');
 	var salaryEl = document.getElementById('salary');
+	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	if(birthYearEl.value) params.set('by', birthYearEl.value);
 	if(hireYearEl.value) params.set('hy', hireYearEl.value);
 	if(middleYearEl.checked) params.set('mid', '1');
 	var salRaw = (salaryEl.value || '').toString().replace(/,/g, '').trim();
 	if(salRaw) params.set('sal', salRaw);
+	var regRaw = (regionalAllowanceEl.value || '').toString().replace(/,/g, '').trim();
+	if(regRaw) params.set('reg', regRaw);
 	for(var i = 1; i <= 8; i++){
 		var v = document.getElementById('tyosei' + i).value;
 		if(v) params.set('t' + i, v);
 	}
 	return params;
+}
+
+// 現在の入力内容を反映した共有リンクのURLを組み立てる
+function buildShareUrl(){
+	var params = serializeState();
+	var baseUrl = window.location.href.split('?')[0];
+	return params.toString() ? baseUrl + '?' + params.toString() : baseUrl;
+}
+
+// 共有リンクのQRコードを描画する
+function renderShareQr(){
+	var qrEl = document.getElementById('shareQr');
+	if(!qrEl) return;
+	try{
+		var qr = qrcode(0, 'M');
+		qr.addData(buildShareUrl());
+		qr.make();
+		qrEl.innerHTML = qr.createSvgTag(4);
+	}catch(e){
+		qrEl.innerHTML = '';
+	}
 }
 
 // localStorageに現在の入力内容を保存する
@@ -167,12 +194,17 @@ function applyStateFromParams(params){
 	var hireYearEl = document.getElementById('hireYear');
 	var middleYearEl = document.getElementById('middle_year');
 	var salaryEl = document.getElementById('salary');
+	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	if(params.has('by')) birthYearEl.value = params.get('by');
 	if(params.has('hy')) hireYearEl.value = params.get('hy');
 	if(params.get('mid') === '1') middleYearEl.checked = true;
 	if(params.has('sal')){
 		salaryEl.value = params.get('sal');
-		formatSalaryDisplay();
+		formatSalaryDisplay(salaryEl);
+	}
+	if(params.has('reg')){
+		regionalAllowanceEl.value = params.get('reg');
+		formatSalaryDisplay(regionalAllowanceEl);
 	}
 	for(var i = 1; i <= 8; i++){
 		if(params.has('t' + i)) document.getElementById('tyosei' + i).value = params.get('t' + i);
@@ -196,16 +228,16 @@ function restoreState(){
 	}
 }
 
-// 給与欄をカンマ区切り表示にする（編集中はunformatSalaryForEditで数字のみに戻す）
-function formatSalaryDisplay(){
-	var salaryEl = document.getElementById('salary');
-	var raw = (salaryEl.value || '').toString().replace(/[^\d]/g, '');
-	salaryEl.value = raw ? Number(raw).toLocaleString() : '';
+// 金額欄をカンマ区切り表示にする（編集中はunformatSalaryForEditで数字のみに戻す）
+function formatSalaryDisplay(el){
+	if(!el) return;
+	var raw = (el.value || '').toString().replace(/[^\d]/g, '');
+	el.value = raw ? Number(raw).toLocaleString() : '';
 }
 
-function unformatSalaryForEdit(){
-	var salaryEl = document.getElementById('salary');
-	salaryEl.value = (salaryEl.value || '').toString().replace(/,/g, '');
+function unformatSalaryForEdit(el){
+	if(!el) return;
+	el.value = (el.value || '').toString().replace(/,/g, '');
 }
 
 // すべての入力をクリアする
@@ -214,6 +246,7 @@ function clearAll(){
 	document.getElementById('hireYear').value = '';
 	document.getElementById('middle_year').checked = false;
 	document.getElementById('salary').value = '';
+	document.getElementById('regional_allowance').value = '';
 	for(var i = 1; i <= 8; i++){
 		document.getElementById('tyosei' + i).value = '';
 	}
@@ -243,9 +276,11 @@ window.addEventListener('load', function(){
 		el.addEventListener('change', calc);
 	});
 
-	var salaryEl = document.getElementById('salary');
-	salaryEl.addEventListener('focus', unformatSalaryForEdit);
-	salaryEl.addEventListener('blur', formatSalaryDisplay);
+	[document.getElementById('salary'), document.getElementById('regional_allowance')].forEach(function(el){
+		if(!el) return;
+		el.addEventListener('focus', function(){ unformatSalaryForEdit(el); });
+		el.addEventListener('blur', function(){ formatSalaryDisplay(el); });
+	});
 
 	var clearBtn = document.getElementById('clearBtn');
 	if(clearBtn){
@@ -256,9 +291,7 @@ window.addEventListener('load', function(){
 	var shareMsgEl = document.getElementById('shareMsg');
 	if(shareBtn){
 		shareBtn.addEventListener('click', function(){
-			var params = serializeState();
-			var baseUrl = window.location.href.split('?')[0];
-			var url = params.toString() ? baseUrl + '?' + params.toString() : baseUrl;
+			var url = buildShareUrl();
 			copyToClipboard(url).then(function(){
 				shareMsgEl.textContent = '共有リンクをコピーしました。';
 				setTimeout(function(){ shareMsgEl.textContent = ''; }, 3000);
@@ -289,12 +322,45 @@ window.addEventListener('load', function(){
 		}
 	});
 
+	// タッチ端末では「ホバー」を疑似的に発火させるブラウザがあり、mouseenterで開いた直後に
+	// clickのtoggleが「開いている」と誤認して閉じてしまうため、ホバー対応端末でのみhoverで開閉する
+	var supportsHover = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+	// ツールチップ(.explain)をトリガー要素の直下（画面に収まるよう自動調整）に固定表示する
+	// .table-scrollなどoverflow:autoな祖先要素にクリップされないよう、position:fixedで
+	// ビューポート基準の座標を都度計算する
+	function positionExplain(triggerEl, explainEl){
+		var margin = 8;
+		explainEl.style.left = margin + 'px';
+		explainEl.style.top = margin + 'px';
+		explainEl.style.display = 'block';
+		var triggerRect = triggerEl.getBoundingClientRect();
+		var explainRect = explainEl.getBoundingClientRect();
+		var left = triggerRect.left;
+		var top = triggerRect.bottom + margin;
+		if(left + explainRect.width > window.innerWidth - margin){
+			left = window.innerWidth - margin - explainRect.width;
+		}
+		if(left < margin){
+			left = margin;
+		}
+		if(top + explainRect.height > window.innerHeight - margin){
+			top = triggerRect.top - explainRect.height - margin;
+		}
+		if(top < margin){
+			top = margin;
+		}
+		explainEl.style.left = left + 'px';
+		explainEl.style.top = top + 'px';
+	}
+
 	document.querySelectorAll('div.question').forEach(function(el){
 		el.setAttribute('tabindex', '0');
 		if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
 		var explain = el.nextElementSibling;
 
 		function show(){
+			positionExplain(el, explain);
 			fadeIn(explain, 300, 'block');
 		}
 		function hide(){
@@ -312,8 +378,10 @@ window.addEventListener('load', function(){
 			}
 		}
 
-		el.addEventListener('mouseenter', show);
-		el.addEventListener('mouseleave', hide);
+		if(supportsHover){
+			el.addEventListener('mouseenter', show);
+			el.addEventListener('mouseleave', hide);
+		}
 		el.addEventListener('click', toggle);
 		el.addEventListener('keydown', function(e){
 			if(e.key === 'Enter' || e.key === ' '){
@@ -377,6 +445,7 @@ function calc(){
 	var birthYearEl = document.getElementById('birthYear');
 	var hireYearEl = document.getElementById('hireYear');
 	var salaryEl = document.getElementById('salary');
+	var regionalAllowanceEl = document.getElementById('regional_allowance');
 	var msgBirthEl = document.getElementById('msg_birth');
 	var msgHireEl = document.getElementById('msg_hire');
 	var msgSalaryEl = document.getElementById('msg_salary');
@@ -387,6 +456,11 @@ function calc(){
 
 	var salaryRaw = (salaryEl.value || '').toString().replace(/,/g, '').trim();
 	var salaryValue = salaryRaw ? Number(salaryRaw) : 0;
+	var regionalAllowanceRaw = (regionalAllowanceEl.value || '').toString().replace(/,/g, '').trim();
+	var regionalAllowanceValue = regionalAllowanceRaw ? Number(regionalAllowanceRaw) : 0;
+	// 算定基礎額 = 基本給月額 + 地域手当月額 × 100分の15
+	var regionalAllowanceAdd = Math.floor(regionalAllowanceValue * REGIONAL_ALLOWANCE_ADD_RATE);
+	var baseSalaryValue = salaryValue + regionalAllowanceAdd;
 
 	// 最初の画面で、「～が入力されていません。」の各項目が入力されればOK等を表示する
 	if(birthYearEl.value){
@@ -463,7 +537,7 @@ function calc(){
 			}
 
 			if(age + i < 60){
-				own_price = Math.floor(salaryValue * getRate(own_rate, duration + i)) + tyosei_price_own;
+				own_price = Math.floor(baseSalaryValue * getRate(own_rate, duration + i)) + tyosei_price_own;
 			}else{
 				own_price = 0;
 			}
@@ -485,7 +559,7 @@ function calc(){
 			}
 
 			if(age + i >= teinen || (age + i >= teinen - 10 && duration + i >= 25)){
-				compulsory_price = Math.floor(salaryValue * getRate(compulsory_rate, duration + i)) + tyosei_price;
+				compulsory_price = Math.floor(baseSalaryValue * getRate(compulsory_rate, duration + i)) + tyosei_price;
 			}else{
 				compulsory_price = 0;
 			}
@@ -503,8 +577,15 @@ function calc(){
 			result += "</tr>";
 			memo = "";
 
+			var baseSalaryMemo;
+			if(regionalAllowanceAdd > 0){
+				baseSalaryMemo = "(<span class='numeric'>" + salaryValue.toLocaleString() + "</span>(基本給月額) + <span class='numeric'>" + regionalAllowanceAdd.toLocaleString() + "</span>(地域手当加算額 ※地域手当月額×100分の15) = <span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(算定基礎額))";
+			}else{
+				baseSalaryMemo = "<span class='numeric'>" + baseSalaryValue.toLocaleString() + "</span>(基本給月額)";
+			}
+
 			if(age + i < 60){
-				memo += "自己都合: <span class='numeric'>" + salaryValue.toLocaleString() + "</span>(基本給月額) × <span class='numeric'>" + getRate(own_rate, duration + i) + "</span>(支給率) ＋ ";
+				memo += "自己都合: " + baseSalaryMemo + " × <span class='numeric'>" + getRate(own_rate, duration + i) + "</span>(支給率) ＋ ";
 				if(duration + i < 10){
 					memo += "<span class='numeric'>0</span>(9年以下のため調整額なし)";
 				}else if(duration + i < 25){
@@ -516,7 +597,7 @@ function calc(){
 			}
 
 			if(age + i >= teinen || (age + i >= teinen - 10 && duration + i >= 25)){
-				memo += "定年・勧奨: <span class='numeric'>" + salaryValue.toLocaleString() + "</span>(基本給月額) × ";
+				memo += "定年・勧奨: " + baseSalaryMemo + " × ";
 				memo += "<span class='numeric'>" + getRate(compulsory_rate, duration + i) + "</span>(支給率) ＋ ";
 
 				if(duration + i < 5){
@@ -544,5 +625,6 @@ function calc(){
 		resultEl.innerHTML = "<tr><td colspan='13'>必要な項目を入力するとここに計算結果が表示されます</td></tr>";
 	}
 
+	renderShareQr();
 	saveState();
 }
