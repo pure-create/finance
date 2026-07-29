@@ -29,7 +29,7 @@ th, td {
 	border: 1px solid black;
 }
 
-th, th.own {
+th, th.own, th.mandatory {
 	background: white;
 	color: black;
 }
@@ -53,10 +53,41 @@ input#tyosei_price, span.numeric {
 	font-weight: normal;
 }
 
-tr.calc_memo {
-	background: #FFF;
+span.warning, span.tyosei-hint {
+	background: none;
+	color: black;
 }
 
 div.toolbar button, span.share-msg, div.noscript-warning {
 	display: none;
+}
+
+div.explain, tr.calc_memo {
+	display: none !important;
+}
+
+div.question {
+	border-bottom: none;
+	cursor: default;
+}
+
+.table-scroll {
+	overflow: visible;
+}
+
+table.result-table {
+	font-size: 85%;
+}
+
+table.result-table th, table.result-table td {
+	padding: 3px 4px;
+}
+
+h2, div.section-header {
+	page-break-after: avoid;
+	break-after: avoid;
+}
+
+#footer a[href]::after {
+	content: " (" attr(href) ")";
 }

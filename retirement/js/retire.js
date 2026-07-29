@@ -277,14 +277,19 @@ window.addEventListener('load', function(){
 
 	var shareBtn = document.getElementById('shareBtn');
 	var shareMsgEl = document.getElementById('shareMsg');
+	var shareMsgTimer;
 	if(shareBtn){
 		shareBtn.addEventListener('click', function(){
 			var url = buildShareUrl();
+			clearTimeout(shareMsgTimer);
 			copyToClipboard(url).then(function(){
-				shareMsgEl.textContent = '共有リンクをコピーしました。';
-				setTimeout(function(){ shareMsgEl.textContent = ''; }, 3000);
+				shareMsgEl.innerHTML = '共有リンクをコピーしました。<br>リンクには入力内容が含まれます。';
+				shareMsgEl.classList.add('show');
+				shareMsgTimer = setTimeout(function(){ shareMsgEl.classList.remove('show'); }, 3000);
 			}).catch(function(){
 				shareMsgEl.textContent = 'コピーに失敗しました。URL: ' + url;
+				shareMsgEl.classList.add('show');
+				shareMsgTimer = setTimeout(function(){ shareMsgEl.classList.remove('show'); }, 3000);
 			});
 		});
 	}
@@ -410,6 +415,7 @@ function calc(){
 	var tyosei8 = document.getElementById('tyosei8').value;
 	var tyoseiPriceEl = document.getElementById('tyosei_price');
 	var tyoseiMemoEl = document.getElementById('tyosei_memo');
+	var tyoseiStatusEl = document.getElementById('tyosei_status');
 
 	var total_month = tyosei1 / 1 + tyosei2 / 1 +
 					tyosei3 / 1 + tyosei4 / 1 +
@@ -417,8 +423,21 @@ function calc(){
 					tyosei7 / 1 + tyosei8 / 1;
 	var tyoseiError = total_month > 60;
 	if(tyoseiError){
+		tyoseiStatusEl.textContent = "※月数の合計は60以内にしてください。（入力されている月数の合計:" + total_month + "か月）";
+		tyoseiStatusEl.className = 'warning';
+		tyoseiStatusEl.style.display = 'inline-block';
+	}else if(total_month === 0){
+		tyoseiStatusEl.textContent = "※月数が入力されていません。";
+		tyoseiStatusEl.className = 'tyosei-hint';
+		tyoseiStatusEl.style.display = 'inline-block';
+	}else{
+		tyoseiStatusEl.textContent = "";
+		tyoseiStatusEl.className = '';
+		tyoseiStatusEl.style.display = 'none';
+	}
+	if(tyoseiError){
 		tyoseiPriceEl.value = "";
-		tyoseiMemoEl.innerHTML = "<span class='warning'>エラー：月数の合計は60以内にしてください。（入力されている月数の合計:" + total_month + "か月）</span>";
+		tyoseiMemoEl.innerHTML = '直近の60か月のなかで各区分にあてはまる月数を数字で入力してください。';
 	}else{
 		tyosei_price = tyosei1 * 65000 + tyosei2 * 59550 +
 						tyosei3 * 54150 + tyosei4 * 43350 +

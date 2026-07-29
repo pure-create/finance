@@ -14,10 +14,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="地方公務員向けの退職手当（退職金）を年度ごとに試算できる無料計算サイトです。所得税・住民税を差し引いた手取額も自動計算します。">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260728h">
-<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260728c" media="print">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260729i">
+<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260729d" media="print">
 <script src="./js/qrcode.js?v=20260728b"></script>
-<script src="./js/retire.js?v=20260728e"></script>
+<script src="./js/retire.js?v=20260729c"></script>
 <title>退職手当計算サイト</title>
 </head>
 <body>
@@ -28,8 +28,10 @@
 	<h1>退職手当計算サイト（地方公務員）</h1>
 	<div class='toolbar'>
 		<button type='button' id='clearBtn'>入力をクリア</button>
-		<button type='button' id='shareBtn'>共有リンクをコピー</button>
-		<span id='shareMsg' class='share-msg' aria-live='polite'></span>
+		<div class='share-wrap'>
+			<button type='button' id='shareBtn'>共有リンクをコピー</button>
+			<span id='shareMsg' class='share-msg' aria-live='polite'></span>
+		</div>
 		<span id='shareQr' class='share-qr' aria-hidden='true'></span>
 	</div>
 </div>
@@ -45,12 +47,12 @@
 <div class="basis-row">
 <label for='salary'>給料月額:</label><input id='salary' inputmode='numeric' autocomplete='off'>円
 </div>
-調整月額:
+調整月額:<span id='tyosei_status' style='display:none;'></span>
 <div class='table-scroll'>
 <table id='tyosei-table'>
 	<tr><th width='235'>区分</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
 	<tr><th>調整月額</th><td>65,000</td><td>59,550</td><td>54,150</td><td>43,350</td><td>32,500</td><td>27,100</td><td>21,700</td><td>0</td></tr>
-	<tr><th>代表的な補職</th><td>部長</td><td>部次長</td><td>本庁課長</td><td>本庁参事<br />本庁主幹</td><td>出先課長<br />課長補佐</td><td>係長<br />主任主査</td><td>主査</td><td>主任主事<br />主事</td></tr>
+	<tr><th>代表的な補職</th><td>部長</td><td>次長</td><td>課長</td><td>参事<br />主幹</td><td>課長補佐</td><td>係長</td><td>主査</td><td>主事</td></tr>
 	<tr>
 		<th>
 			<div class='question'>直近5年のうちの月数</div>
@@ -68,7 +70,10 @@
 </table>
 </div>
 <div id='tyosei_result'>調整額:<input id='tyosei_price'>円<br /><span id='tyosei_memo'>直近の60か月のなかで各区分にあてはまる月数を数字で入力してください。</span></div>
+<div class='section-header'>
 <h2>計算の結果</h2>
+<span class='result-disclaimer'>※概算による試算結果です。実際の退職手当・税額等とは異なる場合があります。</span>
+</div>
 <div id='msg'>
 	<span id='msg_birth' class='msg_input'>・生年（生まれた年度）を選択してください。</span><br />
 	<span id='msg_hire' class='msg_input'>・採用年度を選択してください。</span><br />
@@ -76,7 +81,7 @@
 	<span id='msg_age_warning' class='warning' style='display:none;'></span>
 </div>
 <div class='table-scroll'>
-<table>
+<table class='result-table'>
 	<thead>
 		<tr>
 			<th rowspan='2' style='width: 140px;'>年度</th>
@@ -108,7 +113,7 @@
 				</div>
 			</th>
 			<th class='own' colspan='4'>自己都合</th>
-			<th colspan='4'>定年・勧奨</th>
+			<th class='mandatory' colspan='4'>定年・勧奨</th>
 		</tr>
 		<tr>
 			<th class='own price'>
@@ -152,14 +157,14 @@
 					所得税と住民税を差し引いた金額です。<br />
 				</div>
 			</th>
-			<th class='price'>
+			<th class='mandatory price'>
 				<div class='question'>退職手当</div>
 				<div class='explain'>
 					基本的な計算式は、退職日の給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
-			<th class='tax'>
+			<th class='mandatory tax'>
 				<div class='question'>所得税</div>
 				<div class='explain'>
 					所得税計算式:<br />
@@ -181,13 +186,13 @@
 					ここでは復興特別所得税を合算した額を表示しています。
 				</div>
 			</th>
-			<th class='tax'>
+			<th class='mandatory tax'>
 				<div class='question'>住民税</div>
 				<div class='explain'>
 					住民税は、課税される所得金額（(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
 				</div>
 			</th>
-			<th class='price'>
+			<th class='mandatory price'>
 				<div class='question'>手取額</div>
 				<div class='explain'>
 					所得税と住民税を差し引いた金額です。<br />

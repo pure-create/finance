@@ -92,6 +92,21 @@ h2 {
 	margin: 28px 0 12px;
 }
 
+div.section-header {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+div.section-header h2 {
+	margin: 28px 0 12px;
+}
+span.result-disclaimer {
+	color: var(--color-muted);
+	font-size: 13px;
+	margin-bottom: 8px;
+}
+
 th, td {
 	border: 1px solid var(--color-border);
 	margin: 0;
@@ -107,6 +122,11 @@ th {
 th.own {
 	background: #bbf7d0;
 	color: #14532d;
+}
+
+th.mandatory {
+	background: #bfdbfe;
+	color: #1e3a8a;
 }
 
 th.tax {
@@ -195,6 +215,11 @@ span.warning {
 	font-size: 14px;
 	padding: 2px 8px;
 	border-radius: var(--radius-sm);
+}
+
+span.tyosei-hint {
+	color: var(--color-danger);
+	font-size: 12px;
 }
 
 input#tyosei_price {
@@ -389,9 +414,35 @@ span.share-qr svg {
 	height: 100%;
 }
 
+div.share-wrap {
+	position: relative;
+	display: inline-flex;
+}
+
 span.share-msg {
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-top: 8px;
+	z-index: 30;
+	padding: 6px 10px;
+	background: var(--color-text);
+	color: #fff;
 	font-size: 12px;
-	color: var(--color-success);
+	width: max-content;
+	max-width: 220px;
+	text-align: center;
+	border-radius: var(--radius-sm);
+	box-shadow: var(--shadow-md);
+	pointer-events: none;
+	opacity: 0;
+	transform: translate(-50%, -4px);
+	transition: opacity 0.5s ease, transform 0.5s ease;
+}
+span.share-msg.show {
+	opacity: 1;
+	transform: translate(-50%, 0);
 }
 
 div.explain {
