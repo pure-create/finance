@@ -47,7 +47,7 @@ const categories=[
     }
   });
   const tr=document.createElement('tr');tr.className='total-row';
-  let cells=`<td>20〜59歳 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td>`;
+  let cells=`<td>20代〜50代 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td>`;
   if(hasPrev)cells+=deltaCell(ta/tp*100, pta/ptp*100);
   cells+=`<td style="color:#888">${((tp-tn)/tp*100).toFixed(1)}%</td>`;
   tr.innerHTML=cells;
@@ -104,7 +104,7 @@ Chart.register(ChartDataLabels);
 let chart = null;
 
 function updateCenterLabel(age) {
-  const displayAge = age === '現役世代合計' ? '20〜50代' : age;
+  const displayAge = age === '現役世代合計' ? '20代〜50代' : age;
   document.getElementById('centerAge').textContent = displayAge;
 }
 
