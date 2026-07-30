@@ -194,9 +194,11 @@ function renderFamily() {
       </div>`;
   }
   if (state.nChildren < 6) {
+    // 子が多いとき、ラベル込みだと折り返して崩れるため＋アイコンのみにする
+    const compact = state.nChildren >= 4;
     // 追加ボタンと同幅のスペーサーで左右を釣り合わせ、子の中心を＝の真下に保つ
     html = `<span class="child-spacer" aria-hidden="true"></span>` + html
-      + `<button class="add-child" id="addChild"><span class="plus" aria-hidden="true">＋</span><span>子を追加</span></button>`;
+      + `<button class="add-child" id="addChild"${compact ? ' aria-label="子を追加" title="子を追加"' : ''}><span class="plus" aria-hidden="true">＋</span>${compact ? '' : '<span>子を追加</span>'}</button>`;
   }
   row.innerHTML = html;
   row.querySelectorAll('[data-del-child]').forEach(btn => {
