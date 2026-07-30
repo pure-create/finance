@@ -6,19 +6,32 @@
   .note a:hover { color: #185FA5; }
   .section-label { font-size: 12px; font-weight: 500; color: #555; margin: 1.5rem 0 0.4rem; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -1px; }
+  .table-scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -1px;
+    background-color: #fff;
+    background-image:
+      linear-gradient(to right, #fff 30%, rgba(255,255,255,0)),
+      linear-gradient(to left, #fff 30%, rgba(255,255,255,0)),
+      linear-gradient(to right, rgba(0,0,0,.15), rgba(0,0,0,0) 100%),
+      linear-gradient(to left, rgba(0,0,0,.15), rgba(0,0,0,0) 100%);
+    background-repeat: no-repeat;
+    background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
+    background-position: 0 0, 100% 0, 0 0, 100% 0;
+    background-attachment: local, local, scroll, scroll;
+  }
   .table-scroll table { min-width: 480px; }
   thead th { border-bottom: 1.5px solid #ccc; padding: 7px 6px; text-align: right; font-weight: 500; color: #555; white-space: nowrap; }
   thead th:first-child { text-align: left; }
   tbody td { padding: 6px 6px; border-bottom: 0.5px solid #e5e5e5; text-align: right; vertical-align: middle; }
   tbody td:first-child { text-align: left; }
   .total-row td { background: #f5f5f3; font-weight: 500; border-top: 1.5px solid #ccc; }
+  .total-row td:first-child { white-space: nowrap; }
   .ref-row td { background: #fafaf7; color: #777; border-top: 1px dashed #ccc; font-size: 12px; }
   .highlight-row td { background: #f0f4f9; }
   .pct { font-weight: 500; }
-  .cum { font-size: 11px; color: #888; display: block; }
-  .cum-note { font-size: 11px; color: #888; margin-top: 0.4rem; }
-  .ref-label { font-size: 11px; color: #aaa; margin-top: 1.2rem; padding-top: 0.3rem; border-top: 1px dashed #ddd; }
+  .cum { font-size: 11px; color: #767676; display: block; }
+  .cum-note { font-size: 11px; color: #767676; margin-top: 0.4rem; }
+  .ref-label { font-size: 11px; color: #767676; margin-top: 1.2rem; padding-top: 0.3rem; border-top: 1px dashed #ddd; }
 
   /* 円グラフセクション */
   .chart-section { margin-top: 2rem; padding: 1.4rem 1.6rem; background: #f9f9f7; border-radius: 8px; border: 1px solid #e5e5e0; }
@@ -118,7 +131,7 @@
     .chart-body { flex-direction: row; }
     .chart-legend-list { grid-template-columns: repeat(2, auto); }
 
-    .table-scroll { overflow: visible; margin: 0; }
+    .table-scroll { overflow: visible; margin: 0; background: none; }
     .table-scroll table { min-width: 0; }
     table { font-size: 9.5pt; }
     table, tr, .total-row, .ref-row { break-inside: avoid; }

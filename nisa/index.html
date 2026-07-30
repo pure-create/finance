@@ -14,16 +14,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>nisa</title>
 <style>
-  body { font-family: sans-serif; font-size: 16px; line-height: 1.8; padding: 1rem; }
-  a { font-size: 1.1em; }
+  body { font-family: sans-serif; font-size: 15px; line-height: 1.8; color: #222; background: #fff; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
+  .link-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
+  a { color: #378ADD; font-size: 1.05em; font-weight: 500; text-decoration: none; }
+  a:hover { color: #185FA5; text-decoration: underline; }
   .desc { color: #666; font-size: 0.9em; margin: 0 0 1.2rem; }
+  .qr { max-width: 160px; display: block; border: 1px solid #e5e5e5; border-radius: 4px; padding: 6px; }
 </style>
 </head>
 <body>
-<a href="nisa2025.html">NISA利用状況(2025年末)</a><br><a href="nisa2024.html">NISA利用状況(2024年末)</a>
+<div class="link-list">
+  <a href="nisa2025.html">NISA利用状況(2025年末)</a>
+  <a href="nisa2024.html">NISA利用状況(2024年末)</a>
+</div>
 <p class="desc">金融庁のNISA利用状況データと人口データから作成</p>
 
-<img src='../url.png'>
+<img class="qr" src="../url.png" alt="QRコード">
 <p class="desc">スマートフォンからのアクセスはこちらから行ってください</p>
 
 </body>
