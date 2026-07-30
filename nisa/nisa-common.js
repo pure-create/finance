@@ -19,7 +19,7 @@ const categories=[
   {label:'60万円超〜120万円以下', key:'120',color:'#C45E00'},
   {label:'0円超〜60万円以下',     key:'60', color:'#7D3C00'},
   {label:'0円（買付なし）',       key:'0',  color:'#D3D1C7'},
-  {label:'口座未開設',            key:'none',color:'#8C8A80'},
+  {label:'口座未開設',            key:'none',color:'#B4B2A9'},
 ];
 
 // ── テーブル描画 ──
