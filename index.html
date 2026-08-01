@@ -23,6 +23,7 @@
     --accent: #0b66c3;
     --accent-soft: #9db9d8;
     --tint: 6%;
+    --edge-asset: #0d9488;
     --edge-nisa: #16a34a;
     --edge-retire: #d97706;
     --edge-pension: #2563eb;
@@ -38,6 +39,7 @@
       --accent: #6db3f2;
       --accent-soft: #4a708f;
       --tint: 12%;
+      --edge-asset: #2dd4bf;
       --edge-nisa: #4ade80;
       --edge-retire: #fbbf24;
       --edge-pension: #60a5fa;
@@ -90,6 +92,7 @@
     .item { background: color-mix(in srgb, var(--edge, var(--card)) var(--tint), var(--card)); }
   }
 
+  .item-asset   { --edge: var(--edge-asset); }
   .item-nisa    { --edge: var(--edge-nisa); }
   .item-retire  { --edge: var(--edge-retire); }
   .item-pension { --edge: var(--edge-pension); }
@@ -152,6 +155,14 @@
     <h1>金融データ・計算ツール</h1>
     <img class="qr" src="url.png" width="64" height="64" alt="このサイトのURLのQRコード">
   </header>
+
+  <section class="item item-asset">
+    <h2>資産運用</h2>
+    <ul class="links">
+      <li><a href="assetSimulator/">資産運用シミュレーター</a></li>
+    </ul>
+    <p class="desc">積立と取り崩しをモンテカルロ法でシミュレーションし、将来の資産推移を試算</p>
+  </section>
 
   <section class="item item-nisa">
     <h2>NISA利用状況</h2>
