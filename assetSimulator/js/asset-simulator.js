@@ -350,23 +350,52 @@ function drawFan() {
 }
 
 /* ---------- ヒストグラム ---------- */
+
+// 100万・200万・500万・1000万… と切りのいい刻み幅（1・2・5 × 10^n）
+function niceWidth(raw) {
+	if (!(raw > 0)) return 1;
+	const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+	const n = raw / mag;
+	return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+}
+
+const HIST_TARGET_BINS = 34; // 刻み幅を丸めるので、実際の本数はこの半分〜同数になる
+
 function buildHistogram() {
 	const sim = state.sim;
 	const real = state.view === 'real';
 	const N = sim.years;
 	const f = real ? sim.realFactor(N) : 1;
+	// sim.finals は昇順。同じ数で割っても順序は変わらない
 	const vals = new Float64Array(sim.finals.length);
 	for (let i = 0; i < sim.finals.length; i++) vals[i] = sim.finals[i] / f;
-	// 極端な外れ値で潰れないよう上限は99パーセンタイル
-	const upper = Math.max(percentile(vals, 0.99), 1);
-	const bins = 34;
-	const width = upper / bins;
-	const counts = new Array(bins + 1).fill(0); // 最後は「上限より大きい」
-	for (let i = 0; i < vals.length; i++) {
-		const b = Math.min(bins, Math.floor(vals[i] / width));
-		counts[b]++;
+
+	// 資金が尽きた試行（0円）は左端の別の棒にまとめる。
+	// 2割を超えることも珍しくなく、他の棒と同じ目盛に載せると分布が潰れて読めないため
+	let zeroCount = 0;
+	while (zeroCount < vals.length && vals[zeroCount] <= 1e-6) zeroCount++;
+	const alive = vals.subarray(zeroCount);
+
+	// 右の裾が非常に長いので、中央値の3倍あたりで切って低い側を細かく刻む。
+	// 超えた分は最右の「〜以上」の棒にまとめる（裾が短い分布では95パーセンタイルまで）
+	let width, bins;
+	if (alive.length === 0) {
+		width = 100; bins = 1;
+	} else {
+		let center = percentile(vals, 0.5);
+		if (!(center > 0)) center = percentile(alive, 0.5);
+		const p95 = percentile(alive, 0.95);
+		let upper = center * 3;
+		if (!(upper > 0) || upper > p95) upper = p95;
+		if (!(upper > 0)) upper = alive[alive.length - 1];
+		if (!(upper > 0)) upper = 100;
+		width = niceWidth(upper / HIST_TARGET_BINS);
+		bins = Math.max(1, Math.ceil(upper / width));
 	}
-	return { counts: counts, width: width, bins: bins, vals: vals, upper: upper };
+	const counts = new Array(bins + 1).fill(0); // 最後は「上限以上」
+	for (let i = 0; i < alive.length; i++) counts[Math.min(bins, Math.floor(alive[i] / width))]++;
+
+	return { counts: counts, width: width, bins: bins, vals: vals, zeroCount: zeroCount, cutoff: bins * width };
 }
 
 function drawHist() {
@@ -376,20 +405,28 @@ function drawHist() {
 	const canvas = $('histChart');
 	const g = setupCanvas(canvas, window.innerWidth < 700 ? 190 : 230);
 	const ctx = g.ctx;
-	const padL = 52, padR = 16, padT = 14, padB = 34;
+	const padL = 52, padR = 16, padT = 24, padB = 34;
 	const plotW = Math.max(10, g.w - padL - padR);
 	const plotH = Math.max(10, g.h - padT - padB);
+
+	const nBars = h.counts.length;              // 金額のビン（最後は「〜以上」）
+	const hasZero = h.zeroCount > 0;            // 0円の棒を左端に置くか
+	const slots = nBars + (hasZero ? 1 : 0);
+	const slot = plotW / slots;
+	const x0 = padL + (hasZero ? slot : 0);     // 金額0の位置（ビンの左端）
+	const gap = 2.5; // 棒どうしの隙間
+	const barW = Math.min(48, Math.max(1, slot - gap));
+
+	// 度数の目盛。両端は「0円」「〜以上」をまとめた棒で突出しやすいので、
+	// 目盛は間のビンだけを基準にして、はみ出す棒は上端で断ち切る
 	let maxC = 0;
-	for (let i = 0; i < h.counts.length; i++) maxC = Math.max(maxC, h.counts[i]);
-	if (maxC <= 0) maxC = 1;
-
-	const nBars = h.counts.length;
-	const slot = plotW / nBars;
-	const gap = 2;
-	const barW = Math.min(24, Math.max(1, slot - gap));
-
-	// 度数の目盛
+	for (let i = 0; i < h.bins; i++) maxC = Math.max(maxC, h.counts[i]);
+	if (maxC <= 0) maxC = Math.max(1, h.zeroCount, h.counts[h.bins]);
 	const ticks = niceTicks(maxC, 4);
+	// niceTicks は最大値以下までしか刻まないので、一番高い棒が収まるまで伸ばす
+	while (ticks[ticks.length - 1] < maxC) {
+		ticks.push(ticks[ticks.length - 1] + (ticks.length > 1 ? ticks[1] - ticks[0] : Math.max(1, maxC)));
+	}
 	const topC = ticks[ticks.length - 1];
 	ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
 	ctx.fillStyle = css('--muted'); ctx.font = '11px system-ui, sans-serif';
@@ -400,14 +437,15 @@ function drawHist() {
 		ctx.fillText(pctText(ticks[i] / sim.trials), padL - 8, yy);
 	}
 
-	// 棒（先端だけ 4px の丸み）
-	ctx.fillStyle = css('--series-1');
-	for (let i = 0; i < nBars; i++) {
-		if (h.counts[i] === 0) continue;
-		const bh = (h.counts[i] / topC) * plotH;
-		const x = padL + i * slot + (slot - barW) / 2;
+	// 棒（先端だけ 4px の丸み）。目盛を超える棒は上端で断ち切り、割合を上に書く
+	function drawBar(cx, count, color) {
+		if (count <= 0) return;
+		const full = (count / topC) * plotH;
+		const cut = full > plotH + 0.5;
+		const bh = cut ? plotH : full;
+		const x = cx - barW / 2;
 		const y = padT + plotH - bh;
-		const r = Math.min(4, barW / 2, bh);
+		const r = cut ? 0 : Math.min(4, barW / 2, bh);
 		ctx.beginPath();
 		ctx.moveTo(x, padT + plotH);
 		ctx.lineTo(x, y + r);
@@ -416,12 +454,50 @@ function drawHist() {
 		ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
 		ctx.lineTo(x + barW, padT + plotH);
 		ctx.closePath();
+		// 中は薄く塗り、輪郭だけをはっきりした色で描く
+		ctx.globalAlpha = 0.4;
+		ctx.fillStyle = color;
 		ctx.fill();
+		ctx.globalAlpha = 1;
+		ctx.strokeStyle = color; ctx.lineWidth = 1;
+		ctx.stroke();
+		if (!cut) return;
+		// 断ち切りの印（背景色のギザギザ）と実際の割合
+		ctx.fillStyle = css('--surface-1');
+		ctx.beginPath();
+		ctx.moveTo(x, y + 8); ctx.lineTo(x + barW / 2, y + 5); ctx.lineTo(x + barW, y + 8);
+		ctx.lineTo(x + barW, y + 12); ctx.lineTo(x + barW / 2, y + 9); ctx.lineTo(x, y + 12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.fillStyle = color;
+		ctx.font = '600 11px system-ui, sans-serif';
+		ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+		ctx.fillText(pctText(count / sim.trials), cx, y - 3);
 	}
 
-	// 中央値の位置に注記
+	// まとめた棒（両端）と分布そのものの棒を、破線で区切って見分けられるようにする
+	function divider(x) {
+		ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+		ctx.setLineDash([3, 3]);
+		ctx.beginPath();
+		ctx.moveTo(Math.round(x) - 0.5, padT); ctx.lineTo(Math.round(x) - 0.5, padT + plotH);
+		ctx.stroke();
+		ctx.setLineDash([]);
+	}
+
+	// 0円（資金が尽きた）の棒を左端に置く
+	if (hasZero) {
+		drawBar(padL + slot / 2, h.zeroCount, css('--critical'));
+		divider(x0);
+	}
+	for (let i = 0; i < nBars; i++) drawBar(x0 + (i + 0.5) * slot, h.counts[i], css('--series-1'));
+	if (h.counts[h.bins] > 0) divider(x0 + h.bins * slot);
+
+	// 中央値の注記。目盛は棒の位置に合わせてあるので、線も中央値が入る棒の中心に引く
 	const med = percentile(h.vals, 0.5);
-	const mx = padL + Math.min(plotW, (med / h.upper) * plotW);
+	const mx = (med <= 1e-6 && hasZero)
+		? padL + slot / 2
+		: x0 + (Math.min(h.bins, Math.floor(med / h.width)) + 0.5) * slot;
 	ctx.strokeStyle = css('--text-primary'); ctx.lineWidth = 1.5;
 	ctx.beginPath(); ctx.moveTo(mx, padT); ctx.lineTo(mx, padT + plotH); ctx.stroke();
 	ctx.fillStyle = css('--text-primary');
@@ -437,15 +513,42 @@ function drawHist() {
 	ctx.stroke();
 	ctx.fillStyle = css('--muted'); ctx.font = '11px system-ui, sans-serif';
 	ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-	const xticks = niceTicks(h.upper, 5);
-	for (let i = 0; i < xticks.length; i++) {
-		if (xticks[i] > h.upper) continue;
-		ctx.fillText(axisMoney(xticks[i]), padL + (xticks[i] / h.upper) * plotW, padT + plotH + 7);
+	// 目盛は棒の真下に、その棒の上限の金額を置く（0〜500万の棒なら「500」）。
+	// 1・2・5・10本おきに間引くので、間隔も金額の刻みも一定になる
+	const every = niceWidth(Math.max(1, 52 / slot));
+	const tickBins = [];
+	for (let i = every - 1; i < h.bins; i += every) {
+		// 最後のビンの上限は「◯以上」の境目と同じ金額。重なるものは省く
+		if (i === h.bins - 1 || (h.bins - i) * slot < 46) continue;
+		tickBins.push(i);
+	}
+	const tickVals = tickBins.map(function (i) { return (i + 1) * h.width; }).concat([h.cutoff]);
+	// 億表示の小数桁は、丸めても値が変わらないところまで増やす（1.1億が並ぶのを防ぐ）
+	let digits = 0;
+	while (digits < 3 && tickVals.some(function (v) {
+		return v >= 10000 && Math.abs(v / 10000 - Number((v / 10000).toFixed(digits))) > 1e-9;
+	})) digits++;
+	const tickLabel = function (v) { return v >= 10000 ? (v / 10000).toFixed(digits) + '億' : axisMoney(v); };
+	for (let k = 0; k < tickBins.length; k++) {
+		ctx.fillText(tickLabel(tickVals[k]), x0 + (tickBins[k] + 0.5) * slot, padT + plotH + 7);
+	}
+	ctx.fillText(tickLabel(h.cutoff) + '〜', x0 + (h.bins + 0.5) * slot, padT + plotH + 7);
+	if (hasZero) {
+		ctx.fillStyle = css('--critical');
+		ctx.fillText('0円', padL + slot / 2, padT + plotH + 7);
+		ctx.fillStyle = css('--muted');
 	}
 	ctx.textAlign = 'right';
 	ctx.fillText('（' + (state.view === 'real' ? '実質' : '名目') + '／万円）', padL + plotW, padT + plotH + 20);
 
-	state.histGeom = { padL: padL, padT: padT, plotW: plotW, plotH: plotH, slot: slot, nBars: nBars };
+	state.histGeom = { padL: padL, padT: padT, plotW: plotW, plotH: plotH, slot: slot, slots: slots, hasZero: hasZero };
+
+	// 刻み幅と上限は分布に合わせて変わるので、説明も一緒に書き換える
+	$('histSub').textContent = state.cfg.ageEnd + '歳時点の資産の分布。棒1本が ' + money(h.width) +
+		'ごと（目盛はその棒の上限）。' +
+		(hasZero ? '左端は資金が尽きた（0円の）試行、' : '') +
+		'右端は ' + money(h.cutoff) + ' 以上をまとめた棒です。' +
+		(state.ms !== undefined ? '計算 ' + state.ms.toFixed(0) + 'ms。' : '');
 }
 
 /* ---------- ホバー ---------- */
@@ -500,15 +603,23 @@ function setupHover() {
 		if (!geo || !h || !sim) return;
 		const rect = histCanvas.getBoundingClientRect();
 		const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
-		const i = Math.floor((mx - geo.padL) / geo.slot);
-		if (i < 0 || i >= geo.nBars || my > geo.padT + geo.plotH + 6) { histTip.style.opacity = 0; return; }
-		const lo = i * h.width, hi = (i + 1) * h.width;
-		const label = i === h.bins ? money(lo) + ' 以上' : money(lo) + ' 〜 ' + money(hi);
-		histTip.innerHTML = '<div class="tt-title">' + label + '</div><table><tr><td>試行</td><td>' + comma(h.counts[i]) + '回</td></tr>' +
-			'<tr><td>割合</td><td>' + pctText(h.counts[i] / sim.trials) + '</td></tr></table>';
+		const j = Math.floor((mx - geo.padL) / geo.slot);
+		if (j < 0 || j >= geo.slots || my > geo.padT + geo.plotH + 6) { histTip.style.opacity = 0; return; }
+		// 左端に 0円 の棒がある場合、その1枠ぶんだけビン番号がずれる
+		const i = geo.hasZero ? j - 1 : j;
+		let label, count;
+		if (i < 0) {
+			label = '0円（資金が尽きた）'; count = h.zeroCount;
+		} else {
+			const lo = i * h.width, hi = (i + 1) * h.width;
+			label = i === h.bins ? money(lo) + ' 以上' : money(lo) + ' 〜 ' + money(hi);
+			count = h.counts[i];
+		}
+		histTip.innerHTML = '<div class="tt-title">' + label + '</div><table><tr><td>試行</td><td>' + comma(count) + '回</td></tr>' +
+			'<tr><td>割合</td><td>' + pctText(count / sim.trials) + '</td></tr></table>';
 		histTip.style.opacity = 1;
 		const tw = histTip.offsetWidth;
-		let left = geo.padL + i * geo.slot + geo.slot / 2 - tw / 2;
+		let left = geo.padL + j * geo.slot + geo.slot / 2 - tw / 2;
 		left = Math.max(0, Math.min(histCanvas.clientWidth - tw, left));
 		histTip.style.left = left + 'px';
 		histTip.style.top = Math.max(0, my - histTip.offsetHeight - 12) + 'px';
@@ -666,7 +777,7 @@ function run() {
 	const sim = state.sim;
 	$('fanSub').textContent = comma(sim.trials) + '回の試行、' + cfg.ageNow + '歳から' + cfg.ageEnd + '歳まで' + sim.years + '年間。金額は' +
 		(state.view === 'real' ? '実質（現在の物価）' : '名目') + '。';
-	$('histSub').textContent = cfg.ageEnd + '歳時点の資産の分布（上位1%は最右の棒にまとめています）。計算 ' + ms.toFixed(0) + 'ms。';
+	state.ms = ms;
 
 	renderTiles();
 	drawFan();
@@ -744,6 +855,23 @@ window.addEventListener('DOMContentLoaded', function () {
 		const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		const next = cur ? (cur === 'dark' ? 'light' : 'dark') : (dark ? 'light' : 'dark');
 		document.documentElement.setAttribute('data-theme', next);
+		redrawOnly();
+	});
+
+	// 印刷は白地に固定する。canvas は CSS 変数の変更に追従しないので描き直す
+	let printPrevTheme = null, printing = false;
+	window.addEventListener('beforeprint', function () {
+		if (printing) return;
+		printing = true;
+		printPrevTheme = document.documentElement.getAttribute('data-theme');
+		document.documentElement.setAttribute('data-theme', 'light');
+		redrawOnly();
+	});
+	window.addEventListener('afterprint', function () {
+		if (!printing) return;
+		printing = false;
+		if (printPrevTheme === null) document.documentElement.removeAttribute('data-theme');
+		else document.documentElement.setAttribute('data-theme', printPrevTheme);
 		redrawOnly();
 	});
 
