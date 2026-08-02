@@ -14,7 +14,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>資産運用シミュレーター（積立・取り崩し／モンテカルロ）</title>
 <script src="./js/qrcode.js?v=20260801a"></script>
-<link rel="stylesheet" href="./css/main.css?v=20260802a">
+<link rel="stylesheet" href="./css/main.css?v=20260802b">
 </head>
 <body>
 
@@ -46,6 +46,14 @@
 	<h2>キャッシュフロー</h2>
 	<div class="row"><label for="assetNow">現在の運用資産</label><input type="number" id="assetNow" value="1000" min="0" max="200000" step="50"><span class="unit">万円</span></div>
 	<div class="row"><label for="contribution">年間積立額</label><input type="number" id="contribution" value="120" min="0" max="10000" step="6"><span class="unit">万円</span></div>
+	<div class="row"><label for="lumpSum">退職金（手取り）</label><input type="number" id="lumpSum" value="0" min="0" max="50000" step="100"><span class="unit">万円</span></div>
+	<div class="row sub-row"><label for="lumpAge">└ 受け取る年齢</label><input type="number" id="lumpAge" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
+	<div class="row sub-row"><label for="lumpBase">└ 金額の扱い</label><select id="lumpBase">
+		<option value="nominal">名目のまま</option>
+		<option value="real">現在の物価</option>
+	</select></div>
+	<p class="hint">税引後の手取額を入力します。退職金の元になる給料月額は物価に連動して上がるとは限らず、退職所得控除も名目で固定された金額のため、初期値は<strong>名目のまま</strong>（物価が上がっても増えない）にしています。給与水準が物価に合わせて上がると見込むなら「現在の物価」に切り替えてください。</p>
+	<div id="lumpNotes"></div>
 	<div class="row"><label for="wdMode">取り崩し方式</label><select id="wdMode">
 		<option value="fixed">定額（実質）</option>
 		<option value="rate">定率（残高の％）</option>
@@ -69,6 +77,8 @@
 	<div class="row"><label for="allocBond">債券</label><input type="number" id="allocBond" value="25" min="0" max="100" step="5"><span class="unit">%</span></div>
 	<div class="row"><label for="allocCash">現金</label><input type="number" id="allocCash" value="5" min="0" max="100" step="5"><span class="unit">%</span></div>
 	<p class="hint">合計 <span id="allocSum">100</span>%　/　期待リターン <span id="portRet">–</span>％・リスク <span id="portRisk">–</span>％（年率・コスト控除前）</p>
+	<div id="allocNotes"></div>
+	<button type="button" id="allocFix" class="fix-btn" hidden>合計を100%に揃える</button>
 	<div class="row"><label for="fee">信託報酬など</label><input type="number" id="fee" value="0.15" min="0" max="5" step="0.05"><span class="unit">%/年</span></div>
 
 	<details class="sub">
@@ -156,6 +166,7 @@
 			<ul>
 				<li>各資産クラスの年次リターンは対数正規分布に従い、指定した相関で同時に発生させています（幾何ブラウン運動の年次離散版）。入力した期待リターンは<strong>算術平均</strong>として扱います。</li>
 				<li>キャッシュフロー（積立・取り崩し）は年初、運用リターンはその後の1年間に適用します。毎年末に指定した配分へリバランスします。</li>
+				<li>退職金は税引後の手取額を入力し、受け取る年齢の年初に、その年の取り崩しより先に全額を課税口座（簿価＝時価）へ加えます。初期値の「名目のまま」では入力額をそのままの金額として扱うため、物価が上がるほど実質的な価値は下がります。退職手当は退職時の給料月額と支給率で決まり、その給料月額は物価に連動して上がるとは限らないこと、退職所得控除（40万円・70万円×勤続年数）が名目で固定されていることから、こちらを初期値にしています。「現在の物価」を選ぶと、他の金額欄と同じくインフレ率で増額します。</li>
 				<li>取り崩し期は、生活費から収入を差し引いた不足分だけを資産から取り崩します。給与などは指定した年齢になるまで（65歳までなら64歳の1年間まで）、年金などは指定した年齢になった年から受け取るものとして扱います。取り崩し開始から年金開始までの空白期間や、取り崩し開始後も続く再雇用の収入は、この2つを別々に設定して表せます。定率方式では残高の一定率を取り崩すため、収入は結果に影響しません。</li>
 				<li>積立はNISA枠を優先し、枠を超えた分と現在の資産は課税口座として簿価を追跡します。取り崩しは課税口座を先に取り崩し、売却額のうち含み益に相当する部分へ課税します（現在の資産は簿価＝時価、つまり含み益ゼロとして開始）。</li>
 				<li>「運用しなかった場合」は、リターンをまったく得られなかった場合の残高（元本の推移）です。</li>
@@ -170,6 +181,6 @@
 </div>
 
 <script src="./js/asset-core.js?v=20260801a"></script>
-<script src="./js/asset-simulator.js?v=20260802a"></script>
+<script src="./js/asset-simulator.js?v=20260802b"></script>
 </body>
 </html>

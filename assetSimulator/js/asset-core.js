@@ -80,6 +80,23 @@ function incomeAt(cfg, startAge) {
 }
 
 /**
+ * その年（年齢 startAge から1年間）の年初に受け取る一時金。単位は万円・名目。
+ * 退職金は受け取る年齢の年初に一度だけ、全額が入る。
+ *
+ * lumpBase が 'real' のときだけ、入力額を現在の物価とみなして物価倍率 f で増額する。
+ * 既定の 'nominal' は受け取る額そのままで、物価が上がっても増えない。
+ * 退職手当は「退職時の給料月額 × 支給率」で決まり、その給料月額は物価に連動しないうえ、
+ * 退職所得控除も名目で固定された金額なので、名目のまま扱うほうが実態に近い。
+ */
+function lumpAt(cfg, startAge, f) {
+	const amount = cfg.lumpSum || 0;
+	if (!(amount > 0)) return 0;
+	const age = isFinite(cfg.lumpAge) ? Math.round(cfg.lumpAge) : cfg.ageRetire;
+	if (startAge !== age) return 0;
+	return cfg.lumpBase === 'real' ? amount * f : amount;
+}
+
+/**
  * 積立期→取り崩し期を通したモンテカルロ試算。
  * すべて名目（将来の金額）で計算し、実質への換算は表示側で行う。
  */
@@ -126,6 +143,12 @@ function simulate(cfg) {
 		for (let y = 1; y <= N; y++) {
 			const startAge = cfg.ageNow + y - 1;
 			const f = Math.pow(1 + infl, y - 1); // 年初時点の物価倍率
+
+			// 退職金は年初に課税口座へ入れる。取り崩しより先に足さないと、
+			// 受け取る年と取り崩し開始が重なったときに資金切れを誤判定する。
+			// 簿価も同額増やして、元本の部分に課税されないようにする
+			const lump = lumpAt(cfg, startAge, f);
+			if (lump > 0) { taxable += lump; basis += lump; }
 
 			if (startAge < cfg.ageRetire) {
 				// --- 積立期 ---
@@ -233,6 +256,7 @@ function simulate(cfg) {
 		for (let y = 1; y <= N; y++) {
 			const startAge = cfg.ageNow + y - 1;
 			const f = Math.pow(1 + infl, y - 1);
+			p += lumpAt(cfg, startAge, f);
 			if (startAge < cfg.ageRetire) {
 				p += cfg.contribution * f;
 			} else if (cfg.wdMode === 'fixed') {
@@ -277,5 +301,5 @@ function portfolioStats(alloc, ret, risk, corr) {
 
 /* ノードから読み込んだときに計算部分を公開する（テスト用） */
 if (typeof module !== 'undefined' && module.exports) {
-	module.exports = { simulate: simulate, portfolioStats: portfolioStats, percentile: percentile, logParams: logParams, cholesky3: cholesky3, mulberry32: mulberry32, makeNormal: makeNormal, incomeAt: incomeAt };
+	module.exports = { simulate: simulate, portfolioStats: portfolioStats, percentile: percentile, logParams: logParams, cholesky3: cholesky3, mulberry32: mulberry32, makeNormal: makeNormal, incomeAt: incomeAt, lumpAt: lumpAt };
 }

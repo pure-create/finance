@@ -9,6 +9,7 @@ const $ = function (id) { return document.getElementById(id); };
 const FIELDS = [
 	['ageNow', 40, 'a'], ['ageRetire', 65, 'ar'], ['ageEnd', 95, 'ae'],
 	['assetNow', 1000, 'as'], ['contribution', 120, 'ct'],
+	['lumpSum', 0, 'lp'], ['lumpAge', 65, 'la'], ['lumpBase', 'nominal', 'lm'],
 	['wdMode', 'fixed', 'wm'], ['withdraw', 360, 'wd'], ['wdRate', 4.0, 'wr'],
 	['salary', 0, 'sl'], ['salaryUntil', 65, 'su'], ['pension', 180, 'pn'], ['pensionFrom', 65, 'pf'],
 	['allocStock', 70, 'ls'], ['allocBond', 25, 'lb'], ['allocCash', 5, 'lc'], ['fee', 0.15, 'fe'],
@@ -31,6 +32,9 @@ function readConfig() {
 		ageEnd: Math.round(num('ageEnd')),
 		assetNow: num('assetNow'),
 		contribution: num('contribution'),
+		lumpSum: num('lumpSum'),
+		lumpAge: Math.round(num('lumpAge')),
+		lumpBase: $('lumpBase').value,
 		wdMode: $('wdMode').value,
 		withdraw: num('withdraw'),
 		wdRate: num('wdRate'),
@@ -194,6 +198,85 @@ function axisMoney(v) {
 	return comma(v);
 }
 function pctText(v) { return (v * 100).toFixed(1) + '%'; }
+
+/* ---------- 数字のカウントアップ ---------- */
+/* 条件を変えたときに結果が瞬時に飛ぶと、どの数字がどれだけ動いたか分かりにくい。
+   0.5秒かけて動かす。key ごとに「いま画面に出ている値」を覚えておくので、
+   途中でさらに条件が変わっても、その位置から続けて動く */
+const NUM_ANIM_MS = 500;
+const numShown = {}; // key -> 現在表示している数値
+const numAnims = {}; // key -> 実行中のアニメーション
+let numRaf = null;
+
+const NUM_FMT = {
+	money: money,
+	comma: comma,
+	fixed1: function (v) { return v.toFixed(1); },
+	fixed2: function (v) { return v.toFixed(2); },
+	int: function (v) { return String(Math.round(v)); }
+};
+
+function reducedMotion() {
+	return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// タイルのHTMLに埋め込む数字。作った時点では最終値を書いておき、
+// DOMに入れたあと startNumAnims() で前の値から動かし直す
+function numSpan(key, value, fmt) {
+	return '<span data-num-key="' + key + '" data-num-to="' + value + '" data-num-fmt="' + fmt + '">' +
+		NUM_FMT[fmt](value) + '</span>';
+}
+
+// 値が出せないとき（「—」表示など）。次に現れたときは動かさず、その値から始める
+function resetNum(key) { delete numAnims[key]; delete numShown[key]; }
+
+function animateNum(el) {
+	const key = el.dataset.numKey;
+	const to = parseFloat(el.dataset.numTo);
+	const fmt = NUM_FMT[el.dataset.numFmt] || comma;
+	const from = numShown[key];
+	if (!isFinite(to)) { resetNum(key); return; }
+	// 初回表示・値が同じ・動きを減らす設定のときは、動かさずそのまま出す
+	if (from === undefined || !isFinite(from) || from === to || reducedMotion()) {
+		delete numAnims[key];
+		numShown[key] = to;
+		el.textContent = fmt(to);
+		return;
+	}
+	numAnims[key] = { el: el, from: from, to: to, fmt: fmt, t0: performance.now() };
+	el.textContent = fmt(from);
+	if (numRaf === null) numRaf = requestAnimationFrame(numTick);
+}
+
+function numTick(now) {
+	let active = false;
+	for (const key in numAnims) {
+		const a = numAnims[key];
+		// タイルを作り直して消えた要素は追いかけない
+		if (!a.el.isConnected) { delete numAnims[key]; continue; }
+		const p = Math.min(1, (now - a.t0) / NUM_ANIM_MS);
+		const e = 1 - Math.pow(1 - p, 3); // 終わりに向かって減速
+		const v = a.from + (a.to - a.from) * e;
+		numShown[key] = v;
+		a.el.textContent = a.fmt(v);
+		if (p >= 1) { numShown[key] = a.to; delete numAnims[key]; }
+		else active = true;
+	}
+	numRaf = active ? requestAnimationFrame(numTick) : null;
+}
+
+function startNumAnims(root) {
+	const els = root.querySelectorAll('[data-num-key]');
+	for (let i = 0; i < els.length; i++) animateNum(els[i]);
+}
+
+// 作り直さない既存の要素の数字を動かす
+function setNumEl(el, key, value, fmt) {
+	el.dataset.numKey = key;
+	el.dataset.numTo = value;
+	el.dataset.numFmt = fmt;
+	animateNum(el);
+}
 
 function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
@@ -641,27 +724,29 @@ function renderTiles() {
 	const tiles = [];
 	if (cfg.wdMode === 'fixed') {
 		tiles.push('<div class="tile hero"><div class="label">' + cfg.ageEnd + '歳まで資金が尽きない確率</div>' +
-			'<div class="value" style="color:' + color + '">' + (rate * 100).toFixed(1) + '<span style="font-size:24px">%</span></div>' +
+			'<div class="value" style="color:' + color + '">' + numSpan('rate', rate * 100, 'fixed1') + '<span style="font-size:24px">%</span></div>' +
 			'<div class="sub"><span class="status-dot" style="background:' + color + '"></span>' + word +
 			'　（' + comma(sim.trials) + '回中 ' + comma(Math.round((1 - rate) * sim.trials)) + '回が不足）</div></div>');
 	} else {
 		tiles.push('<div class="tile hero"><div class="label">最終年の取り崩し額（実質・中央値）</div>' +
-			'<div class="value">' + comma(sim.medianFinalWithdrawReal) + '<span style="font-size:20px">万円</span></div>' +
+			'<div class="value">' + numSpan('wdFinal', sim.medianFinalWithdrawReal, 'comma') + '<span style="font-size:20px">万円</span></div>' +
 			'<div class="sub">定率方式では資金は理論上尽きませんが、金額が変動します</div></div>');
 	}
 	tiles.push('<div class="tile"><div class="label">' + cfg.ageEnd + '歳時点の資産（中央値）</div>' +
-		'<div class="value">' + money(s.p50 / f) + '</div><div class="sub">' + (real ? '実質・現在の物価' : '名目') + '</div></div>');
+		'<div class="value">' + numSpan('p50', s.p50 / f, 'money') + '</div><div class="sub">' + (real ? '実質・現在の物価' : '名目') + '</div></div>');
 	tiles.push('<div class="tile"><div class="label">同・下位5%（悪いケース）</div>' +
-		'<div class="value">' + money(s.p05 / f) + '</div><div class="sub">20回に1回はこれ以下</div></div>');
+		'<div class="value">' + numSpan('p05', s.p05 / f, 'money') + '</div><div class="sub">20回に1回はこれ以下</div></div>');
 	tiles.push('<div class="tile"><div class="label">同・上位5%（良いケース）</div>' +
-		'<div class="value">' + money(s.p95 / f) + '</div><div class="sub">20回に1回はこれ以上</div></div>');
+		'<div class="value">' + numSpan('p95', s.p95 / f, 'money') + '</div><div class="sub">20回に1回はこれ以上</div></div>');
 	if (cfg.wdMode === 'fixed') {
 		const dep = sim.medianDepletionAge;
+		if (dep === null) resetNum('depAge');
 		tiles.push('<div class="tile"><div class="label">資金が尽きる年齢（中央値）</div>' +
-			'<div class="value">' + (dep === null ? '—' : Math.round(dep) + '<span style="font-size:18px">歳</span>') + '</div>' +
+			'<div class="value">' + (dep === null ? '—' : numSpan('depAge', dep, 'int') + '<span style="font-size:18px">歳</span>') + '</div>' +
 			'<div class="sub">' + (dep === null ? '尽きた試行はありません' : '尽きた ' + comma(sim.depletionAges.length) + '回のうちの中央値') + '</div></div>');
 	}
 	$('tiles').innerHTML = tiles.join('');
+	startNumAnims($('tiles'));
 }
 
 function renderTable() {
@@ -701,6 +786,71 @@ function validate(cfg) {
 	if (cfg.ageEnd - cfg.ageNow > 90) return 'シミュレーション期間が長すぎます（90年以内にしてください）。';
 	if (cfg.alloc[0] + cfg.alloc[1] + cfg.alloc[2] <= 0) return '資産配分を1つ以上入力してください。';
 	return null;
+}
+
+const ALLOC_IDS = ['allocStock', 'allocBond', 'allocCash'];
+const ALLOC_NAMES = ['株式', '債券', '現金'];
+
+/* 配分の合計が100%でないときの注記。
+   計算は合計で割って比率に直しているので結果は間違っていないが、
+   そのままだと「105%ぶん投資した」と読めてしまうため、何を計算したかを書き出す */
+function renderAllocNote(alloc, sum) {
+	const off = sum > 0 && Math.abs(sum - 100) > 0.01;
+	$('allocFix').hidden = !off;
+	if (!off) { $('allocNotes').innerHTML = ''; return; }
+	const raw = [], norm = [];
+	for (let i = 0; i < 3; i++) {
+		raw.push(ALLOC_NAMES[i] + ' ' + (Math.round(alloc[i] * 10) / 10));
+		norm.push(ALLOC_NAMES[i] + ' ' + (alloc[i] / sum * 100).toFixed(1) + '%');
+	}
+	$('allocNotes').innerHTML = '<p class="hint alloc-note"><strong>合計が ' + (Math.round(sum * 10) / 10) + '% です。</strong>' +
+		raw.join(' : ') + ' の比率とみなして計算しています（' + norm.join(' / ') + '）。</p>';
+}
+
+// 比率を保ったまま合計をちょうど100%にする
+function normalizeAlloc() {
+	const v = ALLOC_IDS.map(num);
+	const sum = v[0] + v[1] + v[2];
+	if (!(sum > 0)) return;
+	// 0.1%刻みに丸め、丸めの端数は一番大きい資産に寄せて合計を100%ちょうどにする
+	const p = v.map(function (x) { return Math.round(x / sum * 1000) / 10; });
+	let big = 0;
+	for (let i = 1; i < 3; i++) if (p[i] > p[big]) big = i;
+	p[big] = Math.round((p[big] + 100 - (p[0] + p[1] + p[2])) * 10) / 10;
+	for (let i = 0; i < 3; i++) $(ALLOC_IDS[i]).value = String(p[i]);
+	run();
+}
+
+/* 退職金の下の注意書き。効かない入力と、受け取る年にいくらとして扱うかを知らせる */
+function renderLumpNote(cfg) {
+	const notes = [];
+	if (cfg.lumpSum > 0) {
+		if (cfg.lumpAge < cfg.ageNow) {
+			// すでに受け取っているなら「現在の運用資産」に含まれているはず
+			notes.push(['ignored', '受け取る年齢（' + cfg.lumpAge + '歳）が現在の年齢より前のため、計算に影響しません。' +
+				'受け取り済みの分は「現在の運用資産」に含めてください。']);
+		} else if (cfg.lumpAge >= cfg.ageEnd) {
+			notes.push(['ignored', '受け取る前にシミュレーションが終わる（' + cfg.ageEnd +
+				'歳まで）ため、計算に影響しません。']);
+		} else {
+			// 名目と実質は長期では大きく食い違うので、選んでいない側の金額も必ず見せる
+			const real = cfg.lumpBase === 'real';
+			const factor = Math.pow(1 + cfg.inflation / 100, cfg.lumpAge - cfg.ageNow);
+			const other = real ? cfg.lumpSum * factor : cfg.lumpSum / factor;
+			let text = money(cfg.lumpSum) + (real ? '（現在の物価）' : '') + 'を' + cfg.lumpAge +
+				'歳の年初に受け取り、全額を課税口座で運用します。';
+			if (Math.abs(other - cfg.lumpSum) / Math.max(1, cfg.lumpSum) > 0.005) {
+				text += 'インフレ' + cfg.inflation + '%が続くと、' +
+					(real ? '受け取る年の金額では ' + money(other) + ' になります。'
+						: '現在の物価では ' + money(other) + ' の価値になります。');
+			}
+			notes.push(['info', text]);
+		}
+	}
+	$('lumpNotes').innerHTML = notes.map(function (n) {
+		return n[0] === 'info' ? '<p class="hint">' + n[1] + '</p>'
+			: '<p class="hint side-note ignored">' + n[1] + '</p>';
+	}).join('');
 }
 
 /* 収入欄の下の注意書き。取り崩し期に効かない入力と、収入が途切れる期間を知らせる */
@@ -749,9 +899,10 @@ function run() {
 	const sum = cfg.alloc[0] + cfg.alloc[1] + cfg.alloc[2];
 	$('allocSum').textContent = Math.round(sum * 10) / 10;
 	$('allocSum').className = Math.abs(sum - 100) > 0.01 ? 'warn' : '';
+	renderAllocNote(cfg.alloc, sum);
 	const ps = portfolioStats(cfg.alloc, cfg.ret, cfg.risk, cfg.corr);
-	$('portRet').textContent = ps.ret.toFixed(2);
-	$('portRisk').textContent = ps.risk.toFixed(2);
+	setNumEl($('portRet'), 'portRet', ps.ret, 'fixed2');
+	setNumEl($('portRisk'), 'portRisk', ps.risk, 'fixed2');
 
 	// 方式に応じて入力欄を出し分け
 	$('rowWithdraw').style.display = cfg.wdMode === 'fixed' ? '' : 'none';
@@ -760,6 +911,7 @@ function run() {
 	$('incomeSection').style.display = cfg.wdMode === 'fixed' ? '' : 'none';
 	$('rowNisaUsed').style.display = cfg.nisaOn ? '' : 'none';
 	$('legendPaths').style.display = $('showPaths').checked ? '' : 'none';
+	renderLumpNote(cfg);
 	renderIncomeNotes(cfg);
 
 	persistAndShare();
@@ -821,6 +973,7 @@ window.addEventListener('DOMContentLoaded', function () {
 		inputs[i].addEventListener('change', onFieldChange);
 	}
 	$('allYears').addEventListener('change', renderTable);
+	$('allocFix').addEventListener('click', normalizeAlloc);
 
 	$('resetBtn').addEventListener('click', function () {
 		applyDefaults();
