@@ -128,16 +128,24 @@
 
 	/* ===== 印刷時は強制的にライト =====
 	   canvas は CSS 変数の変更に追従しないので、描き直しのために notify する。
-	   トランジションは挟まない（印刷が始まるまでに間に合わないため）。 */
+	   トランジションは挟まない（印刷が始まるまでに間に合わないため）。
+
+	   あわせて <html> に .printing を付けて、レイアウトを紙の幅に合わせる。
+	   @media print は印刷レイアウトが確定してからしか効かず、beforeprint の
+	   時点ではまだ画面の幅のままになる。スマートフォンのように画面が狭い端末では
+	   canvas がその狭い幅で描かれ、紙に載せるときに引き伸ばされて
+	   グラフの文字や線だけが太く大きくなってしまうため、先回りして幅を変える。 */
 	global.addEventListener('beforeprint', function () {
 		if (printPrevMode !== null) return;
 		printPrevMode = mode;
 		clearAnimTimers();
+		root.classList.add('printing');
 		applyAttribute('light');
 		notify();
 	});
 	global.addEventListener('afterprint', function () {
 		if (printPrevMode === null) return;
+		root.classList.remove('printing');
 		applyAttribute(printPrevMode);
 		printPrevMode = null;
 		notify();
