@@ -1,105 +1,94 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BJ9WKQKN9V"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-BJ9WKQKN9V');
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="年金受給開始年齢（60〜75歳）ごとの累積受取総額を、運用利回りと投資期間終了年齢を変えながら比較できるシミュレーター。">
 <title>年金受給開始年齢 損益分岐点</title>
+<script src="common/analytics.js?v=20260805a" async></script>
+<script src="common/theme.js?v=20260805a"></script>
+<link rel="stylesheet" href="common/theme.css?v=20260805a">
+<link rel="stylesheet" href="common/site.css?v=20260805f">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="common/qrcode.js?v=20260805a"></script>
+<script src="common/share.js?v=20260805d"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',sans-serif;
-  background:#eef2f7;color:#1e293b;padding:16px;min-height:100vh;
+/* 地の色・文字・枠線などは common/theme.css の共通トークンを使う。
+   ここで持つのは受給開始年齢ごとの識別色だけ。本文で「65歳開始（緑色）」と
+   呼んでいるので、ダークでも色味は変えず明度だけ上げる。 */
+:root{
+  --sc-60:#2563eb; --sc-60-bg:#eff6ff;
+  --sc-65:#059669; --sc-65-bg:#ecfdf5;
+  --sc-70:#d97706; --sc-70-bg:#fffbeb;
+  --sc-75:#dc2626; --sc-75-bg:#fef2f2;
+  --switch-thumb:#ffffff; /* 色のついた面に載るのでテーマで変えない */
 }
-.wrap{max-width:840px;margin:0 auto}
-h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
-.sub{font-size:11px;color:#64748b;margin-bottom:14px}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+/* ダーク側。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
+@media(prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){
+    --sc-60:#60a5fa; --sc-60-bg:#152238;
+    --sc-65:#34d399; --sc-65-bg:#0f2a20;
+    --sc-70:#fbbf24; --sc-70-bg:#2e2408;
+    --sc-75:#f87171; --sc-75-bg:#301617;
+  }
+}
+:root[data-theme="dark"]{
+  --sc-60:#60a5fa; --sc-60-bg:#152238;
+  --sc-65:#34d399; --sc-65-bg:#0f2a20;
+  --sc-70:#fbbf24; --sc-70-bg:#2e2408;
+  --sc-75:#f87171; --sc-75-bg:#301617;
+}
 
-/* Header row with share button */
-.head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
-.head-row .sub{margin-bottom:0}
-.share-btn{
-  position:relative;border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:11px;font-weight:600;
-  border-radius:7px;padding:5px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;
-}
-.share-btn:hover{border-color:#1d4ed8;color:#1d4ed8}
-.share-btn .tipbox{
-  position:absolute;top:calc(100% + 8px);right:-4px;left:auto;width:260px;max-width:74vw;
-  background:#fff;color:#1e293b;font-size:12px;font-weight:400;line-height:1.7;
-  border:1px solid #e2e8f0;
-  padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
-  visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
-  box-shadow:0 4px 16px rgba(0,0,0,.14);
-}
-.share-btn .tipbox::before{
-  content:'';position:absolute;bottom:100%;right:18px;left:auto;
-  border:6px solid transparent;border-bottom-color:#fff;
-}
-.share-btn:hover .tipbox,.share-btn:focus-visible .tipbox{visibility:visible;opacity:1}
-@media(max-width:600px){
-  .head-row{flex-direction:column;align-items:flex-start}
+*,*::before,*::after{margin:0;padding:0}
+body{padding:16px;min-height:100vh}
+.wrap{max-width:840px;margin:0 auto}
+.page-head h1{font-size:17px;letter-spacing:-.02em}
+.page-head .sub{font-size:11px}
+.card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+
+/* 共有ボタン・QRコードの基本形は common/site.css にある。
+   ここではこのページの文字サイズだけを調整する */
+.share-btn{font-size:11px;font-weight:600;min-height:0;padding:5px 10px;white-space:nowrap}
+@media screen and (max-width:600px){
   .share-btn{white-space:normal}
-  .share-btn .tipbox{right:auto;left:0}
-  .share-btn .tipbox::before{right:auto;left:14px}
 }
 
 /* Controls */
 .controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:540px){.controls{grid-template-columns:1fr}}
-.ctrl label{font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:7px}
+@media screen and (max-width:540px){.controls{grid-template-columns:1fr}}
+.ctrl label{font-size:11px;font-weight:600;color:var(--text-sub);display:block;margin-bottom:7px}
 .ctrl-head{display:flex;align-items:center;gap:14px;margin-bottom:7px}
 .ctrl-head label{margin-bottom:0}
 
 /* Help tooltip icon */
 .help{
   position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:15px;height:15px;border-radius:50%;border:1px solid #94a3b8;background:#fff;
-  color:#64748b;font-size:10px;font-weight:700;cursor:help;flex-shrink:0;vertical-align:middle;margin-left:5px;
+  width:15px;height:15px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
+  color:var(--muted);font-size:10px;font-weight:700;cursor:help;flex-shrink:0;vertical-align:middle;margin-left:5px;
 }
-.help:hover,.help:focus-visible{border-color:#1d4ed8;color:#1d4ed8}
-.help .tipbox{
-  position:absolute;top:calc(100% + 8px);left:-12px;width:260px;max-width:74vw;
-  background:#fff;color:#1e293b;font-size:12px;font-weight:400;line-height:1.7;
-  border:1px solid #e2e8f0;
-  padding:10px 12px;border-radius:8px;text-align:left;white-space:normal;
-  visibility:hidden;opacity:0;transition:opacity .15s;z-index:10;pointer-events:none;
-  box-shadow:0 4px 16px rgba(0,0,0,.14);
-}
-.help .tipbox::before{
-  content:'';position:absolute;bottom:100%;left:14px;
-  border:6px solid transparent;border-bottom-color:#fff;
-}
-.help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
+.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
+.help .tipbox{width:260px;left:-12px;right:auto;line-height:1.7;padding:10px 12px;pointer-events:none}
+.help .tipbox::before{left:14px;right:auto}
 .srow{display:flex;align-items:center;gap:10px}
-.srow input[type=range]{flex:1;accent-color:#1d4ed8;cursor:pointer}
-.sval{font-size:22px;font-weight:700;color:#1d4ed8;min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
-.ssub{font-size:10px;color:#94a3b8;margin-top:4px}
+.srow input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
+.sval{font-size:22px;font-weight:700;color:var(--accent);min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+.ssub{font-size:10px;color:var(--muted);margin-top:4px}
 
 /* Tax toggle (inline, next to 想定利回り) */
-.ctrl-head label.tax-inline{display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8;font-weight:600;cursor:pointer;white-space:nowrap}
+.ctrl-head label.tax-inline{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap}
 .switch{position:relative;width:26px;height:15px;flex-shrink:0}
 .switch input{position:absolute;opacity:0;width:0;height:0}
-.switch-track{position:absolute;inset:0;background:#cbd5e1;border-radius:8px;transition:background .2s}
-.switch input:checked + .switch-track{background:#1d4ed8}
-.switch-thumb{position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.switch-track{position:absolute;inset:0;background:var(--axis);border-radius:8px;transition:background .2s}
+.switch input:checked + .switch-track{background:var(--accent)}
+.switch input:focus-visible + .switch-track{outline:2px solid var(--accent);outline-offset:2px}
+.switch-thumb{position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:var(--switch-thumb);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
 .switch input:checked + .switch-track .switch-thumb{transform:translateX(11px)}
 
 /* Chart */
 .chart-wrap{position:relative;height:370px}
 
 /* Timeline */
-.sec-title{font-size:13px;font-weight:700;color:#334155;margin-bottom:12px}
+.sec-title{font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:12px}
 .timeline{display:flex;flex-direction:column;gap:6px}
 .period{
   display:flex;align-items:center;gap:0;
@@ -107,30 +96,50 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
   border-left:4px solid;
 }
 .period .age-col{
-  font-size:12px;color:#475569;
+  font-size:12px;color:var(--text-sub);
   padding:9px 12px;min-width:190px;flex-shrink:0;
-  border-right:1px solid rgba(0,0,0,.07);
-  background:rgba(255,255,255,.6);
+  border-right:1px solid var(--border);
+  background:var(--surface);
 }
 .period .winner-col{
   font-size:13px;font-weight:700;
   padding:9px 14px;
 }
-@media(max-width:480px){
+@media screen and (max-width:480px){
   .period{flex-direction:column;align-items:flex-start}
-  .period .age-col{border-right:none;border-bottom:1px solid rgba(0,0,0,.07);min-width:0;width:100%}
+  .period .age-col{border-right:none;border-bottom:1px solid var(--border);min-width:0;width:100%}
 }
-.foot{font-size:12px;color:#94a3b8;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;line-height:1.7}
+
+/* 印刷。白地・黒文字への切り替えは common/theme.css の @media print が行う */
+@media print{
+  @page{margin:12mm}
+  body{padding:0;font-size:10pt}
+  .card{background:none;border:1px solid var(--border);box-shadow:none;break-inside:avoid}
+  .help,.switch{display:none !important}
+  .chart-wrap{height:280px;break-inside:avoid}
+  .timeline,.period{break-inside:avoid}
+  .period .age-col{background:none}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="head-row">
-    <div>
+  <div class="site-head">
+    <a class="home-link" href="./">金融データ・計算ツール</a>
+  </div>
+  <div class="page-head">
+    <div class="page-title">
       <h1>年金受給開始年齢別 損益分岐点シミュレーター</h1>
       <p class="sub">65歳開始（緑色）を基準とした累積受取総額の比較</p>
     </div>
-    <button class="share-btn" id="shareBtn" aria-describedby="shareTip"><span id="shareLabel">試算結果を共有</span><span class="tipbox" id="shareTip" role="tooltip">このURLを開くと、同じ条件の試算結果がそのまま表示されます。</span></button>
+    <div class="page-tools">
+      <span data-theme-toggle></span>
+      <div class="share-wrap">
+        <button class="share-btn" id="shareBtn" type="button">試算結果を共有</button>
+        <span id="shareMsg" class="share-msg" aria-live="polite"></span>
+      </div>
+      <span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます"></span>
+    </div>
   </div>
 
   <div class="card">
@@ -183,12 +192,16 @@ h1{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:3px}
 const TAX_RATE=0.20315, MINA=60, MAXA=100, CALCA=140;
 const MAPM=(CALCA-MINA)*12;
 
+// 色は上の <style> の --sc-* で定義している（ライト／ダークの2値）。
+// テーマが変わると変わるので、描画のたびに Theme.color() で読み直す。
 const SC=[
-  {age:60,label:'60歳開始',color:'#2563eb',bg:'#eff6ff',dashed:false},
-  {age:65,label:'65歳開始',color:'#059669',bg:'#ecfdf5',dashed:false},
-  {age:70,label:'70歳開始',color:'#d97706',bg:'#fffbeb',dashed:false},
-  {age:75,label:'75歳開始',color:'#dc2626',bg:'#fef2f2',dashed:false},
+  {age:60,label:'60歳開始',token:'--sc-60',dashed:false},
+  {age:65,label:'65歳開始',token:'--sc-65',dashed:false},
+  {age:70,label:'70歳開始',token:'--sc-70',dashed:false},
+  {age:75,label:'75歳開始',token:'--sc-75',dashed:false},
 ];
+function scColor(sc){ return Theme.color(sc.token); }
+function scBg(sc){ return Theme.color(sc.token + '-bg'); }
 
 /* ── Pension rate ────────────────────────── */
 function pRate(a){
@@ -289,9 +302,9 @@ const markerPlugin={
       ctx.strokeStyle=mk.color+'99'; ctx.lineWidth=1;
       ctx.moveTo(px,y.top); ctx.lineTo(px,y.bottom); ctx.stroke();
       ctx.setLineDash([]);
-      // Outer ring
+      // Outer ring（中を地の色で抜いて、線と重なっても丸が読めるようにする）
       ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
-      ctx.fillStyle='#fff'; ctx.fill();
+      ctx.fillStyle=Theme.color('--surface'); ctx.fill();
       ctx.strokeStyle=mk.color; ctx.lineWidth=2.5; ctx.stroke();
       // Inner dot
       ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2);
@@ -335,7 +348,7 @@ function render(){
     if(p.start>=MAXA) return [];
     const m=Math.min(Math.round((p.start-MINA)*12), MAPM);
     const wealth=ws[p.idx][m];
-    return[{age:p.start, wealth, color:SC[p.idx].color}];
+    return[{age:p.start, wealth, color:scColor(SC[p.idx])}];
   });
 
   // Chart datasets — use {x,y} so linear x-axis displays correctly
@@ -343,7 +356,7 @@ function render(){
   const datasets=SC.map((sc,i)=>({
     label:sc.label,
     data:chartAges.map(a=>({x:a, y:+(ws[i][(a-MINA)*12].toFixed(3))})),
-    borderColor:sc.color,
+    borderColor:scColor(sc),
     backgroundColor:'transparent',
     borderWidth:2.5,
     pointRadius:0,
@@ -353,6 +366,9 @@ function render(){
   }));
 
   if(!myChart){
+    // 軸・凡例・ツールチップの色は生成時にしか設定されないので、
+    // テーマが変わったときは下の Theme.onChange でグラフごと作り直す
+    const cSub=Theme.color('--text-sub'), cGrid=Theme.color('--grid');
     myChart=new Chart(document.getElementById('chart'),{
       type:'line',
       data:{datasets},
@@ -365,15 +381,17 @@ function render(){
             ticks:{
               stepSize:5,
               callback:v=>`${v}歳`,   // v is the actual numeric age here
-              font:{size:11}, color:'#64748b', maxRotation:0,
+              font:{size:11}, color:cSub, maxRotation:0,
             },
-            grid:{color:'#f1f5f9'},
+            grid:{color:cGrid},
+            border:{color:cGrid},
           },
           y:{
             min:0,
-            ticks:{font:{size:11}, color:'#64748b'},
-            grid:{color:'#f1f5f9'},
-            title:{display:true, text:'累積受取総額（年金年額＝1基準）', font:{size:11}, color:'#64748b'},
+            ticks:{font:{size:11}, color:cSub},
+            grid:{color:cGrid},
+            border:{color:cGrid},
+            title:{display:true, text:'累積受取総額（年金年額＝1基準）', font:{size:11}, color:cSub},
           },
         },
         plugins:{
@@ -383,8 +401,11 @@ function render(){
               label:item =>`${item.dataset.label}：${item.parsed.y.toFixed(2)}年分`,
             },
             titleFont:{size:12}, bodyFont:{size:11},
+            backgroundColor:Theme.color('--tooltip-bg'),
+            titleColor:Theme.color('--tooltip-text'),
+            bodyColor:Theme.color('--tooltip-text'),
           },
-          legend:{labels:{font:{size:12}, usePointStyle:true, boxWidth:36, boxHeight:8, padding:14}},
+          legend:{labels:{font:{size:12}, usePointStyle:true, boxWidth:36, boxHeight:8, padding:14, color:cSub}},
           mpl:{data:markers},
         },
       },
@@ -418,11 +439,14 @@ function render(){
       rangeText=`${fmtAge(p.start)}〜${fmtAge(endCapped)}`;
     }
 
-    return `<div class="period" style="border-color:${sc.color};background:${sc.bg}">
+    return `<div class="period" style="border-color:${scColor(sc)};background:${scBg(sc)}">
       <span class="age-col">${rangeText}</span>
-      <span class="winner-col" style="color:${sc.color}">${sc.label}が最も有利</span>
+      <span class="winner-col" style="color:${scColor(sc)}">${sc.label}が最も有利</span>
     </div>`;
   }).join('');
+
+  // 条件が変わったら共有用QRコードも描き直す
+  Share.refreshQr();
 }
 
 document.getElementById('rSlider').addEventListener('input',render);
@@ -437,28 +461,13 @@ function collectState(){
     t: document.getElementById('taxToggle').checked ? 1 : 0,
   };
 }
-function copyText(t){
-  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
-  return new Promise((res,rej)=>{
-    const ta=document.createElement('textarea');
-    ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy') ? res() : rej(new Error('copy failed')); }
-    finally{ ta.remove(); }
-  });
-}
-document.getElementById('shareBtn').addEventListener('click',()=>{
+function buildShareUrl(){
   const params=new URLSearchParams();
   const s=collectState();
   for(const k in s) params.set(k,s[k]);
-  const url=location.href.split(/[?#]/)[0]+'?'+params.toString();
-  const flash=msg=>{
-    const b=document.getElementById('shareLabel');
-    b.textContent=msg;
-    setTimeout(()=>{ b.textContent='試算結果を共有'; },1600);
-  };
-  copyText(url).then(()=>flash('試算結果のURLをコピーしました ✓'), ()=>flash('コピーできませんでした'));
-});
+  return Share.urlWithParams(params);
+}
+Share.init({ buildUrl: buildShareUrl });
 
 /* ---------- 初期化（URLパラメータがあれば復元） ---------- */
 (function loadFromURL(){
@@ -469,6 +478,16 @@ document.getElementById('shareBtn').addEventListener('click',()=>{
 })();
 
 render();
+
+// グラフはCSS変数に自動では追従しない。scales / legend の色は生成時にしか
+// 設定されないため update() では足りず、作り直す（render はDOMから状態を読み直す）
+Theme.onChange(()=>{
+  if(myChart){ myChart.destroy(); myChart=null; }
+  render();
+  // 印刷時は beforeprint の中で描き終わっている必要があるので、
+  // 描き込みアニメーションを待たずにその場で最終状態にする
+  if(myChart) myChart.update('none');
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,400 @@
+/* ===== 配色 =====
+   地の色・文字・枠線などは common/theme.css の共通トークンを使う。
+   ここで持つのは、このページ固有の名前への別名と、グラフの系列色だけ。
+   系列色は「中央値＝青」「運用しなかった場合＝橙」のようにデータと結び付いて
+   いるので共通化せず、ライト／ダークの2値をここで定義する。 */
+:root {
+	/* 共通トークンへの別名（このCSSと asset-simulator.js がこの名前で参照している） */
+	--page:            var(--bg);
+	--surface-1:       var(--surface);
+	--text-primary:    var(--text);
+	--text-secondary:  var(--text-sub);
+	--warning:         var(--warn);
+	--warning-bg:      var(--warn-soft);
+	--warning-text:    var(--warn-text);
+	--critical:        var(--danger);
+
+	/* グラフの系列色 */
+	--series-1:        #2a78d6; /* 中央値（青） */
+	--series-2:        #eb6834; /* 運用しなかった場合（橙） */
+	--band-outer:      #cde2fb; /* 5–95% */
+	--band-inner:      #9ec5f4; /* 25–75% */
+	--path:            rgba(137,135,129,0.45);
+}
+/* ダークの系列色。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
+@media (prefers-color-scheme: dark) {
+	:root:where(:not([data-theme="light"])) {
+		--series-1:       #3987e5;
+		--series-2:       #d95926;
+		--band-outer:     #0d366b;
+		--band-inner:     #184f95;
+		--path:           rgba(195,194,183,0.30);
+	}
+}
+:root[data-theme="dark"] {
+	--series-1:       #3987e5;
+	--series-2:       #d95926;
+	--band-outer:     #0d366b;
+	--band-inner:     #184f95;
+	--path:           rgba(195,194,183,0.30);
+}
+
+html, body { margin: 0; padding: 0; }
+body {
+	line-height: 1.65;
+	font-size: 15px;
+}
+
+header { padding: 18px 24px 0; }
+header .page-head { margin-bottom: 0; }
+
+.layout {
+	display: grid;
+	grid-template-columns: 316px minmax(0, 1fr);
+	gap: 22px;
+	padding: 20px 24px 60px;
+	align-items: start;
+}
+@media screen and (max-width: 900px) {
+	.layout { grid-template-columns: minmax(0, 1fr); padding: 16px 14px 48px; }
+}
+
+/* ===== 入力パネル ===== */
+.panel {
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 4px 16px 16px;
+	position: sticky;
+	top: 12px;
+	max-height: calc(100vh - 24px);
+	overflow-y: auto;
+}
+@media screen and (max-width: 900px) { .panel { position: static; max-height: none; } }
+
+.panel h2 {
+	font-size: 12px;
+	font-weight: 650;
+	letter-spacing: .06em;
+	color: var(--muted);
+	text-transform: none;
+	margin: 18px 0 8px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid var(--grid);
+}
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 6px 0;
+}
+.row > label { font-size: 13px; color: var(--text-secondary); flex: 1 1 auto; min-width: 0; }
+/* 直前の欄に従属する行（「└ 何歳まで」など） */
+.row.sub-row { margin-top: 2px; }
+.row.sub-row > label { padding-left: 10px; font-size: 12px; color: var(--muted); }
+.row .unit { font-size: 12px; color: var(--muted); flex: 0 0 auto; width: 38px; }
+/* 入力欄の数字はラベルより少し大きく（幅は6桁が収まるように取る） */
+input[type="number"] {
+	width: 82px;
+	flex: 0 0 auto;
+	padding: 4px 6px;
+	font-size: 15px;
+	font-family: inherit;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	color: var(--text-primary);
+	background: var(--field);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+}
+input[type="number"]:focus, select:focus { outline: 2px solid var(--series-1); outline-offset: 1px; }
+select {
+	font-family: inherit; font-size: 15px; padding: 4px 6px;
+	color: var(--text-primary); background: var(--field);
+	border: 1px solid var(--border); border-radius: 6px;
+	max-width: 160px;
+}
+.check { display: flex; align-items: center; gap: 7px; margin: 7px 0; font-size: 13px; color: var(--text-secondary); }
+.check input { accent-color: var(--series-1); width: 15px; height: 15px; }
+.hint { font-size: 11.5px; color: var(--muted); margin: 4px 0 8px; line-height: 1.5; }
+/* 収入欄の下に出す注意書き。橙＝知っておきたい期間、赤＝入力が計算に効いていない */
+.side-note { color: var(--text-secondary); border-left: 2px solid var(--warning); padding-left: 8px; }
+.side-note.ignored { border-left-color: var(--critical); }
+/* 配分の合計が100%でないことは見落とすと結果の読み違いにつながるので、地色を敷いて目立たせる */
+.alloc-note {
+	background: var(--warning-bg);
+	color: var(--warning-text);
+	border: 1px solid var(--warning);
+	border-left: 4px solid var(--warning);
+	border-radius: 8px;
+	padding: 8px 11px 8px 9px;
+	margin: 6px 0 8px;
+	font-size: 12px;
+	line-height: 1.55;
+}
+.alloc-note::before { content: "⚠"; margin-right: 5px; font-weight: 700; }
+.alloc-note strong { font-weight: 700; }
+details.sub { margin: 8px 0 4px; }
+details.sub > summary {
+	cursor: pointer; font-size: 12.5px; color: var(--muted); padding: 3px 0; list-style: none;
+}
+details.sub > summary::before { content: "▸ "; }
+details.sub[open] > summary::before { content: "▾ "; }
+.matrix { font-size: 12px; color: var(--text-secondary); }
+.matrix .row > label { font-size: 12px; }
+#allocSum, #portRet, #portRisk { font-variant-numeric: tabular-nums; }
+#allocSum.warn { color: var(--critical); font-weight: 650; }
+button.reset {
+	margin-top: 14px; width: 100%;
+	background: transparent; color: var(--text-secondary);
+	border: 1px solid var(--border); border-radius: 8px;
+	padding: 7px; font-size: 13px; font-family: inherit; cursor: pointer;
+}
+button.reset:hover { color: var(--text-primary); border-color: var(--muted); }
+/* 配分の合計が100%でないときだけ出る、その場で直すためのボタン */
+button.fix-btn {
+	margin: 0 0 10px;
+	background: transparent; color: var(--text-secondary);
+	border: 1px solid var(--border); border-radius: 7px;
+	padding: 4px 10px; font-size: 12px; font-family: inherit; cursor: pointer;
+}
+button.fix-btn:hover { color: var(--text-primary); border-color: var(--muted); }
+
+/* ===== 結果 ===== */
+.results { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+#alert {
+	display: none;
+	background: var(--surface-1);
+	border: 1px solid var(--critical);
+	border-left: 4px solid var(--critical);
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-size: 13px;
+}
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.tile {
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 13px 15px 14px;
+}
+.tile .label { font-size: 12px; color: var(--text-secondary); }
+/* 数字が動く間に桁の幅が変わって横揺れしないよう、等幅の数字を使う */
+.tile .value { font-size: 26px; font-weight: 650; letter-spacing: -.01em; margin-top: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tile .sub { font-size: 11.5px; color: var(--muted); }
+.tile.hero .value { font-size: 48px; line-height: 1.12; }
+.status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 12%; }
+
+figure {
+	margin: 0;
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 15px 16px 12px;
+}
+figure figcaption { margin-bottom: 6px; }
+.fig-title { font-size: 14.5px; font-weight: 650; }
+.fig-sub { font-size: 12px; color: var(--text-secondary); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0 4px; font-size: 12px; color: var(--text-secondary); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
+.key.box { height: 11px; width: 14px; border-radius: 3px; }
+.key.dash {
+	height: 0; width: 16px; border-top: 2px dashed var(--series-2);
+	border-radius: 0;
+}
+
+.canvas-wrap { position: relative; width: 100%; }
+canvas { display: block; width: 100%; }
+.tooltip {
+	position: absolute;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity .1s;
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	box-shadow: 0 4px 14px rgba(0,0,0,.14);
+	border-radius: 8px;
+	padding: 8px 10px;
+	font-size: 12px;
+	line-height: 1.5;
+	white-space: nowrap;
+	z-index: 5;
+	font-variant-numeric: tabular-nums;
+}
+.tooltip .tt-title { font-weight: 650; margin-bottom: 3px; font-size: 12.5px; }
+.tooltip table { border-collapse: collapse; }
+.tooltip td { padding: 0 0 0 10px; text-align: right; }
+.tooltip td:first-child { padding: 0; text-align: left; color: var(--text-secondary); }
+
+/* ===== テーブル ===== */
+.table-wrap { overflow-x: auto; }
+table.data { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 5px 9px; text-align: right; white-space: nowrap; }
+table.data th {
+	color: var(--text-secondary); font-weight: 600; font-size: 12px;
+	border-bottom: 1px solid var(--axis); position: sticky; top: 0; background: var(--surface-1);
+}
+table.data td { border-bottom: 1px solid var(--grid); }
+table.data th:first-child, table.data td:first-child { text-align: left; }
+table.data tbody tr:hover td { background: color-mix(in srgb, var(--series-1) 8%, transparent); }
+td.neg { color: var(--critical); }
+.retire-row td { border-top: 2px solid var(--axis); }
+
+details.tablebox > summary {
+	cursor: pointer; font-size: 14.5px; font-weight: 650; padding: 2px 0;
+}
+.notes { font-size: 12px; color: var(--text-secondary); line-height: 1.75; }
+.notes h3 { font-size: 13px; margin: 0 0 6px; color: var(--text-primary); }
+.notes ul { margin: 0; padding-left: 1.15em; }
+.notes code { font-size: 11.5px; color: var(--text-primary); }
+#noscript { padding: 24px; }
+
+/* ===== 印刷 =====
+   地の色を白に固定するのは common/theme.css が行う。ここでは系列色と
+   このページ固有のレイアウトだけを指定する。 */
+@media print {
+	:root,
+	:root[data-theme="light"],
+	:root[data-theme="dark"] {
+		--series-1:        #1c5fae;
+		--series-2:        #c04c1c;
+		--band-outer:      #dceaf9;
+		--band-inner:      #a9cbf0;
+		--path:            rgba(0,0,0,0.30);
+	}
+
+	@page { margin: 12mm; }
+
+	body {
+		font-size: 10pt;
+		line-height: 1.5;
+	}
+
+	/* 画面操作のための要素は印刷しない */
+	.tooltip,
+	button.reset,
+	button.fix-btn,
+	#noscript,
+	.tablebox > label.check {
+		display: none !important;
+	}
+
+	/* 空の警告欄が枠だけ残らないようにする */
+	#alert:empty { display: none !important; }
+
+	header { padding: 0; }
+
+	/* 1段組みにして紙幅を使い切る */
+	.layout {
+		display: block;
+		padding: 0;
+		gap: 0;
+	}
+
+	.panel {
+		position: static;
+		max-height: none;
+		overflow: visible;
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 0;
+		padding: 0 12px 12px;
+		margin-bottom: 14px;
+		/* 縦長の入力欄を2段に畳んで枚数を抑える */
+		columns: 2;
+		column-gap: 22px;
+		break-inside: auto;
+	}
+	.panel h2 {
+		break-after: avoid;
+		break-inside: avoid;
+		margin-top: 12px;
+	}
+	.panel h2:first-child { margin-top: 12px; }
+	.row, .check, .hint, details.sub { break-inside: avoid; }
+	.hint { font-size: 8pt; }
+
+	/* 値は読めれば十分なので、入力欄らしい装飾を落とす */
+	input[type="number"], select {
+		border: none;
+		background: none;
+		padding: 0;
+		font-size: 10pt;
+		font-weight: 650;
+		-webkit-appearance: none;
+		appearance: none;
+	}
+	.check input { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	details.sub > summary { list-style: none; }
+
+	.results { display: block; }
+	.results > * + * { margin-top: 12px; }
+
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 8px;
+		break-inside: avoid;
+	}
+	.tile {
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 0;
+		padding: 8px 10px;
+		break-inside: avoid;
+	}
+	.tile .value { font-size: 15pt; }
+	.tile.hero .value { font-size: 22pt; }
+	.tile .label { font-size: 8.5pt; }
+	.tile .sub { font-size: 8pt; }
+	/* 判定の色分けは意味を持つので紙にも出す */
+	.status-dot, .tile .value {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	figure {
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 0;
+		padding: 10px 12px;
+		break-inside: avoid;
+	}
+	.fig-title { font-size: 11pt; }
+	.fig-sub { font-size: 8.5pt; }
+
+	/* 紙幅に合わせて縮むぶん、縦横比を保って高さも縮める */
+	canvas { height: auto !important; }
+	.legend {
+		font-size: 8.5pt;
+		gap: 10px;
+	}
+	.key, .key.box, .key.dash {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	/* 表は横スクロールできないので、はみ出しを切り落とさない */
+	.table-wrap { overflow: visible; }
+	table.data { font-size: 8.5pt; }
+	table.data th {
+		position: static;
+		background: none;
+		font-size: 8pt;
+	}
+	table.data th, table.data td { padding: 2px 6px; }
+	table.data tbody tr:hover td { background: none; }
+	/* 表が複数ページにまたがるときは見出し行を各ページに出す */
+	table.data thead { display: table-header-group; }
+	table.data tr { break-inside: avoid; }
+	details.tablebox > summary { font-size: 11pt; list-style: none; }
+	details.tablebox { break-inside: auto; }
+
+	.notes { font-size: 8.5pt; line-height: 1.6; }
+	.notes h3 { font-size: 9.5pt; }
+}

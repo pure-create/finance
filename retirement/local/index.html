@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="地方公務員向けの退職手当（退職金）を年度ごとに試算できる無料計算サイトです。所得税・住民税を差し引いた手取額も自動計算します。">
+<script src="../../common/analytics.js?v=20260805a" async></script>
+<script src="../../common/theme.js?v=20260805a"></script>
+<link rel="stylesheet" href="../../common/theme.css?v=20260805a">
+<link rel="stylesheet" href="../../common/site.css?v=20260805f">
+<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260805b">
+<link rel="stylesheet" type="text/css" href="../css/print.css?v=20260805a" media="print">
+<script src="./config.js?v=20260805a"></script>
+<script src="../../common/qrcode.js?v=20260805a"></script>
+<script src="../../common/share.js?v=20260805d"></script>
+<script src="../js/retire-core.js?v=20260805b"></script>
+<title>退職手当計算サイト（地方公務員）</title>
+</head>
+<body>
+<noscript>
+	<div class="noscript-warning">このサイトの計算機能はJavaScriptを使用しています。ブラウザの設定でJavaScriptを有効にしてご利用ください。</div>
+</noscript>
+<div class="site-head">
+	<a class="home-link" href="../../">金融データ・計算ツール</a>
+</div>
+<p class='switch-link'><a href='../national/'>→国家公務員向け</a></p>
+<div class="page-head">
+	<div class="page-title">
+		<h1>退職手当計算サイト（地方公務員）</h1>
+	</div>
+	<div class="page-tools">
+		<span data-theme-toggle></span>
+		<button type='button' id='clearBtn' class='btn'>入力をクリア</button>
+		<div class='share-wrap'>
+			<button type='button' id='shareBtn' class='share-btn'>試算結果を共有</button>
+			<span id='shareMsg' class='share-msg' aria-live='polite'></span>
+		</div>
+		<span id='shareQr' class='share-qr' aria-hidden='true' title='スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます'></span>
+	</div>
+</div>
+
+<h2>計算の基準</h2>
+<div class="basis-row">
+<label for="birthYear">生年:</label>
+<select id="birthYear"><option value="" disabled selected>===選択===</option></select>年度
+<label for="hireYear">採用年:</label>
+<select id="hireYear"><option value="" disabled selected>===選択===</option></select>年度
+<div class='container'><div class='question'><label><input type='checkbox' id='middle_year'>年度途中採用</label></div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>
+</div>
+<div class="basis-row">
+<label for='salary'>給料月額:</label><input id='salary' inputmode='numeric' autocomplete='off'>円
+</div>
+調整月額:<span id='tyosei_status' style='display:none;'></span>
+<div class='table-scroll'>
+<table id='tyosei-table'>
+	<tr><th width='235'>区分</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+	<tr><th>調整月額</th><td>65,000</td><td>59,550</td><td>54,150</td><td>43,350</td><td>32,500</td><td>27,100</td><td>21,700</td><td>0</td></tr>
+	<tr><th>代表的な補職</th><td>部長</td><td>次長</td><td>課長</td><td>参事<br />主幹</td><td>課長補佐</td><td>係長</td><td>主査</td><td>主事</td></tr>
+	<tr>
+		<th>
+			<div class='question'>直近5年のうちの月数</div>
+			<div class='explain'>
+				直近60か月を基準に入力してください。<br />
+				休職等の取扱いは自治体により異なる場合があります。<br />
+			</div>
+		</th>
+<script>
+	for(var i = 1; i <= window.TYOSEI_AMOUNTS.length; i ++){
+		document.write("<td><input id='tyosei" + i + "' class='tyosei' inputmode='numeric'></td>");
+	}
+</script>
+	</tr>
+</table>
+</div>
+<div id='tyosei_result'>調整額:<input id='tyosei_price'>円<br /><span id='tyosei_memo'>直近の60か月のなかで各区分にあてはまる月数を数字で入力してください。</span></div>
+<div class='section-header'>
+<h2>計算の結果</h2>
+<span class='result-disclaimer'>※概算による試算結果です。実際の退職手当・税額等とは異なる場合があります。</span>
+</div>
+<div id='msg'>
+	<span id='msg_birth' class='msg_input'>・生年（生まれた年度）を選択してください。</span><br />
+	<span id='msg_hire' class='msg_input'>・採用年度を選択してください。</span><br />
+	<span id='msg_salary' class='msg_input'>・給料月額を入力してください。</span><br />
+	<span id='msg_age_warning' class='warning' style='display:none;'></span>
+</div>
+<div class='table-scroll'>
+<table class='result-table'>
+	<thead>
+		<tr>
+			<th rowspan='2' style='width: 140px;'>年度</th>
+			<th rowspan='2'>年齢</th>
+			<th rowspan='2'>
+				<div class='question'>勤続<br />年数</div>
+				<div class='explain'>
+					1年未満の端数があるときは切り捨てます。<br />
+					休業期間等の勤続期間への算入方法は、<br />退職手当条例等により異なる場合があります。<br />
+				</div>
+			</th>
+			<th rowspan='2'>
+				<div class='question'>定年</div>
+				<div class='explain'>2023年度から2031年度まで<br />段階的に定年が65歳まで<br />引き上げられます</div>
+			</th>
+			<th rowspan='2'>
+				<div class='question'>退職所得<br />控除額</div>
+				<div class='explain'>
+					退職金にかかる税は分離課税となっており、他の所得とは切り離して計算します。<br />
+					支給額が退職所得控除額より少なければ所得税や住民税の課税はありません。<br />
+					退職所得控除額の計算方法は下の表のとおりです。<br />
+					<table>
+						<tr><th>勤続年数</th><th>退職所得控除額</th></tr>
+						<tr><th>20年以下</th><td>40万円×勤続年数（最低80万円）</td></tr>
+						<tr><th>20年超</th><td>70万円×(勤続年数 - 20年) + 800万円</td></tr>
+					</table>
+					勤続年数に1年未満の端数があるときは切り上げます。<br />
+					また、この勤続年数には長期の休職の期間も含まれます。<br />
+				</div>
+			</th>
+			<th class='own' colspan='4'>自己都合</th>
+			<th class='mandatory' colspan='4'>定年・勧奨</th>
+		</tr>
+		<tr>
+			<th class='own price'>
+				<div class='question'>退職手当</div>
+				<div class='explain'>
+					基本的な計算式は、退職日の給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					各行をクリックすると計算式を表示します。<br />
+				</div>
+			</th>
+			<th class='own tax'>
+				<div class='question'>所得税</div>
+				<div class='explain'>
+					所得税計算式:<br />
+					<span style='text-decoration:underline;'>(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)</span> × 所得税率 - 控除額<br />
+					　　　　　課税される所得金額<br />
+					所得税率は課税される所得金額に応じて税率が変わります。<br />
+					所得税の速算表<br />
+					<table>
+						<tr><th>課税される所得金額</th><th>税率</th><th>控除額</th></tr>
+						<tr><td>1,000円～1,949,000円</td><td>5%</td><td>0円</td></tr>
+						<tr><td>1,950,000円～3,299,000円</td><td>10%</td><td>97,500円</td></tr>
+						<tr><td>3,300,000円～6,949,000円</td><td>20%</td><td>427,500円</td></tr>
+						<tr><td>6,950,000円～8,999,000円</td><td>23%</td><td>636,000円</td></tr>
+						<tr><td>9,000,000円～17,999,000円</td><td>33%</td><td>1,536,000円</td></tr>
+						<tr><td>18,000,000円～39,999,000円</td><td>40%</td><td>2,796,000円</td></tr>
+						<tr><td>40,000,000円～</td><td>45%</td><td>4,796,000円</td></tr>
+					</table>
+					また、所得税額の2.1%の復興特別所得税が課税されます。<br />
+					ここでは復興特別所得税を合算した額を表示しています。
+				</div>
+			</th>
+			<th class='own tax'>
+				<div class='question'>住民税</div>
+				<div class='explain'>
+					住民税は、課税される所得金額（(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
+				</div>
+			</th>
+			<th class='own price'>
+				<div class='question'>手取額</div>
+				<div class='explain'>
+					所得税と住民税を差し引いた金額です。<br />
+				</div>
+			</th>
+			<th class='mandatory price'>
+				<div class='question'>退職手当</div>
+				<div class='explain'>
+					基本的な計算式は、退職日の給料月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
+					各行をクリックすると計算式を表示します。<br />
+				</div>
+			</th>
+			<th class='mandatory tax'>
+				<div class='question'>所得税</div>
+				<div class='explain'>
+					所得税計算式:<br />
+					<span style='text-decoration:underline;'>(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)</span> × 所得税率 - 控除額<br />
+					　　　　　課税される所得金額<br />
+					所得税率は課税される所得金額に応じて税率が変わります。<br />
+					所得税の速算表<br />
+					<table>
+						<tr><th>課税される所得金額</th><th>税率</th><th>控除額</th></tr>
+						<tr><td>1,000円～1,949,000円</td><td>5%</td><td>0円</td></tr>
+						<tr><td>1,950,000円～3,299,000円</td><td>10%</td><td>97,500円</td></tr>
+						<tr><td>3,300,000円～6,949,000円</td><td>20%</td><td>427,500円</td></tr>
+						<tr><td>6,950,000円～8,999,000円</td><td>23%</td><td>636,000円</td></tr>
+						<tr><td>9,000,000円～17,999,000円</td><td>33%</td><td>1,536,000円</td></tr>
+						<tr><td>18,000,000円～39,999,000円</td><td>40%</td><td>2,796,000円</td></tr>
+						<tr><td>40,000,000円～</td><td>45%</td><td>4,796,000円</td></tr>
+					</table>
+					また、所得税額の2.1%の復興特別所得税が課税されます。<br />
+					ここでは復興特別所得税を合算した額を表示しています。
+				</div>
+			</th>
+			<th class='mandatory tax'>
+				<div class='question'>住民税</div>
+				<div class='explain'>
+					住民税は、課税される所得金額（(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
+				</div>
+			</th>
+			<th class='mandatory price'>
+				<div class='question'>手取額</div>
+				<div class='explain'>
+					所得税と住民税を差し引いた金額です。<br />
+				</div>
+			</th>
+		</tr>
+	</thead>
+	<tbody id='result'>
+		<tr><td colspan='13'>必要な項目を入力するとここに計算結果が表示されます</td></tr>
+	</tbody>
+</table>
+</div>
+<div id='footer'>
+当サイトで提供する情報については正確な情報であるように努めておりますが、完全に正確であることを保証するものではありません。<br />
+実際の退職手当は自治体の条例・規則、退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
+支給率は、地方公務員の退職手当条例が準拠する国家公務員退職手当法に基づく<a href='https://www.cas.go.jp/jp/gaiyou/jimu/jinjikyoku/files/h29_taishoku2_honbun.pdf' target='_blank' rel='noopener noreferrer'>内閣官房内閣人事局「国家公務員退職手当支給率早見表」（平成30年1月1日以降の退職）</a>の数値を使用しています。<br />
+所得税は、<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>国税庁タックスアンサー No.1420「退職金を受け取ったとき（退職所得）」</a>に基づく概算です。短期勤続者等に適用される一部の特例は考慮していません。<br />
+</div>
+
+</body>
+</html>

@@ -1,0 +1,320 @@
+/* =============================================================
+   サイト共通の配色トークンとテーマ切替UI
+
+   モードは3つ。theme.js が <html> の data-theme 属性で表現する。
+     システム … data-theme なし（下の prefers-color-scheme に従う）
+     ライト   … data-theme="light"
+     ダーク   … data-theme="dark"
+
+   【重要】ダークの値は「@media (prefers-color-scheme: dark)」側と
+   「:root[data-theme="dark"]」側の2箇所に同じものを書いている。
+   メディアクエリ内の宣言と属性セレクタの宣言は1つのルールにまとめられず、
+   このサイトにはビルド工程が無いため。**片方だけ直さないこと。**
+
+   グラフの系列色のように「データに意味が紐づいた色」はここには置かず、
+   各セクションのCSSでライト/ダークの2値を定義する。
+   ============================================================= */
+
+:root {
+	color-scheme: light;
+
+	/* ----- 面 ----- */
+	--bg:            #f4f6f9; /* ページの地色 */
+	--surface:       #ffffff; /* カード・パネル */
+	--surface-2:     #eef1f6; /* 帯・ホバー・補助的な面 */
+	--field:         #ffffff; /* 入力欄の地色 */
+
+	/* ----- 文字 ----- */
+	--text:          #1e293b;
+	--text-sub:      #475569;
+	--muted:         #64748b;
+
+	/* ----- 線 ----- */
+	--border:        #e2e8f0;
+	--grid:          #eef2f6; /* 表の罫線・グラフの目盛り線 */
+	--axis:          #cbd5e1; /* 軸・強めの区切り */
+	--field-border:  #cbd5e1;
+
+	/* ----- 意味を持つ色 ----- */
+	--accent:        #1d4ed8; /* リンク・フォーカス・主ボタン */
+	--accent-hover:  #1e40af;
+	--accent-soft:   #eff6ff; /* アクセント色の淡い地色 */
+	--on-accent:     #ffffff; /* アクセント色の上に載る文字 */
+
+	--good:          #16a34a;
+	--good-text:     #15803d;
+	--good-soft:     #dcfce7;
+	--warn:          #d97706;
+	--warn-text:     #92400e;
+	--warn-soft:     #fffbeb;
+	--danger:        #dc2626;
+	--danger-text:   #b91c1c;
+	--danger-soft:   #fee2e2;
+
+	/* ----- 影 ----- */
+	--shadow-sm:     0 1px 2px rgba(15,23,42,.06), 0 1px 1px rgba(15,23,42,.04);
+	--shadow-md:     0 8px 24px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.05);
+	--shadow-pop:    0 6px 20px rgba(15,23,42,.14), 0 2px 6px rgba(15,23,42,.08);
+
+	/* ----- グラフのツールチップ（JSから Theme.color() で読む） ----- */
+	--tooltip-bg:    rgba(30,30,30,.9);
+	--tooltip-text:  #ffffff;
+
+	/* ----- テーマで反転させない色 ----- */
+	/* QRコードは黒モジュール／白地でないと読み取り精度が落ちるため、
+	   ダークでも印刷時も白のまま固定する */
+	--qr-bg:         #ffffff;
+	--qr-border:     #cbd5e1;
+}
+
+/* ===== ダーク（システム設定に従う場合。ライト固定のときは適用しない） ===== */
+@media (prefers-color-scheme: dark) {
+	:root:where(:not([data-theme="light"])) {
+		color-scheme: dark;
+
+		--bg:            #0f1115;
+		--surface:       #171a1f;
+		--surface-2:     #1f232a;
+		--field:         #1c2027;
+
+		--text:          #e8eaed;
+		--text-sub:      #b6bcc6;
+		--muted:         #8b939f;
+
+		--border:        #2c3138;
+		--grid:          #262b33;
+		--axis:          #3a414c;
+		--field-border:  #3a414c;
+
+		--accent:        #6ba3f5;
+		--accent-hover:  #93c5fd;
+		--accent-soft:   #172336;
+		--on-accent:     #0b1220;
+
+		--good:          #22c55e;
+		--good-text:     #4ade80;
+		--good-soft:     #10291b;
+		--warn:          #f59e0b;
+		--warn-text:     #fbbf24;
+		--warn-soft:     #33270a;
+		--danger:        #f87171;
+		--danger-text:   #fca5a5;
+		--danger-soft:   #35191b;
+
+		--shadow-sm:     0 1px 2px rgba(0,0,0,.5);
+		--shadow-md:     0 8px 24px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+		--shadow-pop:    0 6px 20px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.45);
+
+		--tooltip-bg:    rgba(236,238,242,.95);
+		--tooltip-text:  #0f1115;
+
+		--qr-border:     #3a414c;
+	}
+}
+
+/* ===== ダーク（ユーザーがダーク固定を選んだ場合。上と同じ値） ===== */
+:root[data-theme="dark"] {
+	color-scheme: dark;
+
+	--bg:            #0f1115;
+	--surface:       #171a1f;
+	--surface-2:     #1f232a;
+	--field:         #1c2027;
+
+	--text:          #e8eaed;
+	--text-sub:      #b6bcc6;
+	--muted:         #8b939f;
+
+	--border:        #2c3138;
+	--grid:          #262b33;
+	--axis:          #3a414c;
+	--field-border:  #3a414c;
+
+	--accent:        #6ba3f5;
+	--accent-hover:  #93c5fd;
+	--accent-soft:   #172336;
+	--on-accent:     #0b1220;
+
+	--good:          #22c55e;
+	--good-text:     #4ade80;
+	--good-soft:     #10291b;
+	--warn:          #f59e0b;
+	--warn-text:     #fbbf24;
+	--warn-soft:     #33270a;
+	--danger:        #f87171;
+	--danger-text:   #fca5a5;
+	--danger-soft:   #35191b;
+
+	--shadow-sm:     0 1px 2px rgba(0,0,0,.5);
+	--shadow-md:     0 8px 24px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+	--shadow-pop:    0 6px 20px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.45);
+
+	--tooltip-bg:    rgba(236,238,242,.95);
+	--tooltip-text:  #0f1115;
+
+	--qr-border:     #3a414c;
+}
+
+/* =============================================================
+   テーマの切替アニメーション
+   theme.js が切替の瞬間だけ <html> に .theme-anim を付ける。
+   初期表示時と印刷時には付けないので、そこでは即時に確定する。
+   ============================================================= */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+	/* 切替中の 260ms だけ、既存の transition をこの指定で上書きする。
+	   対象を色に関する性質だけに絞っているので、位置やサイズは動かない。 */
+	transition: background-color 260ms ease,
+	            color 260ms ease,
+	            border-color 260ms ease,
+	            outline-color 260ms ease,
+	            box-shadow 260ms ease,
+	            fill 260ms ease,
+	            stroke 260ms ease !important;
+	transition-delay: 0s !important;
+}
+
+/* canvas は描画済みのピクセルなので色を補間できない。
+   薄くしている間に新しい色で描き直し、フェードで戻す。 */
+html.theme-anim canvas {
+	opacity: .25;
+	transition: opacity 130ms ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.theme-anim,
+	html.theme-anim *,
+	html.theme-anim *::before,
+	html.theme-anim *::after {
+		transition: none !important;
+	}
+	html.theme-anim canvas { opacity: 1; }
+}
+
+/* =============================================================
+   テーマ切替ウィジェット
+   マークアップは theme.js が [data-theme-toggle] の中に生成する。
+   ============================================================= */
+
+/* 生成前でもレイアウトがずれないよう場所を確保しておく */
+[data-theme-toggle] {
+	display: inline-flex;
+	min-width: 34px;
+	min-height: 34px;
+}
+
+.theme-toggle { position: relative; display: inline-flex; }
+
+.theme-toggle__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	color: var(--text-sub);
+	font-family: inherit;
+	font-size: 15px;
+	line-height: 1;
+	cursor: pointer;
+}
+.theme-toggle__btn:hover { border-color: var(--muted); }
+.theme-toggle__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.theme-toggle__btn > span { pointer-events: none; }
+
+.theme-toggle__menu {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 60;
+	min-width: 208px;
+	max-width: min(280px, calc(100vw - 24px));
+	padding: 5px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	box-shadow: var(--shadow-pop);
+	text-align: left;
+}
+.theme-toggle__menu[hidden] { display: none; }
+
+.theme-toggle__item {
+	display: grid;
+	grid-template-columns: 22px 1fr 16px;
+	align-items: start;
+	gap: 0 9px;
+	width: 100%;
+	padding: 7px 8px;
+	background: none;
+	border: 0;
+	border-radius: 7px;
+	color: var(--text);
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1.45;
+	text-align: left;
+	cursor: pointer;
+}
+.theme-toggle__item:hover { background: var(--surface-2); }
+.theme-toggle__item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.theme-toggle__item .ti-icon { font-size: 14px; line-height: 1.45; }
+.theme-toggle__item .ti-desc { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+.theme-toggle__item .ti-check { color: var(--accent); font-size: 12px; visibility: hidden; }
+.theme-toggle__item[aria-checked="true"] .ti-check { visibility: visible; }
+.theme-toggle__item[aria-checked="true"] .ti-name { font-weight: 650; }
+
+/* =============================================================
+   印刷：テーマに関わらず白地・黒文字に固定する
+   （theme.js も beforeprint で data-theme="light" を強制するが、
+     beforeprint が発火しないブラウザのために CSS 側でも担保する）
+   ============================================================= */
+@media print {
+	:root,
+	:root[data-theme="light"],
+	:root[data-theme="dark"] {
+		color-scheme: light;
+
+		--bg:            #ffffff;
+		--surface:       #ffffff;
+		--surface-2:     #ffffff;
+		--field:         #ffffff;
+
+		--text:          #000000;
+		--text-sub:      #333333;
+		--muted:         #595959;
+
+		--border:        #bbbbbb;
+		--grid:          #dddddd;
+		--axis:          #999999;
+		--field-border:  #bbbbbb;
+
+		--accent:        #1c5fae;
+		--accent-hover:  #1c5fae;
+		--accent-soft:   #ffffff;
+		--on-accent:     #ffffff;
+
+		--good:          #0a7d0a;
+		--good-text:     #0a7d0a;
+		--good-soft:     #ffffff;
+		--warn:          #b07800;
+		--warn-text:     #7a5200;
+		--warn-soft:     #ffffff;
+		--danger:        #b32d2d;
+		--danger-text:   #b32d2d;
+		--danger-soft:   #ffffff;
+
+		--shadow-sm:     none;
+		--shadow-md:     none;
+		--shadow-pop:    none;
+
+		--qr-bg:         #ffffff;
+		--qr-border:     #999999;
+	}
+
+	[data-theme-toggle] { display: none !important; }
+}

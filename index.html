@@ -1,27 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-BJ9WKQKN9V"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-BJ9WKQKN9V');
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>finance</title>
+<script src="common/analytics.js?v=20260805a" async></script>
+<script src="common/theme.js?v=20260805a"></script>
+<link rel="stylesheet" href="common/theme.css?v=20260805a">
+<link rel="stylesheet" href="common/site.css?v=20260805f">
 <style>
+  /* 各ツールの識別色。データと結び付いた色なのでテーマ共通トークンには含めない */
   :root {
-    --bg: #ffffff;
-    --fg: #1a1a1a;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --card: #ffffff;
-    --accent: #0b66c3;
-    --accent-soft: #9db9d8;
     --tint: 6%;
     --edge-asset: #0d9488;
     --edge-nisa: #16a34a;
@@ -29,15 +18,9 @@
     --edge-pension: #2563eb;
     --edge-inherit: #8b5cf6;
   }
+  /* ダーク側。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #16181c;
-      --fg: #e8eaed;
-      --muted: #9aa0a6;
-      --line: #2c3036;
-      --card: #1d2025;
-      --accent: #6db3f2;
-      --accent-soft: #4a708f;
+    :root:where(:not([data-theme="light"])) {
       --tint: 12%;
       --edge-asset: #2dd4bf;
       --edge-nisa: #4ade80;
@@ -46,42 +29,29 @@
       --edge-inherit: #a78bfa;
     }
   }
-
-  * { box-sizing: border-box; }
+  :root[data-theme="dark"] {
+    --tint: 12%;
+    --edge-asset: #2dd4bf;
+    --edge-nisa: #4ade80;
+    --edge-retire: #fbbf24;
+    --edge-pension: #60a5fa;
+    --edge-inherit: #a78bfa;
+  }
 
   body {
-    margin: 0;
     padding: 2rem 1rem 3rem;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
     font-size: 16px;
     line-height: 1.7;
   }
 
   main { max-width: 680px; margin: 0 auto; }
 
-  .page-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.75rem;
-    padding-bottom: .75rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: .02em;
-    margin: 0;
-  }
+  .page-head { align-items: center; }
 
   .item {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--edge, var(--line));
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--edge, var(--border));
     border-radius: 10px;
     padding: 1.1rem 1.25rem;
     margin-bottom: 1rem;
@@ -89,7 +59,7 @@
 
   /* 対応ブラウザだけ、枠線の色をごく薄く背景に敷く */
   @supports (background: color-mix(in srgb, red 5%, white)) {
-    .item { background: color-mix(in srgb, var(--edge, var(--card)) var(--tint), var(--card)); }
+    .item { background: color-mix(in srgb, var(--edge, var(--surface)) var(--tint), var(--surface)); }
   }
 
   .item-asset   { --edge: var(--edge-asset); }
@@ -114,24 +84,17 @@
 
   .links a {
     display: inline-block;
-    color: var(--accent);
     text-decoration: none;
     padding: .1rem 0;
   }
 
   .links a::before {
     content: "→";
-    color: var(--edge, var(--accent-soft));
+    color: var(--edge, var(--accent));
     margin-right: .45em;
   }
 
   .links a:hover { text-decoration: underline; }
-
-  .links a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 3px;
-  }
 
   .desc {
     color: var(--muted);
@@ -140,21 +103,29 @@
     margin: .6rem 0 0;
   }
 
+  /* QRコードは読み取り精度のためテーマで反転させない（白地・黒モジュールのまま） */
   .qr {
     display: block;
     flex-shrink: 0;
-    background: #fff;
+    background: var(--qr-bg);
     padding: 4px;
     border-radius: 4px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 </style>
 </head>
 <body>
 <main>
-  <header class="page-head">
-    <h1>金融データ・計算ツール</h1>
-    <img class="qr" src="url.png" width="64" height="64" alt="このサイトのURLのQRコード">
-  </header>
+  <div class="page-head">
+    <div class="page-title">
+      <h1>金融データ・計算ツール</h1>
+    </div>
+    <div class="page-tools">
+      <span data-theme-toggle></span>
+      <img class="qr" src="url.png" width="64" height="64" alt="このサイトのURLのQRコード">
+    </div>
+  </div>
 
   <section class="item item-asset">
     <h2>資産運用</h2>
@@ -193,7 +164,7 @@
   <section class="item item-inherit">
     <h2>相続</h2>
     <ul class="links">
-      <li><a href="inheritance">二次相続シミュレーター</a></li>
+      <li><a href="inheritance/">二次相続シミュレーター</a></li>
     </ul>
     <p class="desc">一次相続と二次相続の相続税を合計で比較し、税額が最小となる取得割合を計算</p>
   </section>

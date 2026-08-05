@@ -1,0 +1,102 @@
+/* 白地・黒文字への切り替えは common/theme.css の @media print が行う。
+   ここには印刷用のレイアウトと、このページ固有の打ち消しだけを置く。 */
+
+body {
+  background: none;
+  color: #000; /* ダークテーマのまま印刷しても白文字にならないようにする */
+  padding: 0;
+}
+
+.wrap {
+  max-width: 100%;
+}
+
+.card {
+  background: none;
+  box-shadow: none;
+  border: 1px solid #94a3b8;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 追加・削除・スライダー操作など、紙面では意味を持たない操作系UIを非表示。
+   共有QRは印刷する（紙から同じ条件の試算を開き直せるようにするため） */
+.share-btn,
+.reset-link,
+.help,
+#jumpBest,
+#spShare,
+#yearsGap {
+  display: none !important;
+}
+
+.remove-btn {
+  display: none;
+}
+
+/* add-spouse/add-child/child-spacerは家系図の横位置合わせに使われているため、
+   非表示にすると実在する家族の枠とSVG連結線がずれる。表示は消しつつ幅は残す */
+.add-spouse,
+.add-child {
+  visibility: hidden;
+}
+
+.year-row {
+  height: auto;
+}
+
+/* ---- 家系図・合計税額まわりの色付き背景は印刷では使わない ---- */
+.person.me,
+.person.sp,
+.person.child {
+  background: none !important;
+}
+
+.best-hint {
+  background: none !important;
+  border: 1px solid #94a3b8;
+}
+.best-hint .tag {
+  background: none !important;
+  border: 1px solid currentColor;
+}
+
+/* ---- 白抜き文字（色付き背景前提の白文字）を、背景印刷の有無によらず読める配色に変更 ---- */
+.badge {
+  background: none !important;
+  border: 1px solid currentColor;
+}
+.first .badge { color: #1d4ed8 !important; }
+.second .badge { color: #db2777 !important; }
+
+.split-bar {
+  border: 1px solid #000;
+}
+.seg.sp-seg,
+.seg.ch-seg {
+  background: none !important;
+  color: #000 !important;
+}
+.seg.ch-seg {
+  border-left: 1px solid #000;
+}
+
+.grand {
+  background: none !important;
+  color: #000 !important;
+  border: 2px solid #1d4ed8;
+}
+.grand.keep {
+  border-color: #059669;
+}
+.grand .glabel,
+.grand .gval,
+.grand .gval small,
+.grand .per-child {
+  color: #000 !important;
+}
+
+.chart-wrap {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}

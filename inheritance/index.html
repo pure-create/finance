@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。">
+<title>二次相続シミュレーター</title>
+<script src="../common/analytics.js?v=20260805a" async></script>
+<script src="../common/theme.js?v=20260805a"></script>
+<link rel="stylesheet" href="../common/theme.css?v=20260805a">
+<link rel="stylesheet" href="../common/site.css?v=20260805f">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260805c">
+<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260805d"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="site-head">
+    <a class="home-link" href="../">金融データ・計算ツール</a>
+  </div>
+  <div class="page-head">
+    <div class="page-title">
+      <h1>二次相続シミュレーター</h1>
+      <p class="sub">一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較</p>
+    </div>
+    <div class="page-tools">
+      <span data-theme-toggle></span>
+      <div class="share-wrap">
+        <button class="share-btn" id="shareBtn" type="button">試算結果を共有</button>
+        <span id="shareMsg" class="share-msg" aria-live="polite"></span>
+      </div>
+      <span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます"></span>
+    </div>
+  </div>
+
+  <!-- 家族構成 -->
+  <div class="card">
+    <div class="sec-title">家族構成と資産額</div>
+    <div class="family" id="famBox">
+      <svg class="tree-svg" id="treeSvg" aria-hidden="true" focusable="false"></svg>
+      <div class="couple">
+        <div class="person me">
+          <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
+          <span class="plabel">自分（被相続人）</span>
+          <span class="asset-in"><input type="number" id="assetMe" value="3000" min="0" step="100" inputmode="numeric" aria-label="自分の資産額（万円）"><span class="unit">万円</span></span>
+          <span class="oku" id="okuMe"></span>
+        </div>
+        <div class="marriage" id="marriageLine"></div>
+        <div id="spouseSlot"></div>
+      </div>
+      <div class="children-row" id="childrenRow"></div>
+      <p class="fam-note">配偶者・子はクリックで追加／×で削除できます（子は1〜6人）</p>
+    </div>
+  </div>
+
+  <!-- 二次相続の前提 -->
+  <div class="card" id="secondCard">
+    <div class="sec-title">二次相続の前提</div>
+    <div class="assume-row">
+      <div class="assume">
+        <label for="spDelta">二次相続までの配偶者の資産増減</label>
+        <span class="asset-in"><input type="number" id="spDelta" value="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
+        <span class="oku" id="okuDelta"></span>
+        <p class="assume-note">生活費の取り崩しは −（マイナス）、貯蓄の増加は ＋ で入力</p>
+      </div>
+      <div class="assume" id="yearsAssume">
+        <div class="assume-label-row">
+          <span class="term">相次相続</span>
+          <span class="help" tabindex="0" aria-label="相次相続とは" aria-describedby="soujiTip">？<span class="tipbox" id="soujiTip" role="tooltip">相次相続（そうじそうぞく）＝一次相続から10年以内に二次相続が起きて、相続が相次ぐこと。この場合「相次相続控除」により、一次相続で配偶者が納めた相続税の一部を二次相続の税額から差し引けます。控除できる額は経過1年ごとに10%ずつ減ります。</span></span>
+          <label for="yearsGap">一次相続から二次相続までの年数</label>
+        </div>
+        <div class="year-row">
+          <input type="range" id="yearsGap" min="0" max="10" step="1" value="10">
+          <span class="yval" id="yearsVal">10年以上</span>
+        </div>
+        <p class="assume-note" id="yearsNote">10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遺産分割スライダー -->
+  <div class="card" id="splitCard">
+    <div class="sec-title">一次相続の遺産分割</div>
+    <div class="slider-head">
+      <label for="spShare">配偶者の取得割合</label>
+      <span class="slider-head-actions">
+        <button class="reset-link" id="resetBtn">法定相続分に戻す</button>
+        <span class="help" tabindex="0" aria-label="法定相続分とは" aria-describedby="statutoryTip">？<span class="tipbox" id="statutoryTip" role="tooltip">法定相続分＝民法で定められた遺産分割の割合。配偶者と子が相続人の場合、配偶者が2分の1、子は全体で2分の1（子が複数いる場合は、その2分の1をさらに人数で均等に分けます）。実際の遺産分割は、相続人全員の合意などによって異なります。</span></span>
+      </span>
+    </div>
+    <div class="srow">
+      <span class="sval" id="spShareVal" aria-hidden="true">50%</span>
+      <div class="slider-wrap">
+        <div class="slider-combo">
+          <div class="split-bar" aria-hidden="true">
+            <div class="seg sp-seg" id="segSp"></div>
+            <div class="seg ch-seg" id="segCh"></div>
+          </div>
+          <input type="range" id="spShare" min="0" max="100" step="1" value="50">
+        </div>
+        <div class="split-legend">
+          <span id="legendSp">配偶者 1,500万円</span>
+          <span id="legendCh">子 1,500万円</span>
+        </div>
+      </div>
+    </div>
+    <div class="best-hint" id="bestHint"></div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card">
+    <div class="sec-title">相続税の試算結果</div>
+    <div class="results">
+      <div class="res-box first">
+        <h3><span class="badge">一次</span>自分が亡くなったとき</h3>
+        <div id="firstDetail"></div>
+      </div>
+      <div class="res-box second" id="secondBox">
+        <h3><span class="badge">二次</span>配偶者が亡くなったとき</h3>
+        <div id="secondDetail"></div>
+      </div>
+    </div>
+    <div class="grand" aria-live="polite">
+      <span class="glabel" id="grandLabel">一次＋二次の相続税合計</span>
+      <span class="gval" id="grandVal">0<small>万円</small></span>
+    </div>
+    <div class="grand keep" aria-live="polite">
+      <span class="glabel" id="keepLabel">最終的に子に残せる金額（総資産−税額合計）</span>
+      <span class="gval" id="keepVal">0<small>万円</small></span>
+    </div>
+  </div>
+
+  <!-- グラフ -->
+  <div class="card" id="chartCard">
+    <div class="sec-title">配偶者の取得割合と税額の関係</div>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="配偶者の取得割合（0〜100％）に応じた一次相続・二次相続・合計の税額を示す折れ線グラフ"></canvas></div>
+  </div>
+
+  <p class="foot">
+    ※ 相続税の速算表（平成27年1月1日以後）に基づく簡易試算です。基礎控除は「3,000万円＋600万円×法定相続人の数」。<br>
+    ※ 配偶者の税額軽減（1億6,000万円または法定相続分のいずれか大きい額まで非課税）を適用しています。<br>
+    ※ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br>
+    ※ 相次相続控除は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br>
+    ※ 生命保険の非課税枠、小規模宅地等の特例、債務・葬式費用、未成年者・障害者控除などは考慮していません。実際の申告は税理士にご相談ください。<br>
+    ※ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、現在の入力内容をそのまま再現できるURLがコピーされ、家族や税理士との共有に使えます。
+  </p>
+</div>
+
+<script src="./js/inheritance.js?v=20260805b"></script>
+</body>
+</html>

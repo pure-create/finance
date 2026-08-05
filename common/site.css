@@ -1,0 +1,245 @@
+/* =============================================================
+   サイト共通のレイアウトとパーツ
+
+   theme.css（配色トークン）の後、各ページ固有のCSSの前に読み込むこと。
+   ここには「全ページで同じ見た目にしたいもの」だけを置く。
+   ページ固有の指定は各セクションのCSSに残す。
+   ============================================================= */
+
+:root {
+	--font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
+	             "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font-sans);
+}
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-hover); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* =============================================================
+   サイト内ヘッダー（トップへ戻る導線）
+   トップページ自身には置かない。
+   ============================================================= */
+.site-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 14px;
+	font-size: 13px;
+}
+.home-link {
+	display: inline-flex;
+	align-items: center;
+	gap: .4em;
+	color: var(--muted);
+	text-decoration: none;
+}
+.home-link::before { content: "←"; }
+.home-link:hover { color: var(--accent); text-decoration: underline; }
+
+/* =============================================================
+   ページ見出し行（見出し＋説明文＋右側のツール）
+   ============================================================= */
+.page-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 18px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--border);
+}
+.page-title { flex: 1 1 320px; min-width: 0; }
+.page-head h1 {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 650;
+	letter-spacing: .01em;
+	line-height: 1.4;
+}
+.page-head .sub {
+	margin: 3px 0 0;
+	color: var(--text-sub);
+	font-size: 13px;
+	line-height: 1.6;
+}
+.page-tools {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	flex: 0 0 auto;
+}
+@media screen and (max-width: 600px) {
+	.page-head { align-items: stretch; }
+	.page-tools { width: 100%; justify-content: flex-end; }
+}
+
+/* =============================================================
+   ボタン
+   ============================================================= */
+.btn,
+.share-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	color: var(--text-sub);
+	min-height: 34px; /* テーマ切替ボタンと高さを揃える */
+	padding: 6px 12px;
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1.5;
+	cursor: pointer;
+}
+.btn:hover,
+.share-btn:hover { color: var(--text); border-color: var(--muted); }
+.btn:focus-visible,
+.share-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* =============================================================
+   共有リンク（コピー結果の吹き出し／QRコード）
+   ============================================================= */
+.share-wrap { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+
+.share-msg {
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	margin-top: 8px;
+	z-index: 30;
+	padding: 6px 10px;
+	background: var(--text);
+	color: var(--surface);
+	font-size: 12px;
+	line-height: 1.5;
+	width: max-content;
+	max-width: 240px;
+	text-align: center;
+	border-radius: 8px;
+	box-shadow: var(--shadow-pop);
+	pointer-events: none;
+	opacity: 0;
+	transform: translate(-50%, -4px);
+	transition: opacity .3s ease, transform .3s ease;
+}
+.share-msg.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* QRコードは常に白地・黒モジュール。読み取り精度が落ちるのでテーマで反転させない。
+   共有QRの大きさは share.js が --qr-size で調整する（URLが長いほど大きくなる）。
+   既定値を変えるときは share.js の QR_MIN_SIZE も合わせること。 */
+.share-qr {
+	display: inline-block;
+	width: var(--qr-size, 72px);
+	height: var(--qr-size, 72px);
+	line-height: 0;
+	background: var(--qr-bg);
+	border: 1px solid var(--qr-border);
+	border-radius: 6px;
+	/* 静穏帯はQRの画像自体が4モジュール分持っているので、ここの余白は枠の見た目の分だけでよい。
+	   余白と枠線は箱の内側に入るため、share.js の QR_PLATE_PX と一致させること */
+	padding: 3px;
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+}
+.share-qr svg { display: block; width: 100%; height: 100%; }
+.share-qr:empty { display: none; }
+/* 狭い画面ではQRを出さない（自分の端末で自分のQRを読む場面が無いため）。
+   紙は幅が狭くても読み取りの対象になるので、screen に限定する */
+@media screen and (max-width: 700px) { .share-qr { display: none; } }
+
+/* =============================================================
+   補足の吹き出し（ボタンやヘルプに添えるツールチップ）
+   ============================================================= */
+.tipbox {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	z-index: 40;
+	width: max-content;
+	max-width: min(280px, calc(100vw - 24px));
+	padding: 8px 11px;
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	box-shadow: var(--shadow-pop);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 1.6;
+	text-align: left;
+	white-space: normal;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity .15s ease;
+}
+.tipbox::before {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	right: 14px;
+	border: 6px solid transparent;
+	border-bottom-color: var(--border);
+}
+:hover > .tipbox,
+:focus-visible > .tipbox { opacity: 1; visibility: visible; }
+
+/* =============================================================
+   フッター
+   ============================================================= */
+.foot {
+	margin-top: 28px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border);
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1.7;
+}
+
+/* =============================================================
+   印刷
+   ============================================================= */
+@media print {
+	/* 画面を操作するための要素は紙では意味を持たないので出さない */
+	.site-head,
+	.btn,
+	.share-wrap,
+	.share-btn,
+	.share-msg,
+	.tipbox {
+		display: none !important;
+	}
+
+	/* QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
+	   （.page-tools の中身はテーマ切替・共有ボタン・QRだが、前2つは上で消えるのでQRだけが残る） */
+	.page-tools {
+		display: block;
+		flex: 0 0 auto;
+	}
+	.share-qr {
+		display: block;
+		/* 台紙の白と黒モジュールは、ブラウザの「背景を印刷しない」設定でも出す必要がある */
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.page-head {
+		margin-bottom: 12px;
+		padding-bottom: 8px;
+		break-after: avoid;
+	}
+	.page-head h1 { font-size: 15pt; }
+	.page-head .sub { font-size: 9pt; }
+	.foot { font-size: 8.5pt; }
+}
