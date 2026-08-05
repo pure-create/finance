@@ -6,9 +6,9 @@
 <meta name="description" content="年金受給開始年齢（60〜75歳）ごとの累積受取総額を、運用利回りと投資期間終了年齢を変えながら比較できるシミュレーター。">
 <title>年金受給開始年齢 損益分岐点</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260805a"></script>
+<script src="common/theme.js?v=20260806a"></script>
 <link rel="stylesheet" href="common/theme.css?v=20260805a">
-<link rel="stylesheet" href="common/site.css?v=20260805f">
+<link rel="stylesheet" href="common/site.css?v=20260806a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260805d"></script>
@@ -109,6 +109,11 @@ body{padding:16px;min-height:100vh}
   .period{flex-direction:column;align-items:flex-start}
   .period .age-col{border-right:none;border-bottom:1px solid var(--border);min-width:0;width:100%}
 }
+
+/* 印刷の直前にグラフを紙幅・紙の高さで描き直させるための指定（下の @media print と同じ値）。
+   @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
+html.printing body{padding:0}
+html.printing .chart-wrap{height:280px}
 
 /* 印刷。白地・黒文字への切り替えは common/theme.css の @media print が行う */
 @media print{
@@ -481,12 +486,23 @@ render();
 
 // グラフはCSS変数に自動では追従しない。scales / legend の色は生成時にしか
 // 設定されないため update() では足りず、作り直す（render はDOMから状態を読み直す）
+// テーマが変わったら、軸・凡例・ツールチップの色を差し替えて描き直す。
+// グラフを作り直さないのは、生成直後の描画がアニメーション経由で非同期になり、
+// 印刷時に beforeprint の中で描き終わらず白紙になってしまうため。
 Theme.onChange(()=>{
-  if(myChart){ myChart.destroy(); myChart=null; }
-  render();
-  // 印刷時は beforeprint の中で描き終わっている必要があるので、
-  // 描き込みアニメーションを待たずにその場で最終状態にする
-  if(myChart) myChart.update('none');
+  if(myChart){
+    const cSub=Theme.color('--text-sub'), cGrid=Theme.color('--grid');
+    const o=myChart.options;
+    o.scales.x.ticks.color=cSub; o.scales.x.grid.color=cGrid; o.scales.x.border.color=cGrid;
+    o.scales.y.ticks.color=cSub; o.scales.y.grid.color=cGrid; o.scales.y.border.color=cGrid;
+    o.scales.y.title.color=cSub;
+    o.plugins.legend.labels.color=cSub;
+    o.plugins.tooltip.backgroundColor=Theme.color('--tooltip-bg');
+    o.plugins.tooltip.titleColor=Theme.color('--tooltip-text');
+    o.plugins.tooltip.bodyColor=Theme.color('--tooltip-text');
+    myChart.resize();   // 印刷直前は .printing で幅が変わっているので測り直す
+  }
+  render();             // 線の色とマーカーの色を取り直して update('none') する
 });
 </script>
 </body>
