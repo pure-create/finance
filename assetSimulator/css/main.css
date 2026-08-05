@@ -259,6 +259,9 @@ details.tablebox > summary {
    （@media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない） */
 html.printing header { padding: 0; }
 html.printing .layout { display: block; padding: 0; }
+html.printing .tooltip,
+html.printing button.reset,
+html.printing button.fix-btn { display: none !important; }
 
 /* ===== 印刷 =====
    地の色を白に固定するのは common/theme.css が行う。ここでは系列色と

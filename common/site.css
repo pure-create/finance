@@ -222,6 +222,18 @@ html.printing {
 	min-width: var(--print-width, 700px);
 }
 
+/* 画面を操作するための要素は、印刷レイアウトの確定を待たずにこの時点で消しておく。
+   @media print だけに任せると、版面を先に作ってしまうブラウザや、
+   ホバー・フォーカスで開いたままの吹き出しが紙に残ることがある。 */
+html.printing .site-head,
+html.printing .btn,
+html.printing .share-wrap,
+html.printing .share-btn,
+html.printing .share-msg,
+html.printing .tipbox {
+	display: none !important;
+}
+
 /* =============================================================
    印刷
    ============================================================= */

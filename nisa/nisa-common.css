@@ -168,6 +168,7 @@
   html.printing body { padding: 0; max-width: 100%; }
   html.printing .chart-body { flex-direction: row; }
   html.printing .chart-canvas-wrap { width: 320px; height: 320px; margin: 0 auto; }
+  html.printing .chart-controls { display: none; }
 
   /* 印刷用。白地・黒文字への切り替えは common/theme.css の @media print が行う。
      print-color-adjust: exact は、白地に固定されたあとの表の地色や凡例の色を

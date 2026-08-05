@@ -280,3 +280,5 @@ body{padding:16px;min-height:100vh}
    @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
 html.printing body{padding:0}
 html.printing .wrap{max-width:100%}
+html.printing .help,html.printing .reset-link,
+html.printing #jumpBest,html.printing #spShare,html.printing #yearsGap{display:none !important}
