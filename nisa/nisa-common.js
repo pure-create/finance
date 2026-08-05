@@ -217,7 +217,11 @@ document.getElementById('chkInactive').addEventListener('change', function () { 
 updateChart();
 
 // 円グラフはCSS変数に自動では追従しないので、テーマが変わったら色を取り直して描き直す
-Theme.onChange(function () { updateChart(true); });
+Theme.onChange(function () {
+  // 印刷直前は .printing で描画領域の大きさが変わっているので測り直す
+  if (chart) chart.resize();
+  updateChart(true);
+});
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {

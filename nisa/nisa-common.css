@@ -163,6 +163,12 @@
     .chart-legend-list .leg-label { min-width: 0; white-space: normal; flex: 1; }
   }
 
+  /* 印刷の直前に円グラフを紙の大きさで描き直させるための指定（下の @media print と同じ値）。
+     @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
+  html.printing body { padding: 0; max-width: 100%; }
+  html.printing .chart-body { flex-direction: row; }
+  html.printing .chart-canvas-wrap { width: 320px; height: 320px; margin: 0 auto; }
+
   /* 印刷用。白地・黒文字への切り替えは common/theme.css の @media print が行う。
      print-color-adjust: exact は、白地に固定されたあとの表の地色や凡例の色を
      そのまま紙に出すために必要。 */
