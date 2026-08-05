@@ -275,3 +275,8 @@ body{padding:16px;min-height:100vh}
 
 /* ---- グラフ ---- */
 .chart-wrap{position:relative;height:300px}
+
+/* 印刷の直前にグラフを紙幅で描き直させるための指定（print.css と同じ余白にそろえる）。
+   @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
+html.printing body{padding:0}
+html.printing .wrap{max-width:100%}
