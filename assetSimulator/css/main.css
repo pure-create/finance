@@ -254,6 +254,12 @@ details.tablebox > summary {
 .notes code { font-size: 11.5px; color: var(--text-primary); }
 #noscript { padding: 24px; }
 
+/* 印刷の直前に canvas を紙幅で描き直させるための指定。
+   下の @media print と同じ「1段組み・余白なし」にそろえておく。
+   （@media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない） */
+html.printing header { padding: 0; }
+html.printing .layout { display: block; padding: 0; }
+
 /* ===== 印刷 =====
    地の色を白に固定するのは common/theme.css が行う。ここでは系列色と
    このページ固有のレイアウトだけを指定する。 */
