@@ -54,8 +54,15 @@
 
 body {
 	font-size: 14px;
+	/* 幅の広い画面では、見出しは左端・操作ボタンは右端と離れてしまって視線が飛ぶので、
+	   中央にまとめる。上限は調整月額の表（国家公務員のページが最も広い）が
+	   横スクロールなしで収まる幅にしている。狭めるとこの表にスクロールが出る */
+	max-width: 1220px;
+	margin: 0 auto;
 	padding: 24px clamp(16px, 4vw, 56px) 16px;
 	line-height: 1.7;
+	/* body に max-width を付けても、背景は画面全体に伸びる（body の背景はキャンバスに
+	   引き継がれる仕様）。縦方向のグラデーションなので幅の指定とも干渉しない */
 	background: linear-gradient(180deg, var(--color-bg-accent) 0px, var(--color-bg) 260px);
 }
 
@@ -74,16 +81,20 @@ table {
 	margin: 4px 0;
 }
 
-p.switch-link {
+/* 地方⇔国家の切り替え。h1と同じ行の右側、操作ボタンの手前に置く */
+a.switch-link {
 	font-size: 13px;
-	margin: 0 0 8px;
-}
-p.switch-link a {
 	color: var(--color-primary);
 	text-decoration: none;
+	white-space: nowrap;
 }
-p.switch-link a:hover {
+a.switch-link:hover {
 	text-decoration: underline;
+}
+a.switch-link:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+	border-radius: 3px;
 }
 
 h2 {

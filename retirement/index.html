@@ -14,6 +14,10 @@
   body {
     font-size: 15px;
     line-height: 1.8;
+    /* 幅は地方・国家のページ（css/main.css）と揃える。
+       入口からそれらへ移ったときに見出しの位置が動かないようにするため */
+    max-width: 1220px;
+    margin: 0 auto;
     padding: 24px clamp(16px, 4vw, 56px);
   }
   .cards {

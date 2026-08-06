@@ -210,10 +210,43 @@ function updateChart(immediate) {
   }
 }
 
+/* ── 円グラフの選択状態の保存 ──
+   年代とチェックの状態は、年をまたいで共通の1か所に保存する。
+   同じ年代を年ごとに見比べる使い方が多く、ページを移るたびに選び直すのが
+   手間になるため。次に開いたときにも同じ状態で始まる。 */
+const CHART_PREF_KEY = 'nisaChart.v1';
+
+const ageSelect   = document.getElementById('ageSelect');
+const chkInactive = document.getElementById('chkInactive');
+
+function saveChartPrefs() {
+  try {
+    localStorage.setItem(CHART_PREF_KEY, JSON.stringify({
+      age: ageSelect.value,
+      inclInactive: chkInactive.checked
+    }));
+  } catch (e) { /* 保存できなくても表示は続ける */ }
+}
+
+function restoreChartPrefs() {
+  let p = null;
+  try {
+    p = JSON.parse(localStorage.getItem(CHART_PREF_KEY));
+  } catch (e) {
+    return; // プライベートブラウジング等で読めないときはページの既定のまま
+  }
+  if (!p || typeof p !== 'object') return;
+  // 年によって選べる年代が変わっても壊れないよう、実在する選択肢のときだけ戻す
+  if (Array.prototype.some.call(ageSelect.options, o => o.value === p.age)) ageSelect.value = p.age;
+  if (typeof p.inclInactive === 'boolean') chkInactive.checked = p.inclInactive;
+}
+
 // updateChart を直接渡すと、イベントオブジェクトが第1引数(immediate)に入って
 // アニメーションが省略されてしまうので、引数を渡さない形で呼ぶ
-document.getElementById('ageSelect').addEventListener('change', function () { updateChart(); });
-document.getElementById('chkInactive').addEventListener('change', function () { updateChart(); });
+ageSelect.addEventListener('change', function () { saveChartPrefs(); updateChart(); });
+chkInactive.addEventListener('change', function () { saveChartPrefs(); updateChart(); });
+
+restoreChartPrefs();
 updateChart();
 
 // 円グラフはCSS変数に自動では追従しないので、テーマが変わったら色を取り直して描き直す

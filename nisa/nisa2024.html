@@ -9,7 +9,7 @@
 <script src="../common/theme.js?v=20260806b"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260806a">
 <link rel="stylesheet" href="../common/site.css?v=20260806c">
-<link rel="stylesheet" href="nisa-common.css?v=20260806c">
+<link rel="stylesheet" href="nisa-common.css?v=20260807a">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
@@ -20,7 +20,10 @@
 <div class="page-head">
   <div class="page-title">
     <h1>NISA利用状況（2024年12月末時点）</h1>
-    <p class="sub">最新データは<a href="nisa2025.html">2025年12月末時点の利用状況</a>をご覧ください。</p>
+    <nav class="year-nav" aria-label="時点の切り替え">
+      <a href="nisa2025.html">2025年末</a>
+      <span class="current" aria-current="page">2024年末</span>
+    </nav>
   </div>
   <div class="page-tools">
     <span data-theme-toggle></span>
@@ -126,7 +129,7 @@ const nisaData = {
   '80歳以上':{'0':1331766,'60':110252,'120':54231, '180':37059, '240':206919,'300':13021, '360':15665 },
 };
 </script>
-<script src="nisa-common.js?v=20260806a"></script>
+<script src="nisa-common.js?v=20260807a"></script>
 
 <p class="note">
   出典：<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>・<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2024年12月報（2024年7月1日現在確定値）」</a><br>

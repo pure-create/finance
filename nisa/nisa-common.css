@@ -47,6 +47,14 @@
 }
 
   body { font-size: 14px; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
+
+  /* 時点の切り替え。年を増やすときは各ページのHTMLに1行ずつ足すこと
+     （どのページにも全年分を並べるので、既存のページも直す必要がある） */
+  .year-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.55rem; margin-top: 5px; font-size: 13px; }
+  .year-nav > * + *::before { content: "|"; color: var(--muted); margin-right: 0.55rem; }
+  .year-nav .current { color: var(--text); font-weight: 600; }
+  .year-nav a { color: var(--accent); text-decoration: none; }
+  .year-nav a:hover { text-decoration: underline; }
   .note { font-size: 11px; color: var(--muted); line-height: 1.7; margin: 2.5rem 0 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
   .note a { text-decoration: underline; }
   .section-label { font-size: 12px; font-weight: 500; color: var(--text-sub); margin: 1.5rem 0 0.4rem; }
