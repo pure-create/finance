@@ -7,22 +7,13 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260806a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260805a">
-<link rel="stylesheet" href="../common/site.css?v=20260806a">
+<link rel="stylesheet" href="../common/site.css?v=20260806b">
 <style>
   body { font-size: 15px; line-height: 1.8; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
   .link-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
   .link-list a { font-size: 1.05em; font-weight: 500; text-decoration: none; }
   .link-list a:hover { text-decoration: underline; }
   .desc { color: var(--muted); font-size: 0.9em; margin: 0 0 1.2rem; }
-  /* QRコードは読み取り精度のためテーマで反転させない（白地・黒モジュールのまま） */
-  .qr {
-    max-width: 160px; display: block;
-    background: var(--qr-bg);
-    border: 1px solid var(--qr-border);
-    border-radius: 4px; padding: 6px;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
 </style>
 </head>
 <body>
@@ -42,9 +33,6 @@
   <a href="nisa2024.html">NISA利用状況(2024年末)</a>
 </div>
 <p class="desc">金融庁のNISA利用状況データと人口データから作成</p>
-
-<img class="qr" src="../url.png" alt="QRコード">
-<p class="desc">スマートフォンからのアクセスはこちらから行ってください</p>
 
 </body>
 </html>

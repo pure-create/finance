@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>finance</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260805a"></script>
+<script src="common/theme.js?v=20260806a"></script>
 <link rel="stylesheet" href="common/theme.css?v=20260805a">
-<link rel="stylesheet" href="common/site.css?v=20260805f">
+<link rel="stylesheet" href="common/site.css?v=20260806b">
+<script src="common/qrcode.js?v=20260805a"></script>
+<script src="common/share.js?v=20260805d"></script>
 <style>
   /* 各ツールの識別色。データと結び付いた色なのでテーマ共通トークンには含めない */
   :root {
@@ -103,16 +105,41 @@
     margin: .6rem 0 0;
   }
 
-  /* QRコードは読み取り精度のためテーマで反転させない（白地・黒モジュールのまま） */
+  /* 吹き出し（.share-msg）の位置決めの基準。共有ボタンが無いページなので
+     .share-wrap は使わない（あれは印刷時に中身ごと消える指定になっている） */
+  .qr-wrap { position: relative; display: inline-flex; align-items: center; }
+
+  /* QRは画面の右端にあるので、既定の中央寄せだと吹き出しが画面からはみ出す。
+     右端をそろえて内側へ開かせる */
+  .qr-wrap .share-msg {
+    left: auto;
+    right: 0;
+    max-width: min(240px, calc(100vw - 32px));
+    transform: translate(0, -4px);
+  }
+  .qr-wrap .share-msg.show { transform: translate(0, 0); }
+
+  /* QRコードは読み取り精度のためテーマで反転させない（白地・黒モジュールのまま）。
+     大きさは share.js が --qr-size で調整する。余白と枠線は share.js の
+     QR_PLATE_PX（左右合計8px）と一致させること */
   .qr {
     display: block;
     flex-shrink: 0;
+    width: var(--qr-size, 72px);
+    height: var(--qr-size, 72px);
+    line-height: 0;
     background: var(--qr-bg);
-    padding: 4px;
-    border-radius: 4px;
+    border: 1px solid var(--qr-border);
+    border-radius: 6px;
+    padding: 3px;
+    cursor: pointer;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  /* 描画できなかったときは枠ごと消す */
+  .qr:empty { display: none; }
+  .qr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -123,7 +150,12 @@
     </div>
     <div class="page-tools">
       <span data-theme-toggle></span>
-      <img class="qr" src="url.png" width="64" height="64" alt="このサイトのURLのQRコード">
+      <div class="qr-wrap">
+        <button class="qr" id="siteQr" type="button"
+                title="スマートフォンのカメラで読み取るか、クリックしてURLをコピーできます"
+                aria-label="このサイトのURLのQRコード。押すとURLをコピーします"></button>
+        <span id="siteQrMsg" class="share-msg" aria-live="polite"></span>
+      </div>
     </div>
   </div>
 
@@ -169,5 +201,16 @@
     <p class="desc">一次相続と二次相続の相続税を合計で比較し、税額が最小となる取得割合を計算</p>
   </section>
 </main>
+<script>
+  /* QRの描画とURLコピーは他のページと同じ共通処理（common/share.js）に任せる。
+     このページには試算の入力が無いので、URLはクエリを付けないトップのURLそのもの */
+  Share.init({
+    buttonId: 'siteQr',
+    qrId:     'siteQr',
+    msgId:    'siteQrMsg',
+    buildUrl: function () { return Share.urlWithParams(null); },
+    okMsg:    'このサイトのURLをコピーしました。'
+  });
+</script>
 </body>
 </html>
