@@ -154,6 +154,11 @@
 	/* =============================================================
 	   切替ウィジェット
 	   ============================================================= */
+	/* メニューの見出し。何を選ぶ場所なのかが一目で分かるように出す。
+	   読み上げには見出しではなくメニュー自身の aria-label で伝えるので、
+	   同じ文言を二重に読ませないよう見出しの要素は aria-hidden にしている */
+	var MENU_TITLE = '画面の配色';
+
 	var ITEMS = [
 		{ mode: 'system', icon: '🌗', name: 'システム', desc: 'OS設定に従う' },
 		{ mode: 'light',  icon: '☀️', name: 'ライト',   desc: '常にライト' },
@@ -172,8 +177,8 @@
 		for (var i = 0; i < widgets.length; i++) {
 			var w = widgets[i];
 			w.icon.textContent = cur.icon;
-			w.btn.setAttribute('aria-label', '表示テーマ: ' + cur.name + '（' + cur.desc + '）');
-			w.btn.title = '表示テーマ: ' + cur.name;
+			w.btn.setAttribute('aria-label', MENU_TITLE + ': ' + cur.name + '（' + cur.desc + '）');
+			w.btn.title = MENU_TITLE + ': ' + cur.name;
 			for (var j = 0; j < w.items.length; j++) {
 				w.items[j].setAttribute('aria-checked', w.items[j].dataset.mode === mode ? 'true' : 'false');
 			}
@@ -200,7 +205,14 @@
 		var menu = document.createElement('div');
 		menu.className = 'theme-toggle__menu';
 		menu.setAttribute('role', 'menu');
+		menu.setAttribute('aria-label', MENU_TITLE);
 		menu.hidden = true;
+
+		var title = document.createElement('div');
+		title.className = 'theme-toggle__title';
+		title.setAttribute('aria-hidden', 'true');
+		title.textContent = MENU_TITLE;
+		menu.appendChild(title);
 
 		var items = ITEMS.map(function (def) {
 			var it = document.createElement('button');

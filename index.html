@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>finance</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260806a"></script>
-<link rel="stylesheet" href="common/theme.css?v=20260805a">
-<link rel="stylesheet" href="common/site.css?v=20260806b">
+<script src="common/theme.js?v=20260806b"></script>
+<link rel="stylesheet" href="common/theme.css?v=20260806a">
+<link rel="stylesheet" href="common/site.css?v=20260806c">
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260805d"></script>
 <style>
@@ -41,9 +41,9 @@
   }
 
   body {
-    padding: 2rem 1rem 3rem;
+    padding: 1.25rem 1rem 1.75rem;
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1.6;
   }
 
   main { max-width: 680px; margin: 0 auto; }
@@ -55,8 +55,8 @@
     border: 1px solid var(--border);
     border-left: 3px solid var(--edge, var(--border));
     border-radius: 10px;
-    padding: 1.1rem 1.25rem;
-    margin-bottom: 1rem;
+    padding: .85rem 1.1rem;
+    margin-bottom: .7rem;
   }
 
   /* 対応ブラウザだけ、枠線の色をごく薄く背景に敷く */
@@ -73,16 +73,20 @@
   .item h2 {
     font-size: 1.05rem;
     font-weight: 600;
-    margin: 0 0 .5rem;
+    line-height: 1.4;
+    margin: 0 0 .3rem;
   }
 
+  /* 同じ分類の入口は横に並べる。NISAは年末ごとに増えていくので、
+     入りきらない分は折り返す */
   .links {
     list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .1rem 1.4rem;
     margin: 0;
     padding: 0;
   }
-
-  .links li + li { margin-top: .15rem; }
 
   .links a {
     display: inline-block;
@@ -101,8 +105,8 @@
   .desc {
     color: var(--muted);
     font-size: .875rem;
-    line-height: 1.6;
-    margin: .6rem 0 0;
+    line-height: 1.55;
+    margin: .35rem 0 0;
   }
 
   /* 吹き出し（.share-msg）の位置決めの基準。共有ボタンが無いページなので

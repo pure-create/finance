@@ -243,6 +243,17 @@ html.theme-anim canvas {
 }
 .theme-toggle__menu[hidden] { display: none; }
 
+/* 選択肢の見出し。左の余白は下の項目の文字の位置と揃える */
+.theme-toggle__title {
+	padding: 4px 8px 7px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--border);
+	color: var(--muted);
+	font-size: 11.5px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
 .theme-toggle__item {
 	display: grid;
 	grid-template-columns: 22px 1fr 16px;

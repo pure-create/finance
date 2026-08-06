@@ -109,6 +109,40 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 .share-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* =============================================================
+   入力部品（セレクトボックス・チェックボックス）
+
+   ページごとに見た目がばらつかないよう、共通の形をここに置く。
+   ブラウザ標準の描画（セレクトの矢印、チェックの箱とレ点）はそのまま使い、
+   枠線・角丸・大きさ・色だけを揃える。標準の見た目のほうが「押せる」「選べる」
+   ことが伝わりやすく、OSやブラウザの操作補助とも噛み合うため。
+
+   ページ固有のCSSはこの後に読み込まれるので、必要なら上書きできる。
+   ============================================================= */
+.field-select {
+	font-family: inherit;
+	font-size: 14px;
+	color: var(--text);
+	background: var(--field);
+	border: 1px solid var(--field-border);
+	border-radius: 6px;
+	box-shadow: var(--shadow-sm);
+	padding: 5px 8px;
+	cursor: pointer;
+	transition: border-color .15s ease;
+}
+.field-select:hover { border-color: var(--muted); }
+.field-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.field-check {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--accent);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+/* =============================================================
    共有リンク（コピー結果の吹き出し／QRコード）
    ============================================================= */
 .share-wrap { position: relative; display: inline-flex; align-items: center; gap: 8px; }

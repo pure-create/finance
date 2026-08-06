@@ -6,10 +6,10 @@
 <meta name="description" content="金融庁「NISA口座の利用状況調査（2024年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布。">
 <title>NISA利用状況（2024年12月末）</title>
 <script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260806a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260805a">
-<link rel="stylesheet" href="../common/site.css?v=20260806b">
-<link rel="stylesheet" href="nisa-common.css?v=20260806b">
+<script src="../common/theme.js?v=20260806b"></script>
+<link rel="stylesheet" href="../common/theme.css?v=20260806a">
+<link rel="stylesheet" href="../common/site.css?v=20260806c">
+<link rel="stylesheet" href="nisa-common.css?v=20260806c">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js" integrity="sha512-JPcRR8yFa8mmCsfrw4TNte1ZvF1e3+1SdGMslZvmrzDYxS69J7J49vkFL8u6u8PlPJK+H3voElBtUCzaXj+6ig==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
@@ -31,26 +31,20 @@
 <div class="chart-section">
   <h2>▼ 年間買付額の分布（年代別）</h2>
   <div class="chart-controls">
-    <div class="age-select-wrap">
-      <span class="age-select-icon">▼</span>
-      <select id="ageSelect">
-        <option value="10代">10代</option>
-        <option value="20代" selected>20代</option>
-        <option value="30代">30代</option>
-        <option value="40代">40代</option>
-        <option value="50代">50代</option>
-        <option value="60代">60代</option>
-        <option value="70代">70代</option>
-        <option value="80歳以上">80歳以上</option>
-        <option value="現役世代合計">20代〜50代合計</option>
-      </select>
-    </div>
-    <label class="toggle-label">
-      <span class="toggle-text">口座未開設・買付なしを含む</span>
-      <input type="checkbox" id="chkInactive" checked>
-      <span class="toggle-track">
-        <span class="toggle-thumb"></span>
-      </span>
+    <select id="ageSelect" class="field-select">
+      <option value="10代">10代</option>
+      <option value="20代" selected>20代</option>
+      <option value="30代">30代</option>
+      <option value="40代">40代</option>
+      <option value="50代">50代</option>
+      <option value="60代">60代</option>
+      <option value="70代">70代</option>
+      <option value="80歳以上">80歳以上</option>
+      <option value="現役世代合計">20代〜50代合計</option>
+    </select>
+    <label>
+      <input type="checkbox" id="chkInactive" class="field-check" checked>
+      <span>口座未開設・買付なしを含む</span>
     </label>
   </div>
   <div class="chart-body">
