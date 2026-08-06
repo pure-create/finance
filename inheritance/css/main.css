@@ -26,27 +26,7 @@
   --thumb-bg:#ffffff;
   --thumb-border:#0f172a;
 }
-/* ダーク側。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
-@media(prefers-color-scheme:dark){
-  :root:where(:not([data-theme="light"])){
-    --inh-first:#6ba3f5;
-    --inh-first-soft:#14253d;
-    --inh-first-tag:#1b3355;
-    --inh-second:#f472b6;
-    --inh-second-soft:#341624;
-    --inh-second-tag:#4a1e33;
-    --inh-keep:#34d399;
-    --inh-keep-soft:#10291f;
-    --inh-keep-text:#34d399;
-    --inh-band:rgba(52,211,153,.14);
-    --seg-sp:#be1e63;
-    --seg-ch:#04795a;
-    --grand-from:#16305f;
-    --grand-to:#1f47a8;
-    --grand-keep-from:#064e3b;
-    --grand-keep-to:#047857;
-  }
-}
+/* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"]{
   --inh-first:#6ba3f5;
   --inh-first-soft:#14253d;

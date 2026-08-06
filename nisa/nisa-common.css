@@ -18,21 +18,7 @@
 
   --scroll-shadow: rgba(0,0,0,.15); /* 横スクロールの端に出す影 */
 }
-/* ダーク側。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    --nisa-360:  #63BE00;
-    --nisa-300:  #A5D01C;
-    --nisa-240:  #DDBD1D;
-    --nisa-180:  #F09520;
-    --nisa-120:  #DC7220;
-    --nisa-60:   #A9581C;
-    --nisa-0:    #8A8880;
-    --nisa-none: #6E6C66;
-    --nisa-seg-border: rgba(255,255,255,.28);
-    --scroll-shadow: rgba(0,0,0,.55);
-  }
-}
+/* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"] {
   --nisa-360:  #63BE00;
   --nisa-300:  #A5D01C;

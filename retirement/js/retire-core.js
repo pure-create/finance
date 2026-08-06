@@ -415,17 +415,11 @@ function calc(){
 	var baseSalaryValue = salaryValue;
 
 	// 最初の画面で、「～が入力されていません。」の各項目が入力されればOK等を表示する
-	if(birthYearEl.value){
-		msgBirthEl.classList.add('msg_input_ok');
-	}
-	if(hireYearEl.value){
-		msgHireEl.classList.add('msg_input_ok');
-	}
-	if(salaryRaw){
-		msgSalaryEl.classList.add('msg_input_ok');
-	}else{
-		msgSalaryEl.classList.remove('msg_input_ok');
-	}
+	// 入力が消えたら「OK」も外す。入力をクリアしたあとに、
+	// 「選択してください」の文言へOKが付いたまま残らないようにする
+	msgBirthEl.classList.toggle('msg_input_ok', !!birthYearEl.value);
+	msgHireEl.classList.toggle('msg_input_ok', !!hireYearEl.value);
+	msgSalaryEl.classList.toggle('msg_input_ok', !!salaryRaw);
 
 	if(birthYearEl.value){
 		age = stdYear - 1 - birthYearEl.value;

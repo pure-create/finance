@@ -283,11 +283,24 @@ html.printing .tipbox {
 	}
 
 	/* QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
-	   （.page-tools の中身はテーマ切替・共有ボタン・QRだが、前2つは上で消えるのでQRだけが残る） */
+	   .page-tools には画面を操作するための部品（テーマ切替・ボタン・ページ間リンク）が
+	   ページごとに増えるので、消したいものを列挙するのではなく、
+	   いったん中身を全部消してからQRだけを戻す。
+	   個別に消す方式だと、部品を足すたびに紙へ載ってしまう。 */
 	.page-tools {
 		display: block;
 		flex: 0 0 auto;
 	}
+	.page-tools > * {
+		display: none;
+	}
+	/* QRの入れ物は2種類ある。共有ボタンを持つページは .share-qr、
+	   ボタンが無いトップページは .qr-wrap（中身は button.qr）。
+	   どちらも紙に残す。中の吹き出し（.share-msg）は上の指定で消えている */
+	.page-tools > .qr-wrap {
+		display: inline-flex;
+	}
+	.page-tools > .share-qr,
 	.share-qr {
 		display: block;
 		/* 台紙の白と黒モジュールは、ブラウザの「背景を印刷しない」設定でも出す必要がある */

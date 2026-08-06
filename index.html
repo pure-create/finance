@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>資産運用・金融シミュレーター</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260806b"></script>
-<link rel="stylesheet" href="common/theme.css?v=20260806a">
-<link rel="stylesheet" href="common/site.css?v=20260806c">
+<script src="common/theme.js?v=20260807a"></script>
+<link rel="stylesheet" href="common/theme.css?v=20260807a">
+<link rel="stylesheet" href="common/site.css?v=20260807a">
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260805d"></script>
 <style>
@@ -20,17 +20,7 @@
     --edge-pension: #2563eb;
     --edge-inherit: #8b5cf6;
   }
-  /* ダーク側。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
-  @media (prefers-color-scheme: dark) {
-    :root:where(:not([data-theme="light"])) {
-      --tint: 12%;
-      --edge-asset: #2dd4bf;
-      --edge-nisa: #4ade80;
-      --edge-retire: #fbbf24;
-      --edge-pension: #60a5fa;
-      --edge-inherit: #a78bfa;
-    }
-  }
+  /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
   :root[data-theme="dark"] {
     --tint: 12%;
     --edge-asset: #2dd4bf;

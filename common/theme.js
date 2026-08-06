@@ -38,21 +38,28 @@
 
 	var mode = readStored();
 
-	// data-theme を実際の DOM に反映する。system のときは属性を外し、
-	// CSS 側の prefers-color-scheme に判断を委ねる。
+	function systemTheme() {
+		return darkQuery && darkQuery.matches ? 'dark' : 'light';
+	}
+
+	/* data-theme を実際の DOM に反映する。
+	   「システム」を選んでいるときも、属性を外すのではなく OS の設定を解決して
+	   light / dark のどちらかを必ず書き込む。こうするとCSS側は data-theme だけを
+	   見ればよくなり、各CSSにダークの値を prefers-color-scheme 側と
+	   属性セレクタ側の2箇所へ書く必要がなくなる。
+	   （代償として、JSを切っているとダークが効かない。ただし各ツールは計算自体が
+	     JS前提なので、実質的な影響はない） */
 	function applyAttribute(m) {
-		if (m === 'system') root.removeAttribute('data-theme');
-		else root.setAttribute('data-theme', m);
+		root.setAttribute('data-theme', m === 'system' ? systemTheme() : m);
 		colorCache = {};
 	}
 
 	// ---- ここだけは同期実行。スタイルが当たる前に確定させる ----
 	applyAttribute(mode);
 
+	// 属性には必ず light / dark のどちらかが入っている
 	function resolved() {
-		var attr = root.getAttribute('data-theme');
-		if (attr === 'light' || attr === 'dark') return attr;
-		return darkQuery && darkQuery.matches ? 'dark' : 'light';
+		return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
 	}
 
 	function notify() {
@@ -111,7 +118,14 @@
 
 	/* ===== OSの設定変更に追従（システムモードのときだけ実体が変わる） ===== */
 	if (darkQuery) {
-		var onSystemChange = function () { if (mode === 'system') { notify(); updateWidgets(); } };
+		// OS側が切り替わったら data-theme を書き直す。
+		// 属性が実体を持つようになったので、ここで反映しないと配色が古いまま残る
+		var onSystemChange = function () {
+			if (mode !== 'system') return;
+			applyAttribute('system');
+			notify();
+			updateWidgets();
+		};
 		if (darkQuery.addEventListener) darkQuery.addEventListener('change', onSystemChange);
 		else if (darkQuery.addListener) darkQuery.addListener(onSystemChange);
 	}

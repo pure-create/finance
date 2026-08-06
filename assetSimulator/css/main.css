@@ -21,16 +21,7 @@
 	--band-inner:      #9ec5f4; /* 25–75% */
 	--path:            rgba(137,135,129,0.45);
 }
-/* ダークの系列色。theme.css と同じく2箇所に同じ値を書いている（片方だけ直さないこと） */
-@media (prefers-color-scheme: dark) {
-	:root:where(:not([data-theme="light"])) {
-		--series-1:       #3987e5;
-		--series-2:       #d95926;
-		--band-outer:     #0d366b;
-		--band-inner:     #184f95;
-		--path:           rgba(195,194,183,0.30);
-	}
-}
+/* ダークの系列色。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"] {
 	--series-1:       #3987e5;
 	--series-2:       #d95926;
