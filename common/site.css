@@ -25,13 +25,18 @@ a:hover { color: var(--accent-hover); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* =============================================================
-   サイト内ヘッダー（トップへ戻る導線）
+   サイト内ヘッダー（戻る導線＋操作ボタン群）
    トップページ自身には置かない。
+
+   左に「トップページに戻る」、右にテーマ切替や共有ボタン（.page-tools）を置く。
+   操作系をこの行に集めることで、下の見出し行が横幅を全部使えるようになる。
    ============================================================= */
 .site-head {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px 12px;
 	margin-bottom: 14px;
 	font-size: 13px;
 }
@@ -59,7 +64,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 .home-link:focus-visible { border-radius: 999px; }
 
 /* =============================================================
-   ページ見出し行（見出し＋説明文＋右側のツール）
+   ページ見出し行（見出し＋説明文）
+
+   各ツールのページでは操作ボタン群が上の .site-head にあるので、この行には
+   見出しだけが入り、横幅を全部使える。戻る導線を持たないトップページだけは
+   操作ボタン群もこの行に置くため、左右に振り分けられる形を残している。
    ============================================================= */
 .page-head {
 	display: flex;
@@ -92,9 +101,11 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	flex-wrap: wrap;
 	flex: 0 0 auto;
 }
+/* 見出しと同じ行に操作ボタン群があるトップページ用。狭いときは行を分ける。
+   ツールのページでは .site-head の中にあるので、この指定は当たらない */
 @media screen and (max-width: 600px) {
 	.page-head { align-items: stretch; }
-	.page-tools { width: 100%; justify-content: flex-end; }
+	.page-head > .page-tools { width: 100%; justify-content: flex-end; }
 }
 
 /* =============================================================
@@ -183,6 +194,66 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 }
 .share-msg.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* 共有ボタンの直下に開く窓。QRとコピー結果をここに入れる。
+   本文の上に重ねて浮かせるので、開いても下の内容がずれない。
+   （QRを行の中に置くと、100px前後ある高さがヘッダーの行の高さを決めてしまう）
+   枠・影・角丸は .tipbox と同じトークンを使い、浮きものの見た目を揃える */
+.share-pop {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	width: max-content;
+	max-width: min(260px, calc(100vw - 24px));
+	padding: 10px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	box-shadow: var(--shadow-pop);
+
+	/* 開け閉めは display ではなく opacity で行う（display は途中の値を持てず、
+	   切り替えた瞬間に出入りしてしまうため）。visibility も一緒に変えることで、
+	   閉じている間はクリックもフォーカスも読み上げも当たらない状態にする。
+	   visibility は段階的には変化しないが、両端のどちらかが visible の間は
+	   visible のままなので、消えるときも最後まで見えたままフェードできる */
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-4px);
+	transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+.share-pop.show {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+	.share-pop { transition: none; transform: none; }
+	.share-pop.show { transform: none; }
+}
+
+/* ポップオーバーの中では、消える吹き出しではなく静的な説明行として置く。
+   コピーに失敗したときはURLをそのまま載せるので、途中で折り返せるようにする
+   （区切りの無い長いURLだと、折り返せずに窓からはみ出す） */
+.share-pop .share-msg {
+	position: static;
+	width: 100%;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+	margin: 0;
+	padding: 0;
+	background: none;
+	color: var(--text-sub);
+	box-shadow: none;
+	font-size: 11px;
+	opacity: 1;
+	transform: none;
+	transition: none;
+}
+
 /* QRコードは常に白地・黒モジュール。読み取り精度が落ちるのでテーマで反転させない。
    共有QRの大きさは share.js が --qr-size で調整する（URLが長いほど大きくなる）。
    既定値を変えるときは share.js の QR_MIN_SIZE も合わせること。 */
@@ -202,9 +273,6 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 }
 .share-qr svg { display: block; width: 100%; height: 100%; }
 .share-qr:empty { display: none; }
-/* 狭い画面ではQRを出さない（自分の端末で自分のQRを読む場面が無いため）。
-   紙は幅が狭くても読み取りの対象になるので、screen に限定する */
-@media screen and (max-width: 700px) { .share-qr { display: none; } }
 
 /* =============================================================
    補足の吹き出し（ボタンやヘルプに添えるツールチップ）
@@ -271,28 +339,58 @@ html.printing {
 
 /* 画面を操作するための要素は、印刷レイアウトの確定を待たずにこの時点で消しておく。
    @media print だけに任せると、版面を先に作ってしまうブラウザや、
-   ホバー・フォーカスで開いたままの吹き出しが紙に残ることがある。 */
-html.printing .site-head,
+   ホバー・フォーカスで開いたままの吹き出しが紙に残ることがある。
+
+   下の @media print と同じ構造・同じ結果になるようにすること。
+   ここで作った版面のままグラフが描き直されるため、食い違うと紙で位置がずれる。 */
 html.printing .btn,
-html.printing .share-wrap,
 html.printing .share-btn,
 html.printing .share-msg,
 html.printing .tipbox {
 	display: none !important;
 }
 
+html.printing .site-head { justify-content: flex-end; }
+html.printing .site-head > .home-link { display: none; }
+html.printing .page-tools { display: block; }
+html.printing .page-tools > * { display: none; }
+html.printing .page-tools > .share-wrap { display: block; }
+html.printing .share-wrap > * { display: none; }
+/* 画面で閉じていても紙には出す。開け閉めに使っている opacity / visibility も戻す */
+html.printing .share-wrap > .share-pop {
+	display: block;
+	position: static;
+	max-width: none;
+	padding: 0;
+	background: none;
+	border: none;
+	box-shadow: none;
+	opacity: 1;
+	visibility: visible;
+	transform: none;
+	transition: none;
+}
+html.printing .share-pop > .share-qr { display: block; }
+
 /* =============================================================
    印刷
    ============================================================= */
 @media print {
 	/* 画面を操作するための要素は紙では意味を持たないので出さない */
-	.site-head,
 	.btn,
-	.share-wrap,
 	.share-btn,
 	.share-msg,
 	.tipbox {
 		display: none !important;
+	}
+
+	/* 戻る導線の行は、共有QRの入れ物（.page-tools）も兼ねている。
+	   行ごと消すとQRまで消えるので、中身を選んで消す */
+	.site-head {
+		justify-content: flex-end;
+	}
+	.site-head > .home-link {
+		display: none;
 	}
 
 	/* QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
@@ -307,13 +405,30 @@ html.printing .tipbox {
 	.page-tools > * {
 		display: none;
 	}
-	/* QRの入れ物は2種類ある。共有ボタンを持つページは .share-qr、
-	   ボタンが無いトップページは .qr-wrap（中身は button.qr）。
-	   どちらも紙に残す。中の吹き出し（.share-msg）は上の指定で消えている */
-	.page-tools > .qr-wrap {
-		display: inline-flex;
+	/* QRの入れ物は .share-wrap の中の .share-pop（画面では押したときだけ開く窓）。
+	   トップページも含め全ページ同じ形なので、これだけを紙に残す */
+	.page-tools > .share-wrap {
+		display: block;
 	}
-	.page-tools > .share-qr,
+	.share-wrap > * {
+		display: none;
+	}
+	/* 画面で開いていなくても紙には開いた状態で載せる。
+	   浮かせるための枠・影・重ね順と、開け閉めの opacity / visibility を外す */
+	.share-wrap > .share-pop {
+		display: block;
+		position: static;
+		max-width: none;
+		padding: 0;
+		background: none;
+		border: none;
+		box-shadow: none;
+		opacity: 1;
+		visibility: visible;
+		transform: none;
+		transition: none;
+	}
+	.share-pop > .share-qr,
 	.share-qr {
 		display: block;
 		/* 台紙の白と黒モジュールは、ブラウザの「背景を印刷しない」設定でも出す必要がある */

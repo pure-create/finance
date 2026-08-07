@@ -8,12 +8,12 @@
 <script src="../../common/analytics.js?v=20260805a" async></script>
 <script src="../../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../../common/theme.css?v=20260807a">
-<link rel="stylesheet" href="../../common/site.css?v=20260807d">
-<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260807n">
+<link rel="stylesheet" href="../../common/site.css?v=20260808a">
+<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260808a">
 <link rel="stylesheet" type="text/css" href="../css/print.css?v=20260807a" media="print">
 <script src="./config.js?v=20260805a"></script>
 <script src="../../common/qrcode.js?v=20260805a"></script>
-<script src="../../common/share.js?v=20260805d"></script>
+<script src="../../common/share.js?v=20260808a"></script>
 <script src="../js/retire-core.js?v=20260807b"></script>
 <title>退職手当計算サイト（国家公務員）</title>
 </head>
@@ -23,19 +23,21 @@
 </noscript>
 <div class="site-head">
 	<a class="home-link" href="../../">トップページに戻る</a>
+	<div class="page-tools">
+		<span data-theme-toggle></span>
+		<div class='share-wrap'>
+			<button type='button' id='shareBtn' class='share-btn' aria-expanded='false' aria-controls='sharePop'>試算結果を共有</button>
+			<div class='share-pop' id='sharePop'>
+				<span id='shareQr' class='share-qr' aria-hidden='true' title='スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます'></span>
+				<p id='shareMsg' class='share-msg' aria-live='polite'></p>
+			</div>
+		</div>
+	</div>
 </div>
 <div class="page-head">
 	<div class="page-title">
 		<h1>退職手当計算サイト（国家公務員）</h1>
 		<a class='switch-link' href='../local/'>→地方公務員向け</a>
-	</div>
-	<div class="page-tools">
-		<span data-theme-toggle></span>
-		<div class='share-wrap'>
-			<button type='button' id='shareBtn' class='share-btn'>試算結果を共有</button>
-			<span id='shareMsg' class='share-msg' aria-live='polite'></span>
-		</div>
-		<span id='shareQr' class='share-qr' aria-hidden='true' title='スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます'></span>
 	</div>
 </div>
 

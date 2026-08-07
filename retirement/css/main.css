@@ -78,7 +78,7 @@ table {
 }
 
 /* 地方⇔国家の切り替えは h1 のすぐ右に置く。
-   ページ見出しの一部なので、右端の操作ボタン群（.page-tools）とは分けている。
+   ページ見出しの一部なので、上の行の操作ボタン群（.page-tools）とは分けている。
    ベースラインで揃えると、文字の大きさが違っても行の中で浮いて見えない */
 .page-title {
 	display: flex;
@@ -96,19 +96,6 @@ table {
 }
 .page-head + div.section-header h2 {
 	margin-top: 6px;
-}
-
-/* 共有QRは105px前後の高さがあり、27pxしかないh1の横に置くと見出し行がQRの高さに
-   引き伸ばされ、h1の下に大きな空白ができる。本文が広いときは右側が空いているので、
-   置き場所は従来どおり（共有ボタンの右）のまま、下へはみ出させて逃がす。
-   負の下マージンで「行の高さに数える分」だけをボタンと同じ34pxに切り詰めており、
-   QR自体は指定どおりの大きさで描かれる（--qr-size はURLの長さに応じて share.js が設定）。
-   本文が狭いときは入力欄が右端まで伸びてきて重なるので、従来どおり行の中に収める */
-@media screen and (min-width: 1000px) {
-	.page-tools .share-qr {
-		align-self: flex-start;
-		margin-bottom: calc(34px - var(--qr-size, 72px));
-	}
 }
 
 a.switch-link {

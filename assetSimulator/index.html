@@ -7,29 +7,31 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260807a">
-<link rel="stylesheet" href="../common/site.css?v=20260807d">
+<link rel="stylesheet" href="../common/site.css?v=20260808a">
 <link rel="stylesheet" href="./css/main.css?v=20260807a">
 <script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260805d"></script>
+<script src="../common/share.js?v=20260808a"></script>
 </head>
 <body>
 
 <header>
 	<div class="site-head">
 		<a class="home-link" href="../">トップページに戻る</a>
+		<div class="page-tools">
+			<span data-theme-toggle></span>
+			<div class="share-wrap">
+				<button id="shareBtn" class="share-btn" type="button" aria-expanded="false" aria-controls="sharePop">試算結果を共有</button>
+				<div class="share-pop" id="sharePop">
+					<span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます"></span>
+					<p id="shareMsg" class="share-msg" aria-live="polite"></p>
+				</div>
+			</div>
+		</div>
 	</div>
 	<div class="page-head">
 		<div class="page-title">
 			<h1>資産運用シミュレーター</h1>
 			<p class="sub">積立期と取り崩し期を通したモンテカルロ試算。インフレ・税金・NISA枠・資産配分（相関あり）を考慮します。</p>
-		</div>
-		<div class="page-tools">
-			<span data-theme-toggle></span>
-			<div class="share-wrap">
-				<button id="shareBtn" class="share-btn" type="button">試算結果を共有</button>
-				<span id="shareMsg" class="share-msg" aria-live="polite"></span>
-			</div>
-			<span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、同じ条件の試算結果がそのまま開けます"></span>
 		</div>
 	</div>
 </header>
