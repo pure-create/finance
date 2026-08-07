@@ -458,7 +458,7 @@ function calc(){
 			if(teinen < (age + i)){
 				break;
 			}
-			result += "<tr class='calc_disp'><td>" + (stdYear + i - 1) + "年度末(" + (stdYear + i) + ".3)</td><td>" + (age + i) + "</td><td>" + (duration + i) + "</td>";
+			result += "<tr class='calc_disp'><td>" + (stdYear + i - 1) + "年度末(" + (stdYear + i) + "/3)</td><td>" + (age + i) + "</td><td>" + (duration + i) + "</td>";
 			result += "<td>" + teinen + "</td>";
 
 			// 退職所得控除額の計算

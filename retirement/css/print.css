@@ -69,6 +69,11 @@ div.noscript-warning {
 	display: none;
 }
 
+/* ページ間の移動リンクは画面を操作するための導線なので紙には出さない */
+a.switch-link {
+	display: none;
+}
+
 div#footer {
 	color: black;
 }

@@ -70,8 +70,47 @@ table {
 	-webkit-overflow-scrolling: touch;
 	margin: 4px 0;
 }
+/* 計算結果の表は、最終行のツールチップ（「クリックすると計算式を表示します」）が
+   表の下にはみ出す。overflow-x を指定した箱は縦もはみ出しを拾うので、
+   そのままだと縦スクロールバーが出てしまう。ツールチップの高さぶんの余白で受ける */
+.table-scroll.result-scroll {
+	padding-bottom: 28px;
+}
 
-/* 地方⇔国家の切り替え。h1と同じ行の右側、操作ボタンの手前に置く */
+/* 地方⇔国家の切り替えは h1 のすぐ右に置く。
+   ページ見出しの一部なので、右端の操作ボタン群（.page-tools）とは分けている。
+   ベースラインで揃えると、文字の大きさが違っても行の中で浮いて見えない */
+.page-title {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 2px 10px;
+}
+/* 見出し行と最初のセクション見出しの間。共通の下余白（18px）と h2 の上余白（28px）が
+   そのまま足し算になって空きすぎるので、この2つを詰める。
+   h2 は色の付いた帯なので、区切り線との間はこの程度でも見出しとして読める */
+.page-head {
+	margin-bottom: 0;
+	padding-bottom: 0;
+	border-bottom: none;
+}
+.page-head + div.section-header h2 {
+	margin-top: 6px;
+}
+
+/* 共有QRは105px前後の高さがあり、27pxしかないh1の横に置くと見出し行がQRの高さに
+   引き伸ばされ、h1の下に大きな空白ができる。本文が広いときは右側が空いているので、
+   置き場所は従来どおり（共有ボタンの右）のまま、下へはみ出させて逃がす。
+   負の下マージンで「行の高さに数える分」だけをボタンと同じ34pxに切り詰めており、
+   QR自体は指定どおりの大きさで描かれる（--qr-size はURLの長さに応じて share.js が設定）。
+   本文が狭いときは入力欄が右端まで伸びてきて重なるので、従来どおり行の中に収める */
+@media screen and (min-width: 1000px) {
+	.page-tools .share-qr {
+		align-self: flex-start;
+		margin-bottom: calc(34px - var(--qr-size, 72px));
+	}
+}
+
 a.switch-link {
 	font-size: 13px;
 	color: var(--color-primary);
@@ -111,6 +150,11 @@ div.section-header {
 div.section-header h2 {
 	margin: 28px 0 12px;
 }
+/* 「入力をクリア」は「計算の基準」の見出し行に置く。
+   h2の下余白（12px）と同じだけ下に余白を取ると、見出しの箱と下端が揃う */
+div.section-header .btn {
+	margin-bottom: 12px;
+}
 span.result-disclaimer {
 	color: var(--color-muted);
 	font-size: 13px;
@@ -139,15 +183,24 @@ th.mandatory {
 	color: var(--th-must-text);
 }
 
+/* 計算結果の表は列が13あり、既定の余白のままだと本文の幅(1220px)に収まらず
+   横スクロールが出る。列数が多いぶん、左右の余白を1つ削るだけでも全体では効く */
+table.result-table th,
+table.result-table td {
+	padding: 6px 4px;
+}
+/* 金額の列は入る桁数で幅を決める。ch は「0」1文字分の幅で、数字は tabular-nums なので
+   どのフォントでもカンマ入りの表示がちょうど収まる。加える10pxは左右のpadding(4px×2)と枠線。
+   退職手当・手取額は8桁（12,345,678＝10文字）、所得税・住民税は7桁（1,234,567＝9文字） */
 th.tax {
-	width: 60px;
+	width: calc(9ch + 10px);
 }
 th.price {
-	width: 85px;
+	width: calc(10ch + 10px);
 }
 td.price {
 	text-align: right;
-	padding-right: 8px;
+	white-space: nowrap;
 	font-variant-numeric: tabular-nums;
 }
 
@@ -159,8 +212,11 @@ th.small {
 	font-size: 10px;
 }
 
+/* 区分・調整月額の見出し列。width:1px は「最小幅にせよ」の指示になり、
+   折り返しを禁じてあるので中身（＝最も長い「直近5年のうちの月数」）の幅ちょうどに縮む */
 #tyosei-table th:first-child {
 	white-space: nowrap;
+	width: 1px;
 }
 
 td {
@@ -190,9 +246,16 @@ input {
 	width: 74px;
 }
 
+/* 月数の入力欄は2桁（最大60）しか入らないので、枠と余白を切り詰めて列幅を稼ぐ。
+   区分の数だけ横に並ぶ列なので、1つ削るとそのぶん表全体が縮む */
 input.tyosei {
-	width: 44px;
-	margin: 8px;
+	width: 41px;
+	margin: 8px 5px;
+	padding: 5px 6px;
+}
+/* 区分の列。上の入力欄に合わせてセルの左右余白も詰める */
+#tyosei-table td {
+	padding: 6px 6px;
 }
 input[type='checkbox']{
 	width: 18px;
@@ -262,6 +325,9 @@ tr.calc_disp:hover {
 /* マウスホバー時に「クリックすると計算式を表示します」を知らせるCSSツールチップ */
 tr.calc_disp td:first-child {
 	position: relative;
+	/* 年度は「2025年度末(2026.3)」で1行。折り返すと行の高さが揃わなくなる。
+	   計算式の行（.calc_memo）は折り返させたいので、この行だけに指定する */
+	white-space: nowrap;
 }
 tr.calc_disp td:first-child::after {
 	content: 'クリックすると計算式を表示します';
@@ -400,7 +466,9 @@ div#footer {
 	background: transparent;
 	color: var(--color-muted);
 	padding: 14px 0 0;
-	margin-top: 40px;
+	/* 結果の表の下は、ツールチップ用に確保した28pxの余白が先にあるので、
+	   ここは区切り線が近づきすぎない程度でよい */
+	margin-top: 16px;
 	border-top: 1px solid var(--color-border);
 	font-size: 95%;
 	height: auto;
@@ -435,8 +503,8 @@ div#footer a:hover {
 	}
 
 	input.tyosei {
-		width: 38px;
-		margin: 6px 4px;
+		width: 37px;
+		margin: 6px 3px;
 	}
 
 	div#tyosei_result {

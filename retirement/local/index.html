@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -9,12 +9,12 @@
 <script src="../../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../../common/theme.css?v=20260807a">
 <link rel="stylesheet" href="../../common/site.css?v=20260807a">
-<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260807b">
-<link rel="stylesheet" type="text/css" href="../css/print.css?v=20260805a" media="print">
+<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260807n">
+<link rel="stylesheet" type="text/css" href="../css/print.css?v=20260807a" media="print">
 <script src="./config.js?v=20260805a"></script>
 <script src="../../common/qrcode.js?v=20260805a"></script>
 <script src="../../common/share.js?v=20260805d"></script>
-<script src="../js/retire-core.js?v=20260807a"></script>
+<script src="../js/retire-core.js?v=20260807b"></script>
 <title>退職手当計算サイト（地方公務員）</title>
 </head>
 <body>
@@ -27,11 +27,10 @@
 <div class="page-head">
 	<div class="page-title">
 		<h1>退職手当計算サイト（地方公務員）</h1>
+		<a class='switch-link' href='../national/'>→国家公務員向け</a>
 	</div>
 	<div class="page-tools">
-		<a class='switch-link' href='../national/'>→国家公務員向け</a>
 		<span data-theme-toggle></span>
-		<button type='button' id='clearBtn' class='btn'>入力をクリア</button>
 		<div class='share-wrap'>
 			<button type='button' id='shareBtn' class='share-btn'>試算結果を共有</button>
 			<span id='shareMsg' class='share-msg' aria-live='polite'></span>
@@ -40,7 +39,10 @@
 	</div>
 </div>
 
+<div class='section-header'>
 <h2>計算の基準</h2>
+<button type='button' id='clearBtn' class='btn'>入力をクリア</button>
+</div>
 <div class="basis-row">
 <label for="birthYear">生年:</label>
 <select id="birthYear"><option value="" disabled selected>===選択===</option></select>年度
@@ -54,7 +56,7 @@
 調整月額:<span id='tyosei_status' style='display:none;'></span>
 <div class='table-scroll'>
 <table id='tyosei-table'>
-	<tr><th width='235'>区分</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+	<tr><th>区分</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
 	<tr><th>調整月額</th><td>65,000</td><td>59,550</td><td>54,150</td><td>43,350</td><td>32,500</td><td>27,100</td><td>21,700</td><td>0</td></tr>
 	<tr><th>代表的な補職</th><td>部長</td><td>次長</td><td>課長</td><td>参事<br />主幹</td><td>課長補佐</td><td>係長</td><td>主査</td><td>主事</td></tr>
 	<tr>
@@ -84,7 +86,7 @@
 	<span id='msg_salary' class='msg_input'>・給料月額を入力してください。</span><br />
 	<span id='msg_age_warning' class='warning' style='display:none;'></span>
 </div>
-<div class='table-scroll'>
+<div class='table-scroll result-scroll'>
 <table class='result-table'>
 	<thead>
 		<tr>
