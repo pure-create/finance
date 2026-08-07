@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  検索エンジンに知らせるページの一覧。
+  https://pure-create.github.io/finance/sitemap.xml として公開される。
+
+  lastmod はあえて入れていない。実態とずれた日付が並ぶと検索エンジンは
+  lastmod 自体を信用しなくなるため、手で更新し続けられない以上は
+  「書かない」ほうが正しく扱われる。
+
+  ページを増やしたときは、ここへの追加を忘れないこと。
+  URLはすべて各ページの <link rel="canonical"> と同じ形（末尾のスラッシュまで）に揃える。
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<url><loc>https://pure-create.github.io/finance/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/assetSimulator/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/nisa/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/nisa/nisa2025.html</loc></url>
+	<url><loc>https://pure-create.github.io/finance/nisa/nisa2024.html</loc></url>
+	<url><loc>https://pure-create.github.io/finance/retirement/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/retirement/local/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/retirement/national/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/pension/</loc></url>
+	<url><loc>https://pure-create.github.io/finance/inheritance/</loc></url>
+</urlset>

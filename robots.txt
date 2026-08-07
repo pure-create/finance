@@ -1,0 +1,16 @@
+# 検索エンジンの巡回に関する指示。全ページを対象にする（禁止したい場所は無い）。
+#
+# 【重要】このファイルは今の公開先では読まれない
+#   robots.txt はホストの直下（https://pure-create.github.io/robots.txt）しか
+#   参照されない決まりで、プロジェクトページである
+#   https://pure-create.github.io/finance/robots.txt は無視される。
+#   下の Sitemap 行も同じ理由で届かないため、サイトマップは
+#   Google Search Console から直接登録すること。
+#
+#   独自ドメイン（https://example.com/ 直下での公開）に移せば、
+#   このファイルがそのまま効くようになる。そのときは下のURLも書き換えること。
+
+User-agent: *
+Allow: /
+
+Sitemap: https://pure-create.github.io/finance/sitemap.xml

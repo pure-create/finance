@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 存在しないURLで表示されるページ。GitHub Pages がリポジトリ直下の 404.html を使う。
+     検索結果に出す意味は無いので noindex にし、サイトマップにも載せない -->
+<meta name="robots" content="noindex">
+<title>ページが見つかりません｜資産運用・金融シミュレーター</title>
+<!-- このページは /finance/ 配下のどの深さのURLでも表示されるため、
+     読み込み先とリンク先は相対パスにできない（絶対パスで書くこと） -->
+<script src="/finance/common/theme.js?v=20260807a"></script>
+<link rel="stylesheet" href="/finance/common/theme.css?v=20260807a">
+<link rel="stylesheet" href="/finance/common/site.css?v=20260808a">
+<style>
+  body {
+    padding: 1.25rem 1rem 1.75rem;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  main { max-width: 680px; margin: 0 auto; }
+
+  .lead { margin: 0 0 .6rem; }
+
+  .hint {
+    color: var(--muted);
+    font-size: .875rem;
+    line-height: 1.7;
+    margin: 0 0 1.4rem;
+  }
+
+  /* トップページの入口一覧と同じ見た目にして、ここから行き先を選び直せるようにする */
+  .links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .links li { margin-bottom: .35rem; }
+  .links a { text-decoration: none; }
+  .links a::before {
+    content: "→";
+    color: var(--accent);
+    margin-right: .45em;
+  }
+  .links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main>
+  <div class="site-head">
+    <a class="home-link" href="/finance/">トップページに戻る</a>
+    <div class="page-tools">
+      <span data-theme-toggle></span>
+    </div>
+  </div>
+
+  <div class="page-head">
+    <div class="page-title">
+      <h1>ページが見つかりません</h1>
+      <p class="sub">お探しのページは、移動したか削除された可能性があります。</p>
+    </div>
+  </div>
+
+  <p class="lead">お探しのものが下にあるかもしれません。</p>
+  <p class="hint">共有されたURLを開いてこの画面が出た場合は、URLが途中で切れていないかご確認ください。</p>
+
+  <ul class="links">
+    <li><a href="/finance/assetSimulator/">資産運用シミュレーター</a></li>
+    <li><a href="/finance/nisa/nisa2025.html">NISA利用状況</a></li>
+    <li><a href="/finance/retirement/">公務員退職手当計算</a></li>
+    <li><a href="/finance/pension/">年金受給開始年齢別シミュレーター</a></li>
+    <li><a href="/finance/inheritance/">二次相続シミュレーター</a></li>
+  </ul>
+</main>
+</body>
+</html>
