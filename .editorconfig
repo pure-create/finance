@@ -1,0 +1,15 @@
+# 文字コードと改行の取り決め。
+# charset = utf-8 は「BOMなしのUTF-8」の意味（BOM付きは utf-8-bom）。
+# 先頭にBOMが入るとバイト列を直接読むツールが U+FEFF を拾ってしまうので付けない。
+#
+# 注意: PowerShell 5.1 の Out-File / > はUTF-8で書くとBOMを付ける。
+# このリポジトリのファイルをスクリプトから書き換えるときは
+# [System.IO.File]::WriteAllText などBOMを付けない方法を使うこと。
+#
+# インデントはファイルによってタブと半角スペースが混在しているため、あえて指定しない。
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf

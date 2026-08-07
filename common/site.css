@@ -54,6 +54,9 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	border-color: var(--accent);
 	background: var(--accent-soft);
 }
+/* 上の a:focus-visible が border-radius: 3px を当ててくるので、
+   フォーカス時だけピルの角が四角くならないよう戻す */
+.home-link:focus-visible { border-radius: 999px; }
 
 /* =============================================================
    ページ見出し行（見出し＋説明文＋右側のツール）
