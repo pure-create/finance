@@ -42,13 +42,15 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	font-size: 13px;
 }
 /* トップへ戻る導線。文字だけだと見出しのラベルに見えて押せることが伝わらないので、
-   枠線を付けてボタンの形にする。文言は行き先そのもの（「トップページ」）にしている */
+   枠線を付けてボタンの形にする。文言は行き先そのもの（「トップページ」）にしている。
+   枠線は灰色ではなく、わずかに青みのある --border-action を使う（灰色の枠だけだと
+   ただの囲みに見えて、押せることが触る前に伝わらないため） */
 .home-link {
 	display: inline-flex;
 	align-items: center;
 	padding: 5px 12px;
 	background: var(--surface);
-	border: 1px solid var(--border);
+	border: 1px solid var(--border-action);
 	border-radius: 999px;
 	box-shadow: var(--shadow-sm);
 	color: var(--text-sub);
@@ -139,7 +141,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	align-items: center;
 	gap: 6px;
 	background: var(--surface);
-	border: 1px solid var(--border);
+	/* 枠線にわずかな青み。灰色の枠だけだと押せることが伝わらない（.home-link と同じ考え） */
+	border: 1px solid var(--border-action);
 	border-radius: 8px;
 	color: var(--text-sub);
 	min-height: 34px; /* テーマ切替ボタンと高さを揃える */
@@ -149,8 +152,10 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	line-height: 1.5;
 	cursor: pointer;
 }
+/* 既定の枠線が青みを帯びたので、ホバーは灰色（--muted）ではなくアクセント色へ寄せる。
+   灰色に戻ると、触ったときに青みが薄れて逆向きの変化に見えてしまう */
 .btn:hover,
-.share-btn:hover { color: var(--text); border-color: var(--muted); }
+.share-btn:hover { color: var(--text); border-color: var(--accent); }
 .btn:focus-visible,
 .share-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 

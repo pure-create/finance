@@ -32,6 +32,11 @@
 
 	/* ----- 線 ----- */
 	--border:        #e2e8f0;
+	/* 押せるもの（ボタン・戻る導線）の枠線。地の枠線と同じ灰色だと、ただの囲みに見えて
+	   押せることが伝わらない。かといってアクセント色そのものだと主張が強すぎるので、
+	   --border に --accent を15%ほど混ぜた、わずかに青みのある値を置いている。
+	   混色をCSSで書かず実値にしているのは、対応していないブラウザでも同じ色にするため */
+	--border-action: #c5d1ec;
 	--grid:          #eef2f6; /* 表の罫線・グラフの目盛り線 */
 	--axis:          #cbd5e1; /* 軸・強めの区切り */
 	--field-border:  #cbd5e1;
@@ -82,6 +87,8 @@
 	--muted:         #8b939f;
 
 	--border:        #2c3138;
+	/* ダークは地が暗いぶん、同じ15%では青みが沈む。20%強まで寄せている */
+	--border-action: #3a4a62;
 	--grid:          #262b33;
 	--axis:          #3a414c;
 	--field-border:  #3a414c;
@@ -171,7 +178,8 @@ html.theme-anim canvas {
 	height: 34px;
 	padding: 0;
 	background: var(--surface);
-	border: 1px solid var(--border);
+	/* 同じ行に並ぶ「トップページに戻る」「試算結果を共有」と枠線の色をそろえる */
+	border: 1px solid var(--border-action);
 	border-radius: 8px;
 	color: var(--text-sub);
 	font-family: inherit;
@@ -179,7 +187,7 @@ html.theme-anim canvas {
 	line-height: 1;
 	cursor: pointer;
 }
-.theme-toggle__btn:hover { border-color: var(--muted); }
+.theme-toggle__btn:hover { border-color: var(--accent); }
 .theme-toggle__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .theme-toggle__btn > span { pointer-events: none; }
 
@@ -256,6 +264,8 @@ html.theme-anim canvas {
 		--muted:         #595959;
 
 		--border:        #bbbbbb;
+		/* 紙では押せるものが出ないので、青みは付けず地の枠線と同じにする */
+		--border-action: #bbbbbb;
 		--grid:          #dddddd;
 		--axis:          #999999;
 		--field-border:  #bbbbbb;
