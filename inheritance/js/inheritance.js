@@ -324,7 +324,15 @@ function renderChart(sweep) {
           callbacks: {
             title: items => `配偶者の取得割合 ${items[0].label}%`,
             label: item => `${item.dataset.label}: ${fmt(item.parsed.y)}万円`,
-          }
+          },
+          // Chart.js の既定は明暗によらず黒地。ページの吹き出し（.tipbox）と
+          // 食い違うので、テーマのトークンで塗り直す。地色が面と同系になるぶん、
+          // 折れ線に埋もれないよう枠線を添える
+          backgroundColor: Theme.color('--tooltip-bg'),
+          titleColor: Theme.color('--tooltip-text'),
+          bodyColor: Theme.color('--tooltip-text'),
+          borderColor: Theme.color('--tooltip-border'),
+          borderWidth: 1,
         }
       }
     }

@@ -206,9 +206,10 @@ canvas { display: block; width: 100%; }
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity .1s;
-	background: var(--surface-1);
-	border: 1px solid var(--border);
-	box-shadow: 0 4px 14px rgba(0,0,0,.14);
+	background: var(--tooltip-bg);
+	color: var(--tooltip-text);
+	border: 1px solid var(--tooltip-border);
+	box-shadow: var(--shadow-pop);
 	border-radius: 8px;
 	padding: 8px 10px;
 	font-size: 12px;

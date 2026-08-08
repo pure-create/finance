@@ -213,9 +213,12 @@ function render(){
               label:item =>`${item.dataset.label}：${item.parsed.y.toFixed(2)}年分`,
             },
             titleFont:{size:12}, bodyFont:{size:11},
+            // 地色をテーマに合わせるぶん、折れ線に埋もれないよう枠線を添える
             backgroundColor:Theme.color('--tooltip-bg'),
             titleColor:Theme.color('--tooltip-text'),
             bodyColor:Theme.color('--tooltip-text'),
+            borderColor:Theme.color('--tooltip-border'),
+            borderWidth:1,
           },
           legend:{labels:{font:{size:12}, usePointStyle:true, boxWidth:36, boxHeight:8, padding:14, color:cSub}},
           mpl:{data:markers},
@@ -307,6 +310,7 @@ Theme.onChange(()=>{
     o.plugins.tooltip.backgroundColor=Theme.color('--tooltip-bg');
     o.plugins.tooltip.titleColor=Theme.color('--tooltip-text');
     o.plugins.tooltip.bodyColor=Theme.color('--tooltip-text');
+    o.plugins.tooltip.borderColor=Theme.color('--tooltip-border');
     myChart.resize();   // 印刷直前は .printing で幅が変わっているので測り直す
   }
   render();             // 線の色とマーカーの色を取り直して update('none') する

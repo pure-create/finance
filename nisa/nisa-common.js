@@ -148,6 +148,7 @@ function updateChart(immediate) {
     const tt = chart.options.plugins.tooltip;
     tt.backgroundColor = Theme.color('--tooltip-bg');
     tt.bodyColor = tt.titleColor = Theme.color('--tooltip-text');
+    tt.borderColor = Theme.color('--tooltip-border');
     chart.update(immediate ? 'none' : undefined);
   } else {
     chart = new Chart(pieCtx, {
@@ -197,9 +198,12 @@ function updateChart(immediate) {
             },
             bodyFont: { size: 13 },
             padding: 10,
+            // 地色をテーマに合わせるぶん、円グラフに埋もれないよう枠線を添える
             backgroundColor: Theme.color('--tooltip-bg'),
             bodyColor: Theme.color('--tooltip-text'),
             titleColor: Theme.color('--tooltip-text'),
+            borderColor: Theme.color('--tooltip-border'),
+            borderWidth: 1,
           }
         },
         responsive: true,

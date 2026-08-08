@@ -159,7 +159,7 @@ body{padding:16px;min-height:100vh}
   line-height:1.7;padding:10px 12px;
   pointer-events:none;
 }
-.tipbox::before{left:14px;right:auto;border-bottom-color:var(--border)}
+.tipbox::before{left:14px;right:auto;border-bottom-color:var(--tooltip-border)}
 .help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
 .yval{font-size:15px;font-weight:700;color:var(--text);min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
 

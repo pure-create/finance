@@ -62,9 +62,16 @@
 	--shadow-md:     0 8px 24px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.05);
 	--shadow-pop:    0 6px 20px rgba(15,23,42,.14), 0 2px 6px rgba(15,23,42,.08);
 
-	/* ----- グラフのツールチップ（JSから Theme.color() で読む） ----- */
-	--tooltip-bg:    rgba(30,30,30,.9);
-	--tooltip-text:  #ffffff;
+	/* ----- ツールチップ（JSから Theme.color() で読むものもある） -----
+	   ヘルプの吹き出し・グラフのツールチップ・コピー結果の通知は、すべて
+	   この3つで塗る。ライトは白地に黒、ダークは黒地に白でテーマに従わせる。
+	   地色を反転させる流儀と混ぜると、同じ画面に白地と黒地の吹き出しが並ぶ。
+	   地と同系色になるぶん、下の内容に埋もれないよう枠線を必ず添える */
+	--tooltip-bg:     #ffffff;
+	--tooltip-text:   #1e293b;
+	/* 地の枠線（--border）だと、白いカードの上に出る白い吹き出しの輪郭が
+	   ほとんど見えなかった。入力欄と同じ濃さまで上げて縁を立てている */
+	--tooltip-border: #cbd5e1;
 
 	/* ----- テーマで反転させない色 ----- */
 	/* QRコードは黒モジュール／白地でないと読み取り精度が落ちるため、
@@ -112,8 +119,9 @@
 	--shadow-md:     0 8px 24px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
 	--shadow-pop:    0 6px 20px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.45);
 
-	--tooltip-bg:    rgba(236,238,242,.95);
-	--tooltip-text:  #0f1115;
+	--tooltip-bg:     #171a1f;
+	--tooltip-text:   #e8eaed;
+	--tooltip-border: #3a414c;
 
 	--qr-border:     #3a414c;
 }
