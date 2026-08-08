@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<!-- 検索結果に出す意味は無い。sitemap にも載せていない -->
+<meta name="robots" content="noindex">
+<title>OGP画像の版下（1200×630）</title>
+<!--
+  SNSやチャットにURLを貼ったときに出るプレビュー画像（og:image）の版下。
+  これをヘッドレスChromeで1200×630に撮って /og-image.png を作る。
+
+    chrome --headless --screenshot=og-image.png --window-size=1200,630
+           --force-device-scale-factor=1 --hide-scrollbars og/card.html
+
+  画像を直接描かずHTMLで持っているのは、文言や色をあとから変えられるようにするため。
+  ツール別の派生を作るときは、下の <body> の class を差し替える（末尾の一覧を参照）。
+
+  デザイン上の制約:
+  - プレビューは実際には幅300〜400pxで表示される。1200pxが1/3に縮む前提で、
+    文字は大きく、細部は入れない
+  - サービスによって切り取り方が違うので、文字は中央寄りに置く。
+    外周60pxは切り落とされてもよい余白として空けている
+  - 配色はファビコンと同じ地色、下の帯はトップページの各ツールの識別色に揃える
+-->
+<style>
+	/* ファビコンと同じ地色。サイト本体のダークテーマ（#0f1115）ではなく
+	   アイコン側に合わせて、並んだときの見え方を揃える */
+	:root {
+		--card-bg:   #201e1d;
+		--card-text: #f3f2f2;
+		--card-sub:  #a8a5a3;
+		--card-key:  #0088b0;
+
+		/* トップページの各ツールの識別色（ダーク側の値）。
+		   地色が暗いので、明るいほうを使う */
+		--tool-asset:   #2dd4bf;
+		--tool-nisa:    #4ade80;
+		--tool-retire:  #fbbf24;
+		--tool-pension: #60a5fa;
+		--tool-inherit: #a78bfa;
+	}
+
+	* { box-sizing: border-box; }
+
+	html, body { margin: 0; padding: 0; }
+
+	body {
+		width: 1200px;
+		height: 630px;
+		overflow: hidden;
+		background: var(--card-bg);
+		color: var(--card-text);
+		font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
+		             "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+		/* 縮小表示でも文字の輪郭が痩せないよう、字面を詰めすぎない */
+		letter-spacing: .01em;
+	}
+
+	/* 左上から差す淡い光。真っ平らな単色だと縮んだときに
+	   のっぺりして見えるので、わずかに階調を付ける */
+	.card {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		padding: 60px 72px;
+		display: flex;
+		flex-direction: column;
+		background:
+			radial-gradient(900px 520px at 14% 8%, rgba(0, 136, 176, .16), transparent 70%),
+			var(--card-bg);
+	}
+
+	/* ---- 上段：アイコンと本文 ---- */
+	.head {
+		display: flex;
+		align-items: center;
+		gap: 30px;
+	}
+
+	/* ファビコンと同じ図形。SVGで持っておくと大きさを変えても崩れない */
+	.mark { flex: 0 0 auto; }
+
+	.site {
+		font-size: 27px;
+		font-weight: 600;
+		color: var(--card-sub);
+		letter-spacing: .06em;
+	}
+
+	.body {
+		flex: 1 1 auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	/* 1/3に縮んでも読める大きさ。ここだけは絶対に小さくしない */
+	h1 {
+		margin: 0;
+		font-size: 76px;
+		font-weight: 700;
+		line-height: 1.25;
+	}
+
+	.lead {
+		margin: 26px 0 0;
+		font-size: 31px;
+		font-weight: 500;
+		line-height: 1.6;
+		color: var(--card-sub);
+	}
+
+	/* ---- 下段：ツールの一覧 ---- */
+	/* 縮小すると文字は潰れるが、色の並びは残る。トップページと同じ色を使うことで
+	   「5つの道具がある」ことだけは伝わるようにしている。
+	   5つが1行に収まる前提の幅なので、ここに他の要素を混ぜると折り返してしまう */
+	.tools {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 14px;
+		margin-top: 8px;
+	}
+
+	.tool {
+		display: inline-flex;
+		align-items: center;
+		gap: 11px;
+		padding: 11px 22px 11px 18px;
+		border: 1px solid rgba(243, 242, 242, .14);
+		border-radius: 999px;
+		background: rgba(243, 242, 242, .05);
+		font-size: 25px;
+		font-weight: 600;
+		color: var(--card-text);
+	}
+
+	.tool::before {
+		content: "";
+		width: 15px;
+		height: 15px;
+		border-radius: 4px;
+		background: var(--dot);
+	}
+
+	.tool-asset   { --dot: var(--tool-asset); }
+	.tool-nisa    { --dot: var(--tool-nisa); }
+	.tool-retire  { --dot: var(--tool-retire); }
+	.tool-pension { --dot: var(--tool-pension); }
+	.tool-inherit { --dot: var(--tool-inherit); }
+
+	/* 上段の右端に置く。下段はツールの5つで幅を使い切っており、
+	   右下の角は切り取られやすい場所でもあるため */
+	.url {
+		margin-left: auto;
+		flex: 0 0 auto;
+		font-size: 22px;
+		font-weight: 500;
+		color: rgba(168, 165, 163, .75);
+		letter-spacing: .02em;
+		white-space: nowrap;
+	}
+</style>
+</head>
+<body>
+<div class="card">
+
+	<div class="head">
+		<span class="mark">
+			<!-- favicon.svg と同じ図形（地色の角丸だけ外し、棒を大きくしたもの） -->
+			<svg width="92" height="92" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+				<rect x="14" y="45" width="12" height="7" rx="2" fill="#f3f2f2" opacity=".4"></rect>
+				<rect x="14" y="34" width="17" height="7" rx="2" fill="#f3f2f2" opacity=".55"></rect>
+				<rect x="14" y="23" width="25" height="7" rx="2" fill="#f3f2f2" opacity=".75"></rect>
+				<rect x="14" y="12" width="36" height="7" rx="2" fill="#0088b0"></rect>
+			</svg>
+		</span>
+		<span class="site">FINANCE SIMULATOR</span>
+		<span class="url">pure-create.github.io/finance</span>
+	</div>
+
+	<div class="body">
+		<h1>資産運用・金融シミュレーター</h1>
+		<p class="lead">積立と取り崩し、退職手当、年金、相続税。<br>条件を入れて試算し、結果はURLとQRでそのまま共有できます。</p>
+	</div>
+
+	<div class="tools">
+		<span class="tool tool-asset">資産運用</span>
+		<span class="tool tool-nisa">NISA利用状況</span>
+		<span class="tool tool-retire">退職手当</span>
+		<span class="tool tool-pension">年金</span>
+		<span class="tool tool-inherit">相続</span>
+	</div>
+
+</div>
+</body>
+</html>
