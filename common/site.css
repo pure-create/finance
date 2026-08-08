@@ -397,6 +397,27 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 .foot-disclaimer a { text-decoration: underline; }
 
 /* =============================================================
+   ページ最下部の1行（アクセス解析の明示）
+
+   Google Analytics は閲覧者の情報をGoogleへ送るので、使っていることを知らせる。
+   免責（.foot-disclaimer）は試算をするページにしか出さないが、こちらは計測が
+   動いているページすべてに要るので、入れ物を分けている。
+   404ページには計測を入れていないので置かない。
+
+   置き場所は各ページの本文の入れ物の一番最後。ページごとに横幅の決め方が
+   違うので、共通の外枠は作らず、それぞれの中に入れて幅を合わせている。
+   ============================================================= */
+.site-privacy {
+	margin: 24px 0 0;
+	padding-top: 10px;
+	border-top: 1px solid var(--border);
+	color: var(--muted);
+	font-size: 11px;
+	line-height: 1.7;
+}
+.site-privacy a { text-decoration: underline; }
+
+/* =============================================================
    印刷の直前だけ、レイアウトを紙の幅にそろえる
 
    theme.js が beforeprint で <html> に .printing を付ける。
@@ -420,7 +441,9 @@ html.printing {
 html.printing .btn,
 html.printing .share-btn,
 html.printing .share-msg,
-html.printing .tipbox {
+html.printing .tipbox,
+/* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
+html.printing .site-privacy {
 	display: none !important;
 }
 
@@ -454,7 +477,9 @@ html.printing .share-pop > .share-qr { display: block; }
 	.btn,
 	.share-btn,
 	.share-msg,
-	.tipbox {
+	.tipbox,
+	/* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
+	.site-privacy {
 		display: none !important;
 	}
 
