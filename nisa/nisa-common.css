@@ -41,8 +41,9 @@
   .year-nav .current { color: var(--text); font-weight: 600; }
   .year-nav a { color: var(--accent); text-decoration: none; }
   .year-nav a:hover { text-decoration: underline; }
-  .note { font-size: 11px; color: var(--muted); line-height: 1.7; margin: 2.5rem 0 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-  .note a { text-decoration: underline; }
+  /* 注記の見た目は common/site.css の .site-foot / .foot-note に集約した。
+     このページは末尾に余白が欲しいので、そこだけ足す */
+  .site-foot { margin-bottom: 1.5rem; }
   .section-label { font-size: 12px; font-weight: 500; color: var(--text-sub); margin: 1.5rem 0 0.4rem; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   /* 端の影で横スクロールできることを知らせる。左右のぼかしは地の色と揃える必要がある */
@@ -150,5 +151,5 @@
     thead { display: table-header-group; }
 
     .section-label { break-after: avoid; }
-    .note { color: #333; }
+    .foot-note { color: #333; }
   }

@@ -449,26 +449,10 @@ div.explain {
 	z-index: 10;
 	opacity: 0.97;
 }
-div#footer {
-	background: transparent;
-	color: var(--color-muted);
-	padding: 14px 0 0;
-	/* 結果の表の下は、ツールチップ用に確保した28pxの余白が先にあるので、
-	   ここは区切り線が近づきすぎない程度でよい */
-	margin-top: 16px;
-	border-top: 1px solid var(--color-border);
-	font-size: 95%;
-	height: auto;
-}
-div#footer a {
-	color: var(--color-primary);
-	text-decoration: none;
-	border-bottom: 1px solid transparent;
-	transition: border-color 0.15s ease;
-}
-div#footer a:hover {
-	border-bottom-color: var(--color-primary);
-}
+/* 注記の見た目は common/site.css の .site-foot / .foot-note / .foot-disclaimer に
+   集約した。ここでは間隔だけ詰める。結果の表の下にはツールチップ用に確保した
+   28pxの余白が先にあるので、共通の28pxをそのまま足すと空きすぎるため */
+.site-foot { margin-top: 16px; }
 
 @media screen and (max-width: 600px) {
 	body {

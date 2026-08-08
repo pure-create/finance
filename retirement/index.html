@@ -26,8 +26,9 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260807a">
-<link rel="stylesheet" href="../common/site.css?v=20260808a">
+<link rel="stylesheet" href="../common/site.css?v=20260808b">
 <script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
 <title>退職手当計算サイト</title>
 <style>
   body {
@@ -70,27 +71,6 @@
     font-weight: 700;
     color: var(--accent);
   }
-  /* QRコードは読み取り精度のためテーマで反転させない（白地・黒モジュールのまま） */
-  a.card .qr {
-    position: absolute;
-    right: 12px;
-    bottom: 12px;
-    display: block;
-    width: 56px;
-    height: 56px;
-    line-height: 0;
-    background: var(--qr-bg);
-    border: 1px solid var(--qr-border);
-    border-radius: 6px;
-    padding: 4px;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  a.card .qr svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
 </style>
 </head>
 <body>
@@ -98,6 +78,13 @@
 	<a class="home-link" href="../">トップページに戻る</a>
 	<div class="page-tools">
 		<span data-theme-toggle></span>
+		<div class="share-wrap">
+			<button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
+			<div class="share-pop" id="sharePop">
+				<span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、このページが開けます"></span>
+				<p id="shareMsg" class="share-msg" aria-live="polite"></p>
+			</div>
+		</div>
 	</div>
 </div>
 <div class="page-head">
@@ -109,29 +96,23 @@
 <div class="cards">
 	<a class="card" href="./local/">
 		<span class="title">地方公務員</span>
-		<span class="qr" id="qrLocal" aria-hidden="true"></span>
 	</a>
 	<a class="card" href="./national/">
 		<span class="title">国家公務員</span>
-		<span class="qr" id="qrNational" aria-hidden="true"></span>
 	</a>
 </div>
 <script>
-	function renderQr(elId, relativePath){
-		var el = document.getElementById(elId);
-		if(!el) return;
-		try{
-			var url = new URL(relativePath, window.location.href).href;
-			var qr = qrcode(0, 'M');
-			qr.addData(url);
-			qr.make();
-			el.innerHTML = qr.createSvgTag(4);
-		}catch(e){
-			el.innerHTML = '';
-		}
-	}
-	renderQr('qrLocal', './local/');
-	renderQr('qrNational', './national/');
+	/* 入口のページなので、共有するのはクエリの付かないこのページのURLそのもの
+	   （トップページと同じ形。JSモジュールを持たないページなのでここで初期化する）。
+
+	   以前は2枚のカードの中に、地方・国家それぞれのQRを常時表示していた。
+	   他のページはどこも「共有ボタンを押したときだけQRの窓が開く」形なので、
+	   このページだけ作りが違っていた。カードからQRを外し、ヘッダーの
+	   共有ボタンに寄せている */
+	Share.init({
+		buildUrl: function () { return Share.urlWithParams(null); },
+		okMsg:    'このページのURLをコピーしました。'
+	});
 </script>
 </body>
 </html>

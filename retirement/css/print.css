@@ -74,7 +74,8 @@ a.switch-link {
 	display: none;
 }
 
-div#footer {
+.foot-note,
+.foot-disclaimer {
 	color: black;
 }
 
@@ -104,6 +105,7 @@ h2, div.section-header {
 	break-after: avoid;
 }
 
-#footer a[href]::after {
+/* 紙にはリンク先が残らないので、URLを文字として書き出す */
+.site-foot a[href]::after {
 	content: " (" attr(href) ")";
 }

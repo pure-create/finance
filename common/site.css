@@ -311,16 +311,63 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 :focus-visible > .tipbox { opacity: 1; visibility: visible; }
 
 /* =============================================================
-   フッター
+   ページ末尾の注記
+
+   中身は2つに分かれる。
+     .foot-note       … そのページ固有の前提・出典。ページごとに違う
+     .foot-disclaimer … 全ページ共通の免責。文面はどのページでも同じ
+
+   免責を置くのは試算をするページだけ（資産運用・退職手当の地方/国家・
+   年金・相続の5つ）。NISAの各年のページは公表データの集計を見せるもので
+   試算をしないので出典と注記だけを置き、入口のページも同じ理由で置かない。
+
+   これまで入れ物が .foot / .note / .notes / #footer と4種類あり、見た目の
+   指定も4つのCSSに散っていた。それをここ1箇所に集約している。
+
+   .foot-note と .foot-disclaimer は単独でも成立するようにしてある。
+   資産運用のページだけは注記がグリッドの中のカードに入っており、
+   ページ末尾の .site-foot を使えないため。
    ============================================================= */
-.foot {
+.site-foot {
 	margin-top: 28px;
 	padding-top: 12px;
 	border-top: 1px solid var(--border);
+}
+
+.foot-note,
+.foot-disclaimer {
 	color: var(--muted);
 	font-size: 12px;
 	line-height: 1.7;
 }
+
+.foot-note { margin: 0; }
+.foot-note > * { margin: 0; }
+.foot-note > * + * { margin-top: .6em; }
+.foot-note h3 {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-sub);
+}
+.foot-note ul { padding-left: 1.15em; }
+.foot-note li + li { margin-top: .3em; }
+
+/* 注記の続きに置くので、区切りは実線ではなく点線にして段差を小さくする */
+.foot-disclaimer {
+	margin: .9em 0 0;
+	padding-top: .9em;
+	border-top: 1px dotted var(--border);
+}
+/* 注記が無いページでは、上の .site-foot の実線とすぐ重なるので区切りは要らない */
+.site-foot > .foot-disclaimer:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: none;
+}
+
+/* 出典などのリンク。本文中のリンクより控えめだが、押せることは分かるようにする */
+.foot-note a,
+.foot-disclaimer a { text-decoration: underline; }
 
 /* =============================================================
    印刷の直前だけ、レイアウトを紙の幅にそろえる
@@ -443,5 +490,7 @@ html.printing .share-pop > .share-qr { display: block; }
 	}
 	.page-head h1 { font-size: 15pt; }
 	.page-head .sub { font-size: 9pt; }
-	.foot { font-size: 8.5pt; }
+	.foot-note,
+	.foot-disclaimer { font-size: 8.5pt; line-height: 1.6; }
+	.foot-note h3 { font-size: 9.5pt; }
 }
