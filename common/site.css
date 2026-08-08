@@ -242,6 +242,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	box-shadow: var(--shadow-pop);
+	/* 中のどこを押しても閉じるので、押せることが分かるようにしておく（share.js） */
+	cursor: pointer;
 
 	/* 開け閉めは display ではなく opacity で行う（display は途中の値を持てず、
 	   切り替えた瞬間に出入りしてしまうため）。visibility も一緒に変えることで、

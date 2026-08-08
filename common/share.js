@@ -176,6 +176,11 @@
 		}
 
 		if (popEl()) {
+			// 窓の中（QRやコピー結果）を押したときも閉じる。読み終えて押す先は
+			// 共有ボタンとは限らず、目の前のQRを押しても消えないと閉じ方が分からない。
+			// 中に押せるものは無いので、どこを押しても閉じてよい
+			popEl().addEventListener('click', function () { setOpen(false); });
+
 			// 外側をクリック、または Esc で閉じる（テーマ切替のメニューと同じ操作感にする）
 			document.addEventListener('click', function (e) {
 				if (!isOpen()) return;
