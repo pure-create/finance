@@ -7,19 +7,26 @@
 <title>OGP画像の版下（1200×630）</title>
 <!--
   SNSやチャットにURLを貼ったときに出るプレビュー画像（og:image）の版下。
-  これをヘッドレスChromeで1200×630に撮り、リポジトリ直下のPNGを作る。
+  これをヘッドレスChromeで1200×630に撮り、このフォルダにPNGとして書き出す。
 
-    chrome --headless --screenshot=og-image.png --window-size=1200,630
-           --force-device-scale-factor=1 --hide-scrollbars "og/card.html?v=site"
+    chrome --headless --screenshot=og/site.png --window-size=1200,630
+           --force-device-scale-factor=1 --hide-scrollbars
+           "file:///D:/finance/og/card.html?v=site"
+
+  URLは file:/// の形で渡すこと。ファイルパスをそのまま渡すと ?v= がファイル名の
+  一部として扱われ、どの版も同じ空の絵になる。
 
   ?v= で切り替える。書き出し先は下の一覧のとおり。
 
-    v=site        → og-image.png        （トップページ）
-    v=asset       → og-asset.png        （資産運用シミュレーター）
-    v=nisa        → og-nisa.png         （NISA利用状況・2年分で共用）
-    v=retirement  → og-retirement.png   （退職手当・入口/地方/国家で共用）
-    v=pension     → og-pension.png      （年金）
-    v=inheritance → og-inheritance.png  （相続）
+    v=site        → og/site.png         （トップページ）
+    v=asset       → og/asset.png        （資産運用シミュレーター）
+    v=nisa        → og/nisa.png         （NISA利用状況・2年分で共用）
+    v=retirement  → og/retirement.png   （退職手当・入口/地方/国家で共用）
+    v=pension     → og/pension.png      （年金）
+    v=inheritance → og/inheritance.png  （相続）
+
+  og:image に置き場所の決まりは無いので、版下と同じここにまとめている
+  （favicon や robots.txt のようなホスト直下の制約は無い）。
 
   画像を直接描かずHTMLで持っているのは、文言や色をあとから変えられるようにするため。
   文言は下の VARIANTS にまとめてあるので、絵と文字を別々に直さなくてよい。
