@@ -7,20 +7,30 @@
 <title>OGP画像の版下（1200×630）</title>
 <!--
   SNSやチャットにURLを貼ったときに出るプレビュー画像（og:image）の版下。
-  これをヘッドレスChromeで1200×630に撮って /og-image.png を作る。
+  これをヘッドレスChromeで1200×630に撮り、リポジトリ直下のPNGを作る。
 
     chrome --headless --screenshot=og-image.png --window-size=1200,630
-           --force-device-scale-factor=1 --hide-scrollbars og/card.html
+           --force-device-scale-factor=1 --hide-scrollbars "og/card.html?v=site"
+
+  ?v= で切り替える。書き出し先は下の一覧のとおり。
+
+    v=site        → og-image.png        （トップページ）
+    v=asset       → og-asset.png        （資産運用シミュレーター）
+    v=nisa        → og-nisa.png         （NISA利用状況・2年分で共用）
+    v=retirement  → og-retirement.png   （退職手当・入口/地方/国家で共用）
+    v=pension     → og-pension.png      （年金）
+    v=inheritance → og-inheritance.png  （相続）
 
   画像を直接描かずHTMLで持っているのは、文言や色をあとから変えられるようにするため。
-  ツール別の派生を作るときは、下の <body> の class を差し替える（末尾の一覧を参照）。
+  文言は下の VARIANTS にまとめてあるので、絵と文字を別々に直さなくてよい。
 
   デザイン上の制約:
   - プレビューは実際には幅300〜400pxで表示される。1200pxが1/3に縮む前提で、
     文字は大きく、細部は入れない
   - サービスによって切り取り方が違うので、文字は中央寄りに置く。
     外周60pxは切り落とされてもよい余白として空けている
-  - 配色はファビコンと同じ地色、下の帯はトップページの各ツールの識別色に揃える
+  - 地色はファビコンと同じ。差し色は各ツールの識別色（トップページと同じ値）に揃え、
+    貼られた先でどの道具の話かが色でも分かるようにする
 -->
 <style>
 	/* ファビコンと同じ地色。サイト本体のダークテーマ（#0f1115）ではなく
@@ -29,16 +39,17 @@
 		--card-bg:   #201e1d;
 		--card-text: #f3f2f2;
 		--card-sub:  #a8a5a3;
-		--card-key:  #0088b0;
 
-		/* トップページの各ツールの識別色（ダーク側の値）。
-		   地色が暗いので、明るいほうを使う */
-		--tool-asset:   #2dd4bf;
-		--tool-nisa:    #4ade80;
-		--tool-retire:  #fbbf24;
-		--tool-pension: #60a5fa;
-		--tool-inherit: #a78bfa;
+		/* 差し色。既定はサイト全体用。ツール別は body の class で上書きする */
+		--key: #0088b0;
 	}
+
+	/* トップページの各ツールの識別色（ダーク側の値）。地色が暗いので明るいほうを使う */
+	body.v-asset       { --key: #2dd4bf; }
+	body.v-nisa        { --key: #4ade80; }
+	body.v-retirement  { --key: #fbbf24; }
+	body.v-pension     { --key: #60a5fa; }
+	body.v-inheritance { --key: #a78bfa; }
 
 	* { box-sizing: border-box; }
 
@@ -57,7 +68,7 @@
 	}
 
 	/* 左上から差す淡い光。真っ平らな単色だと縮んだときに
-	   のっぺりして見えるので、わずかに階調を付ける */
+	   のっぺりして見えるので、わずかに階調を付ける。色は差し色に追従させる */
 	.card {
 		position: relative;
 		width: 100%;
@@ -66,25 +77,45 @@
 		display: flex;
 		flex-direction: column;
 		background:
-			radial-gradient(900px 520px at 14% 8%, rgba(0, 136, 176, .16), transparent 70%),
+			radial-gradient(900px 520px at 14% 8%, rgba(255, 255, 255, .10), transparent 70%),
 			var(--card-bg);
 	}
+	.card::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(760px 460px at 12% 6%, var(--key), transparent 70%);
+		opacity: .17;
+		pointer-events: none;
+	}
+	.card > * { position: relative; }
 
-	/* ---- 上段：アイコンと本文 ---- */
+	/* ---- 上段：アイコン・サイト名・URL ---- */
 	.head {
 		display: flex;
 		align-items: center;
 		gap: 30px;
 	}
 
-	/* ファビコンと同じ図形。SVGで持っておくと大きさを変えても崩れない */
-	.mark { flex: 0 0 auto; }
+	.mark { flex: 0 0 auto; line-height: 0; }
 
 	.site {
 		font-size: 27px;
 		font-weight: 600;
 		color: var(--card-sub);
 		letter-spacing: .06em;
+	}
+
+	/* 上段の右端に置く。下段は見出し語で幅を使い切っており、
+	   右下の角は切り取られやすい場所でもあるため */
+	.url {
+		margin-left: auto;
+		flex: 0 0 auto;
+		font-size: 22px;
+		font-weight: 500;
+		color: rgba(168, 165, 163, .75);
+		letter-spacing: .02em;
+		white-space: nowrap;
 	}
 
 	.body {
@@ -94,13 +125,15 @@
 		justify-content: center;
 	}
 
-	/* 1/3に縮んでも読める大きさ。ここだけは絶対に小さくしない */
+	/* 1/3に縮んでも読める大きさ。ここだけは絶対に小さくしない。
+	   ツール別は見出しが長くなるので、サイト全体用より一段小さくしている */
 	h1 {
 		margin: 0;
-		font-size: 76px;
+		font-size: 68px;
 		font-weight: 700;
 		line-height: 1.25;
 	}
+	body.v-site h1 { font-size: 76px; }
 
 	.lead {
 		margin: 26px 0 0;
@@ -110,18 +143,17 @@
 		color: var(--card-sub);
 	}
 
-	/* ---- 下段：ツールの一覧 ---- */
-	/* 縮小すると文字は潰れるが、色の並びは残る。トップページと同じ色を使うことで
-	   「5つの道具がある」ことだけは伝わるようにしている。
-	   5つが1行に収まる前提の幅なので、ここに他の要素を混ぜると折り返してしまう */
-	.tools {
+	/* ---- 下段：見出し語 ---- */
+	/* 縮小すると文字は潰れるが、色の並びは残る。何の道具かが色でも伝わるようにしている。
+	   1行に収まる前提の幅なので、ここに他の要素を混ぜると折り返してしまう */
+	.tags {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 14px;
 		margin-top: 8px;
 	}
 
-	.tool {
+	.tag {
 		display: inline-flex;
 		align-items: center;
 		gap: 11px;
@@ -134,31 +166,20 @@
 		color: var(--card-text);
 	}
 
-	.tool::before {
+	.tag::before {
 		content: "";
 		width: 15px;
 		height: 15px;
 		border-radius: 4px;
-		background: var(--dot);
+		background: var(--dot, var(--key));
 	}
 
-	.tool-asset   { --dot: var(--tool-asset); }
-	.tool-nisa    { --dot: var(--tool-nisa); }
-	.tool-retire  { --dot: var(--tool-retire); }
-	.tool-pension { --dot: var(--tool-pension); }
-	.tool-inherit { --dot: var(--tool-inherit); }
-
-	/* 上段の右端に置く。下段はツールの5つで幅を使い切っており、
-	   右下の角は切り取られやすい場所でもあるため */
-	.url {
-		margin-left: auto;
-		flex: 0 0 auto;
-		font-size: 22px;
-		font-weight: 500;
-		color: rgba(168, 165, 163, .75);
-		letter-spacing: .02em;
-		white-space: nowrap;
-	}
+	/* サイト全体用だけは、5つの道具をそれぞれの色で並べる */
+	.tag-asset       { --dot: #2dd4bf; }
+	.tag-nisa        { --dot: #4ade80; }
+	.tag-retirement  { --dot: #fbbf24; }
+	.tag-pension     { --dot: #60a5fa; }
+	.tag-inheritance { --dot: #a78bfa; }
 </style>
 </head>
 <body>
@@ -166,31 +187,78 @@
 
 	<div class="head">
 		<span class="mark">
-			<!-- favicon.svg と同じ図形（地色の角丸だけ外し、棒を大きくしたもの） -->
+			<!-- favicon.svg と同じ図形（地色の角丸だけ外したもの）。一番上の棒だけ差し色 -->
 			<svg width="92" height="92" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 				<rect x="14" y="45" width="12" height="7" rx="2" fill="#f3f2f2" opacity=".4"></rect>
 				<rect x="14" y="34" width="17" height="7" rx="2" fill="#f3f2f2" opacity=".55"></rect>
 				<rect x="14" y="23" width="25" height="7" rx="2" fill="#f3f2f2" opacity=".75"></rect>
-				<rect x="14" y="12" width="36" height="7" rx="2" fill="#0088b0"></rect>
+				<rect x="14" y="12" width="36" height="7" rx="2" fill="currentColor" style="color: var(--key)"></rect>
 			</svg>
 		</span>
-		<span class="site">FINANCE SIMULATOR</span>
+		<span class="site" id="site"></span>
 		<span class="url">pure-create.github.io/finance</span>
 	</div>
 
 	<div class="body">
-		<h1>資産運用・金融シミュレーター</h1>
-		<p class="lead">積立と取り崩し、退職手当、年金、相続税。<br>条件を入れて試算し、結果はURLとQRでそのまま共有できます。</p>
+		<h1 id="title"></h1>
+		<p class="lead" id="lead"></p>
 	</div>
 
-	<div class="tools">
-		<span class="tool tool-asset">資産運用</span>
-		<span class="tool tool-nisa">NISA利用状況</span>
-		<span class="tool tool-retire">退職手当</span>
-		<span class="tool tool-pension">年金</span>
-		<span class="tool tool-inherit">相続</span>
-	</div>
+	<div class="tags" id="tags"></div>
 
 </div>
+
+<script>
+/* 版ごとの文言。絵と文字を別々に直さなくてよいよう、ここ1箇所にまとめる。
+   tags の各項目は [表示する語, 点の色に使う版名]。版名を省くとその版の差し色になる。 */
+var VARIANTS = {
+	site: {
+		site:  'FINANCE SIMULATOR',
+		title: '資産運用・金融シミュレーター',
+		lead:  '積立と取り崩し、退職手当、年金、相続税。<br>条件を入れて試算し、結果はURLとQRでそのまま共有できます。',
+		tags:  [['資産運用', 'asset'], ['NISA利用状況', 'nisa'], ['退職手当', 'retirement'],
+		        ['年金', 'pension'], ['相続', 'inheritance']]
+	},
+	asset: {
+		title: '資産運用シミュレーター',
+		lead:  '積立と取り崩しをモンテカルロ法で試算。<br>インフレ・税金・NISA枠・資産配分を織り込んで資産推移を見ます。',
+		tags:  [['積立と取り崩し'], ['モンテカルロ法'], ['NISA枠と税金']]
+	},
+	nisa: {
+		title: 'NISA利用状況',
+		lead:  '金融庁の利用状況調査と総務省の人口推計から、<br>年代別の口座保有率と年間買付額の分布をまとめました。',
+		tags:  [['年代別の保有率'], ['買付額の分布'], ['前年比']]
+	},
+	retirement: {
+		title: '公務員退職手当計算',
+		lead:  '地方公務員・国家公務員の退職手当を年度ごとに試算。<br>所得税・住民税を差し引いた手取額まで計算します。',
+		tags:  [['地方公務員'], ['国家公務員'], ['手取額まで']]
+	},
+	pension: {
+		title: '年金受給開始年齢 損益分岐点',
+		lead:  '60〜75歳の受給開始年齢ごとに累積受取総額を比較。<br>運用利回りを変えながら損益分岐点を探せます。',
+		tags:  [['繰上げ・繰下げ'], ['累積受取総額'], ['損益分岐点']]
+	},
+	inheritance: {
+		title: '二次相続シミュレーター',
+		lead:  '一次相続と二次相続の相続税を合計で比較。<br>税額が最小になる配偶者の取得割合を探せます。',
+		tags:  [['一次＋二次の合計'], ['配偶者の取得割合'], ['税額の最小点']]
+	}
+};
+
+(function () {
+	var name = new URLSearchParams(location.search).get('v') || 'site';
+	var v = VARIANTS[name] || VARIANTS.site;
+	document.body.className = 'v-' + name;
+	/* ツール別はサイト名を出して、どのサイトの話かが分かるようにする。
+	   サイト全体用は見出しがサイト名そのものなので、重ならないよう英字の呼び名にしている */
+	document.getElementById('site').textContent = v.site || '資産運用・金融シミュレーター';
+	document.getElementById('title').textContent = v.title;
+	document.getElementById('lead').innerHTML = v.lead;
+	document.getElementById('tags').innerHTML = v.tags.map(function (t) {
+		return '<span class="tag' + (t[1] ? ' tag-' + t[1] : '') + '">' + t[0] + '</span>';
+	}).join('');
+})();
+</script>
 </body>
 </html>
