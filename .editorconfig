@@ -13,3 +13,10 @@ root = true
 [*]
 charset = utf-8
 end_of_line = lf
+
+# 外部ライブラリをそのまま置いてある場所。配布元のバイト列を1バイトも変えたくないので、
+# 上の取り決めを適用しない（エディタが開いただけで改行や文字コードを直してしまうと、
+# 配布元のSRIハッシュと突き合わせた確認ができなくなる）。
+[common/vendor/**]
+charset = unset
+end_of_line = unset
