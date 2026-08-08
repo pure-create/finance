@@ -392,9 +392,23 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	border-top: none;
 }
 
+/* アクセス解析の断り書き。免責（それが無いページでは注記）のすぐ下に、
+   間隔も区切り線も入れずに続ける。離して置くと本文から切り離されて見え、
+   どのページの話なのか伝わりにくくなるため。
+
+   入れ物を持たないページ（トップ・退職手当の入口）では、代わりに
+   下の .site-privacy を単独で使う。 */
+.foot-privacy {
+	margin: 0;
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1.7;
+}
+
 /* 出典などのリンク。本文中のリンクより控えめだが、押せることは分かるようにする */
 .foot-note a,
-.foot-disclaimer a { text-decoration: underline; }
+.foot-disclaimer a,
+.foot-privacy a { text-decoration: underline; }
 
 /* =============================================================
    ページ最下部の断り書き（データの扱い・アクセス解析）
@@ -403,6 +417,10 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    免責（.foot-disclaimer）は試算をするページにしか出さないが、こちらは計測が
    動いているページすべてに要るので、入れ物を分けている。
    404ページには計測を入れていないので置かない。
+
+   これを使うのは、末尾に注記の入れ物を持たないページ（トップページと
+   退職手当の入口）だけ。注記のあるページでは、免責のすぐ下に続ける
+   .foot-privacy を使う。
 
    トップページだけは、入力内容の扱い（計算はブラウザの中で完結すること、
    共有URLには入力内容が入ること）も併せて書くため複数行になる。
@@ -450,7 +468,8 @@ html.printing .share-btn,
 html.printing .share-msg,
 html.printing .tipbox,
 /* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
-html.printing .site-privacy {
+html.printing .site-privacy,
+html.printing .foot-privacy {
 	display: none !important;
 }
 
@@ -486,7 +505,8 @@ html.printing .share-pop > .share-qr { display: block; }
 	.share-msg,
 	.tipbox,
 	/* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
-	.site-privacy {
+	.site-privacy,
+	.foot-privacy {
 		display: none !important;
 	}
 

@@ -243,10 +243,6 @@ details.tablebox > summary {
    このページだけは注記がグリッドの中のカード（figure）に入っているので、
    ページ末尾に置く .site-foot は使わず、カードの中で2つを並べている */
 .foot-note code { font-size: 11.5px; color: var(--text-primary); }
-
-/* アクセス解析の断り書きは2段組みのグリッドの直下に置いているので、
-   左右の列にまたがらせてページ幅いっぱいの1行にする */
-.layout > .site-privacy { grid-column: 1 / -1; }
 #noscript { padding: 24px; }
 
 /* 印刷の直前に canvas を紙幅で描き直させるための指定。
