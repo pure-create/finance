@@ -101,6 +101,25 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	flex-wrap: wrap;
 	flex: 0 0 auto;
 }
+
+/* 使っている制度データがいつ時点のものかを示す小さな札。
+   税率・支給率・年金の増減率は改正されるので、いつの制度で計算しているかが
+   分からないと結果を信用してよいか判断できない。試算をするページには必ず出す。
+
+   日付は各ページのHTMLに直接書いてある。ツールごとに見直した時期が違うため、
+   1箇所にまとめず、そのページの制度データを直したときに一緒に更新する。 */
+.data-asof {
+	display: inline-block;
+	margin: 7px 0 0;
+	padding: 2px 9px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	color: var(--muted);
+	font-size: 11px;
+	line-height: 1.7;
+	white-space: nowrap;
+}
 /* 見出しと同じ行に操作ボタン群があるトップページ用。狭いときは行を分ける。
    ツールのページでは .site-head の中にあるので、この指定は当たらない */
 @media screen and (max-width: 600px) {
@@ -490,6 +509,8 @@ html.printing .share-pop > .share-qr { display: block; }
 	}
 	.page-head h1 { font-size: 15pt; }
 	.page-head .sub { font-size: 9pt; }
+	/* 紙に残った試算がいつの制度によるものかは、後から見返すときに要る */
+	.data-asof { font-size: 8pt; }
 	.foot-note,
 	.foot-disclaimer { font-size: 8.5pt; line-height: 1.6; }
 	.foot-note h3 { font-size: 9.5pt; }
