@@ -31,12 +31,21 @@
 <link rel="stylesheet" href="nisa-common.css?v=20260807b">
 <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
 <script src="../common/vendor/chartjs-plugin-datalabels.min.js?v=2.2.0"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
 </head>
 <body>
 <div class="site-head">
   <a class="home-link" href="../">トップページに戻る</a>
   <div class="page-tools">
     <span data-theme-toggle></span>
+    <div class="share-wrap">
+      <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
+      <div class="share-pop" id="sharePop">
+        <span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、このページが開けます"></span>
+        <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+      </div>
+    </div>
   </div>
 </div>
 <div class="page-head">

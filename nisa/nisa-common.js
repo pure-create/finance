@@ -261,3 +261,11 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => { if (chart) chart.update(); }, 150);
 });
+
+/* このページは公表データを見せるだけで、試算の入力が無い。共有するのは
+   クエリの付かないページのURLそのもの（年代の選択などはURLには載せない）。
+   2024年版・2025年版の両方から読まれるので、ここに置いて1回で済ませている */
+Share.init({
+  buildUrl: function () { return Share.urlWithParams(null); },
+  okMsg:    'このページのURLをコピーしました。'
+});

@@ -28,6 +28,8 @@
 <script src="../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260807a">
 <link rel="stylesheet" href="../common/site.css?v=20260808a">
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
 <style>
   body { font-size: 15px; line-height: 1.8; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
   .link-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
@@ -41,6 +43,13 @@
   <a class="home-link" href="../">トップページに戻る</a>
   <div class="page-tools">
     <span data-theme-toggle></span>
+    <div class="share-wrap">
+      <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
+      <div class="share-pop" id="sharePop">
+        <span id="shareQr" class="share-qr" aria-hidden="true" title="スマートフォンのカメラで読み取ると、このページが開けます"></span>
+        <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+      </div>
+    </div>
   </div>
 </div>
 <div class="page-head">
@@ -54,5 +63,13 @@
 </div>
 <p class="desc">金融庁のNISA利用状況データと人口データから作成</p>
 
+<script>
+  /* 入口のページなので、共有するのはクエリの付かないこのページのURLそのもの
+     （トップページと同じ形。JSモジュールを持たないページなのでここで初期化する） */
+  Share.init({
+    buildUrl: function () { return Share.urlWithParams(null); },
+    okMsg:    'このページのURLをコピーしました。'
+  });
+</script>
 </body>
 </html>
