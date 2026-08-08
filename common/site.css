@@ -25,10 +25,11 @@ a:hover { color: var(--accent-hover); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* =============================================================
-   サイト内ヘッダー（戻る導線＋操作ボタン群）
+   サイト内ヘッダー（戻る導線＋制度データの時点＋操作ボタン群）
    トップページ自身には置かない。
 
-   左に「トップページに戻る」、右にテーマ切替や共有ボタン（.page-tools）を置く。
+   左に「トップページに戻る」、その隣に制度データの時点、
+   右にテーマ切替や共有ボタン（.page-tools）を置く。
    操作系をこの行に集めることで、下の見出し行が横幅を全部使えるようになる。
    ============================================================= */
 .site-head {
@@ -62,6 +63,26 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 /* 上の a:focus-visible が border-radius: 3px を当ててくるので、
    フォーカス時だけピルの角が四角くならないよう戻す */
 .home-link:focus-visible { border-radius: 999px; }
+
+/* 使っている制度データがいつ時点のものかを示す。
+   税率・支給率・年金の増減率は改正されるので、いつの制度で計算しているかが
+   分からないと結果を信用してよいか判断できない。試算をするページには必ず出す。
+
+   枠線・背景・角丸は付けない。この行は押せるものが並んでいるので、
+   同じ形にすると押せる部品に見えてしまう。ただの説明文として置く。
+
+   右の余白を auto にして、戻る導線のすぐ隣に寄せる（.site-head は
+   space-between なので、指定しないと行の真ん中に浮いてしまう）。
+
+   日付は各ページのHTMLに直接書いてある。ツールごとに見直した時期が違うため、
+   1箇所にまとめず、そのページの制度データを直したときに一緒に更新する。 */
+.data-asof {
+	margin-right: auto;
+	color: var(--muted);
+	font-size: 12px;
+	line-height: 1.6;
+	white-space: nowrap;
+}
 
 /* =============================================================
    ページ見出し行（見出し＋説明文）
@@ -102,24 +123,6 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	flex: 0 0 auto;
 }
 
-/* 使っている制度データがいつ時点のものかを示す小さな札。
-   税率・支給率・年金の増減率は改正されるので、いつの制度で計算しているかが
-   分からないと結果を信用してよいか判断できない。試算をするページには必ず出す。
-
-   日付は各ページのHTMLに直接書いてある。ツールごとに見直した時期が違うため、
-   1箇所にまとめず、そのページの制度データを直したときに一緒に更新する。 */
-.data-asof {
-	display: inline-block;
-	margin: 7px 0 0;
-	padding: 2px 9px;
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 999px;
-	color: var(--muted);
-	font-size: 11px;
-	line-height: 1.7;
-	white-space: nowrap;
-}
 /* 見出しと同じ行に操作ボタン群があるトップページ用。狭いときは行を分ける。
    ツールのページでは .site-head の中にあるので、この指定は当たらない */
 @media screen and (max-width: 600px) {
