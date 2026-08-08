@@ -33,20 +33,53 @@
     margin: 0 0 1.4rem;
   }
 
-  /* トップページの入口一覧と同じ見た目にして、ここから行き先を選び直せるようにする */
-  .links {
+  /* サイト全体の構成をそのまま出す。行き先を選び直せるだけでなく、
+     どこに何があるかが分かるようにするため、トップページを根に置いた木にしている。
+
+     枝の線は罫線素片（├ └）ではなく、入れ子の <ul> に対してCSSで引いている。
+     文字で描くと読み上げに混ざり、コピーしたときにも付いてくるため。
+     縦線は各項目の ::before、横線は ::after。最後の子だけ縦線を途中で止めて
+     「└」の形にする。 */
+  .tree,
+  .tree ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  .links li { margin-bottom: .35rem; }
-  .links a { text-decoration: none; }
-  .links a::before {
-    content: "→";
-    color: var(--accent);
-    margin-right: .45em;
+  .tree li { line-height: 1.9; }
+
+  /* 子の階層。左に枝を引くぶんの幅を空ける */
+  .tree ul { margin-left: .5em; }
+  .tree ul > li { position: relative; padding-left: 1.5em; }
+
+  .tree ul > li::before {   /* 縦線 */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--axis);
   }
-  .links a:hover { text-decoration: underline; }
+  .tree ul > li:last-child::before { bottom: auto; height: .95em; }
+
+  .tree ul > li::after {    /* 横線。文字の中心（line-height 1.9 の半分）に合わせる */
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .95em;
+    width: 1em;
+    border-top: 1px solid var(--axis);
+  }
+
+  .tree a { text-decoration: none; }
+  .tree a:hover { text-decoration: underline; }
+
+  /* 根（トップページ）。ここが起点だと分かるように少し強くする */
+  .tree > li > a { font-weight: 600; }
+
+  /* ページを持たない区分の見出し。NISAは各年のページがあるだけで、
+     まとめのページを持っていないのでリンクにしない */
+  .tree .branch { color: var(--text-sub); }
 </style>
 </head>
 <body>
@@ -68,12 +101,30 @@
   <p class="lead">お探しのものが下にあるかもしれません。</p>
   <p class="hint">共有されたURLを開いてこの画面が出た場合は、URLが途中で切れていないかご確認ください。</p>
 
-  <ul class="links">
-    <li><a href="/finance/assetSimulator/">資産運用シミュレーター</a></li>
-    <li><a href="/finance/nisa/nisa2025.html">NISA利用状況</a></li>
-    <li><a href="/finance/retirement/">公務員退職手当計算</a></li>
-    <li><a href="/finance/pension/">年金受給開始年齢別シミュレーター</a></li>
-    <li><a href="/finance/inheritance/">二次相続シミュレーター</a></li>
+  <!-- サイトの構成をそのまま木にしたもの。ページを増やしたときはここにも足すこと -->
+  <ul class="tree">
+    <li>
+      <a href="/finance/">資産運用・金融シミュレーター</a>
+      <ul>
+        <li><a href="/finance/assetSimulator/">資産運用シミュレーター</a></li>
+        <li>
+          <span class="branch">NISA利用状況</span>
+          <ul>
+            <li><a href="/finance/nisa/nisa2025.html">2025年末</a></li>
+            <li><a href="/finance/nisa/nisa2024.html">2024年末</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/finance/retirement/">公務員退職手当計算</a>
+          <ul>
+            <li><a href="/finance/retirement/local/">地方公務員</a></li>
+            <li><a href="/finance/retirement/national/">国家公務員</a></li>
+          </ul>
+        </li>
+        <li><a href="/finance/pension/">年金受給開始年齢別シミュレーター</a></li>
+        <li><a href="/finance/inheritance/">二次相続シミュレーター</a></li>
+      </ul>
+    </li>
   </ul>
 </main>
 </body>
