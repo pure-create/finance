@@ -27,7 +27,7 @@
 <script src="common/analytics.js?v=20260805a" async></script>
 <script src="common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="common/theme.css?v=20260808b">
-<link rel="stylesheet" href="common/site.css?v=20260809a">
+<link rel="stylesheet" href="common/site.css?v=20260809b">
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260808a"></script>
 <style>
@@ -182,7 +182,18 @@
     </ul>
     <p class="desc">一次相続と二次相続の相続税を合計で比較し、税額が最小となる取得割合を計算</p>
   </section>
-  <p class="site-privacy">※ アクセス状況の把握に Google Analytics を利用しています（<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Googleによるデータ使用について</a>）。</p>
+  <!-- データの扱いについての断り書き。他のページは3行目のアクセス解析だけを出しているが、
+       トップページはサイトの入口なので、入力内容の扱いもここにまとめて書く。
+
+       2行目は省略できない。1行目だけだと「入力内容は外に出ない」と読めてしまうが、
+       共有URLにはクエリとして入力内容が入るため、そのURLを開けば通信に乗る
+       （アクセス解析にもURLごと記録される）。入力している間はURLが書き換わらないので、
+       外に出るのは共有URLを開いたときだけ、という切り分けを明示している。 -->
+  <div class="site-privacy">
+    <p>※ 各ツールの計算はすべてお使いのブラウザの中で行われます。入力した内容がサーバーへ送られることはなく、入力内容と画面の設定はお使いのブラウザ内にのみ保存されます（ブラウザの保存データを消すと初期状態に戻ります）。</p>
+    <p>※ ただし「試算結果を共有」で作るURLには、入力内容がURLの一部として含まれます。そのURLを開いたときは入力内容も一緒に送られるため、渡す相手にご注意ください。</p>
+    <p>※ アクセス状況の把握に Google Analytics を利用しています（<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Googleによるデータ使用について</a>）。</p>
+  </div>
   </main>
 <script>
   /* QRの描画とURLコピーは他のページと同じ共通処理（common/share.js）に任せる。

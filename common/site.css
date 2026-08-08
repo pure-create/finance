@@ -397,12 +397,17 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 .foot-disclaimer a { text-decoration: underline; }
 
 /* =============================================================
-   ページ最下部の1行（アクセス解析の明示）
+   ページ最下部の断り書き（データの扱い・アクセス解析）
 
    Google Analytics は閲覧者の情報をGoogleへ送るので、使っていることを知らせる。
    免責（.foot-disclaimer）は試算をするページにしか出さないが、こちらは計測が
    動いているページすべてに要るので、入れ物を分けている。
    404ページには計測を入れていないので置かない。
+
+   トップページだけは、入力内容の扱い（計算はブラウザの中で完結すること、
+   共有URLには入力内容が入ること）も併せて書くため複数行になる。
+   1行のページは <p class="site-privacy">、複数行のページは
+   <div class="site-privacy"> の中に <p> を並べる。どちらでも同じ見た目になる。
 
    置き場所は各ページの本文の入れ物の一番最後。ページごとに横幅の決め方が
    違うので、共通の外枠は作らず、それぞれの中に入れて幅を合わせている。
@@ -415,6 +420,8 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	font-size: 11px;
 	line-height: 1.7;
 }
+.site-privacy > p { margin: 0; }
+.site-privacy > p + p { margin-top: .5em; }
 .site-privacy a { text-decoration: underline; }
 
 /* =============================================================
