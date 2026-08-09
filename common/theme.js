@@ -174,7 +174,7 @@
 	var MENU_TITLE = '画面の配色';
 
 	var ITEMS = [
-		{ mode: 'system', icon: '🌗', name: 'システム', desc: 'OS設定に従う' },
+		{ mode: 'system', icon: '🌗', name: 'システム', desc: 'お使いの環境に合わせる' },
 		{ mode: 'light',  icon: '☀️', name: 'ライト',   desc: '常にライト' },
 		{ mode: 'dark',   icon: '🌙', name: 'ダーク',   desc: '常にダーク' }
 	];
