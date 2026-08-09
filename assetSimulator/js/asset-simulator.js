@@ -723,7 +723,7 @@ function renderTable() {
 	const real = state.view === 'real';
 	const all = $('allYears').checked;
 	const N = sim.years;
-	const head = '<tr><th>年齢</th><th>経過</th><th>運用なし</th><th>下位5%</th><th>25%</th><th>中央値</th><th>75%</th><th>上位95%</th><th>資金切れ</th></tr>';
+	const head = '<tr><th>年齢</th><th>経過</th><th>運用なし</th><th>下位5%</th><th>下位25%</th><th>中央値</th><th>上位25%</th><th>上位5%</th><th>資金切れ</th></tr>';
 	let body = '';
 	for (let y = 0; y <= N; y++) {
 		const age = cfg.ageNow + y;
