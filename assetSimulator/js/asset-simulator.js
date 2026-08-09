@@ -627,11 +627,11 @@ function setupHover() {
 		ctx.lineWidth = 2; ctx.strokeStyle = css('--surface-1'); ctx.stroke();
 
 		const rows = [
-			['95%', money(geo.conv(s.p95, y))],
-			['75%', money(geo.conv(s.p75, y))],
+			['上位5%', money(geo.conv(s.p95, y))],
+			['上位25%', money(geo.conv(s.p75, y))],
 			['中央値', money(geo.conv(s.p50, y))],
-			['25%', money(geo.conv(s.p25, y))],
-			['5%', money(geo.conv(s.p05, y))],
+			['下位25%', money(geo.conv(s.p25, y))],
+			['下位5%', money(geo.conv(s.p05, y))],
 			['運用なし', money(geo.conv(sim.principal[y], y))],
 			['資金が尽きた割合', pctText(s.ruinRate)]
 		];
