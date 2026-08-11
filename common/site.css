@@ -35,12 +35,19 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 .site-head {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	/* 振り分けに justify-content は使わず、下の margin-left: auto に余白を吸わせる。
+	   space-between だと、狭い画面で .page-tools が次の行へ折り返したときに、
+	   その行は要素が1つなので左端へ寄ってしまう。すると右端を基準に開く
+	   テーマ切替のメニューが画面の外へはみ出す（実測で26〜51px）。
+	   auto マージンなら折り返した行でも .page-tools が右端に着く */
+	justify-content: flex-start;
 	flex-wrap: wrap;
 	gap: 10px 12px;
 	margin-bottom: 14px;
 	font-size: 13px;
 }
+/* 戻る導線・制度データの時点と、操作ボタン群との間の余白をここで全部吸う */
+.site-head > .page-tools { margin-left: auto; }
 /* トップへ戻る導線。文字だけだと見出しのラベルに見えて押せることが伝わらないので、
    枠線を付けてボタンの形にする。文言は行き先そのもの（「トップページ」）にしている。
    枠線は灰色ではなく、わずかに青みのある --border-action を使う（灰色の枠だけだと
@@ -79,7 +86,10 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    日付は各ページのHTMLに直接書いてある。ツールごとに見直した時期が違うため、
    1箇所にまとめず、そのページの制度データを直したときに一緒に更新する。 */
 .data-asof {
-	margin-right: auto;
+	/* 以前はここに margin-right: auto があり、この文字と操作ボタン群の間の余白を
+	   吸わせていた。その役目は .site-head > .page-tools の margin-left: auto へ移した
+	   （折り返した行も右端に着くようにするため）。両方に持たせると余白を取り合って
+	   この文字が中央へ寄るので、ここには戻さないこと */
 	color: var(--muted);
 	font-size: 12px;
 	line-height: 1.6;

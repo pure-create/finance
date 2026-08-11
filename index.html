@@ -27,7 +27,7 @@
 <script src="common/analytics.js?v=20260805a" async></script>
 <script src="common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="common/theme.css?v=20260808b">
-<link rel="stylesheet" href="common/site.css?v=20260809c">
+<link rel="stylesheet" href="common/site.css?v=20260811a">
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260808a"></script>
 <style>
@@ -56,7 +56,8 @@
     line-height: 1.6;
   }
 
-  main { max-width: 680px; margin: 0 auto; }
+  /* 本文の幅は年金・相続・NISAと揃えて840px */
+  main { max-width: 840px; margin: 0 auto; }
 
   .page-head { align-items: center; }
 
@@ -130,7 +131,6 @@
       <h1>資産運用・金融シミュレーター</h1>
     </div>
     <div class="page-tools">
-      <span data-theme-toggle></span>
       <div class="share-wrap">
         <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
         <div class="share-pop" id="sharePop">
@@ -138,6 +138,7 @@
           <p id="shareMsg" class="share-msg" aria-live="polite"></p>
         </div>
       </div>
+      <span data-theme-toggle></span>
     </div>
   </div>
 

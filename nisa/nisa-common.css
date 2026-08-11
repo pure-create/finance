@@ -32,7 +32,9 @@
   --scroll-shadow: rgba(0,0,0,.55);
 }
 
-  body { font-size: 14px; margin: 0 auto; padding: 1.5rem; max-width: 860px; }
+  /* 本文の幅は年金・相続と揃えて840px。box-sizing が border-box なので、
+     max-width には左右のpadding（16px×2）が含まれる。840を変えるときはこの値も直すこと */
+  body { font-size: 14px; margin: 0 auto; padding: 1rem; max-width: 872px; }
 
   /* 時点の切り替え。年を増やすときは各ページのHTMLに1行ずつ足すこと
      （どのページにも全年分を並べるので、既存のページも直す必要がある） */
@@ -100,7 +102,6 @@
   .chart-legend-list .leg-pct { font-weight: 500; color: var(--text); min-width: 38px; text-align: right; }
 
   @media screen and (max-width: 600px) {
-    body { padding: 1rem; }
     .page-head h1 { font-size: 15px; }
     table { font-size: 11.5px; }
     thead th { padding: 5px 4px; }
