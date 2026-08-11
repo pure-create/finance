@@ -42,7 +42,7 @@
 	                            // そのぶんモジュール数が減って同じ大きさでも読みやすくなる
 	var QR_PX_PER_MODULE = 2.15; // 1モジュールあたり確保する画面ピクセル。小さくするとQRも
 	                            // 小さくなるが、読み取りにくくなる（2を下回ると厳しい）
-	var QR_PLATE_PX = 8;        // 白い台紙の余白と枠線の合計（site.css の padding 3px + border 1px を左右で）。
+	var QR_PLATE_PX = 6;        // 白い台紙の余白の合計（site.css の padding 3px を左右で）。
 	                            // box-sizing: border-box なので、この分は升目に使えない
 	var QR_MIN_SIZE = 72;       // common/site.css の .share-qr の既定サイズと合わせること
 	var QR_MAX_SIZE = 144;      // ヘッダーに収まる上限

@@ -77,7 +77,6 @@
 	/* QRコードは黒モジュール／白地でないと読み取り精度が落ちるため、
 	   ダークでも印刷時も白のまま固定する */
 	--qr-bg:         #ffffff;
-	--qr-border:     #cbd5e1;
 }
 
 /* ===== ダーク ===== */
@@ -122,8 +121,6 @@
 	--tooltip-bg:     #171a1f;
 	--tooltip-text:   #e8eaed;
 	--tooltip-border: #3a414c;
-
-	--qr-border:     #3a414c;
 }
 
 /* =============================================================
@@ -298,7 +295,6 @@ html.theme-anim canvas {
 		--shadow-pop:    none;
 
 		--qr-bg:         #ffffff;
-		--qr-border:     #999999;
 	}
 
 	[data-theme-toggle] { display: none !important; }
