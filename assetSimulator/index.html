@@ -28,7 +28,7 @@
 <script src="../common/theme.js?v=20260807a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260811a">
-<link rel="stylesheet" href="./css/main.css?v=20260809b">
+<link rel="stylesheet" href="./css/main.css?v=20260812a">
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
 </head>
@@ -163,6 +163,15 @@
 			<canvas id="fanChart" height="400" role="img" aria-label="資産残高の推移と、下位5%から上位5%までのばらつきを示すグラフ"></canvas>
 			<div class="tooltip" id="fanTip"></div>
 		</div>
+		<div class="range-bar" id="rangeBar">
+			<div class="range-wrap" id="rangeWrap" tabindex="0" role="slider"
+				aria-label="上のグラフに表示する期間" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="全期間">
+				<canvas id="rangeChart" height="56" aria-hidden="true"></canvas>
+			</div>
+			<div class="range-foot">
+				<button type="button" class="range-reset" id="rangeReset" hidden>全期間に戻す</button>
+			</div>
+		</div>
 	</figure>
 
 	<figure>
@@ -207,6 +216,6 @@
 </div>
 
 <script src="./js/asset-core.js?v=20260805a"></script>
-<script src="./js/asset-simulator.js?v=20260805a"></script>
+<script src="./js/asset-simulator.js?v=20260812a"></script>
 </body>
 </html>

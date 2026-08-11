@@ -20,6 +20,13 @@
 	--band-outer:      #cde2fb; /* 5–95% */
 	--band-inner:      #9ec5f4; /* 25–75% */
 	--path:            rgba(137,135,129,0.45);
+
+	/* 表示期間スライダー。canvas は color-mix を解さないので、
+	   範囲外を覆う膜（scrim）も実体のある色として持つ */
+	--range-track:     #f7f9fc;
+	--range-scrim:     rgba(244,246,249,0.72);
+	--range-edge:      #7ba7e0;
+	--range-grip:      #ffffff;
 }
 /* ダークの系列色。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"] {
@@ -28,6 +35,11 @@
 	--band-outer:     #0d366b;
 	--band-inner:     #184f95;
 	--path:           rgba(195,194,183,0.30);
+
+	--range-track:    #14171c;
+	--range-scrim:    rgba(11,13,17,0.55);
+	--range-edge:     #4d7fc4;
+	--range-grip:     #0f1115;
 }
 
 html, body { margin: 0; padding: 0; }
@@ -201,6 +213,35 @@ figure figcaption { margin-bottom: 6px; }
 
 .canvas-wrap { position: relative; width: 100%; }
 canvas { display: block; width: 100%; }
+
+/* ===== 表示期間スライダー =====
+   全期間を縮めた帯の上の「窓」をつまんで、上のグラフに映す期間を絞る */
+.range-bar { margin-top: 8px; }
+.range-wrap {
+	position: relative; width: 100%;
+	/* 枠は内向きの outline で描く。border にすると clientWidth が2px縮んで、
+	   上のグラフと横位置がずれる（canvas の幅は親の clientWidth で決めている） */
+	outline: 1px solid var(--border); outline-offset: -1px;
+	border-radius: 8px; overflow: hidden;
+	background: var(--range-track);
+	/* 指でつまんだときにページが縦に流れないように。
+	   帯の上だけに効かせる（グラフ本体に付けるとページが動かせなくなる） */
+	touch-action: none;
+	-webkit-user-select: none; user-select: none;
+	cursor: grab;
+}
+.range-wrap.dragging { cursor: grabbing; }
+.range-wrap:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+.range-foot {
+	display: flex; align-items: center; justify-content: flex-end;
+	margin-top: 4px; min-height: 14px;
+}
+.range-reset {
+	border: none; background: none; padding: 0;
+	color: var(--accent); font: inherit; font-size: 11.5px; font-weight: 600;
+	cursor: pointer; text-decoration: underline;
+}
+.range-reset:hover { opacity: .8; }
 .tooltip {
 	position: absolute;
 	pointer-events: none;
@@ -252,6 +293,7 @@ details.tablebox > summary {
 html.printing header { padding: 0; }
 html.printing .layout { display: block; padding: 0; }
 html.printing .tooltip,
+html.printing .range-bar,
 html.printing button.reset,
 html.printing button.fix-btn { display: none !important; }
 
@@ -267,6 +309,11 @@ html.printing button.fix-btn { display: none !important; }
 		--band-outer:      #dceaf9;
 		--band-inner:      #a9cbf0;
 		--path:            rgba(0,0,0,0.30);
+
+		--range-track:     #ffffff;
+		--range-scrim:     rgba(255,255,255,0.75);
+		--range-edge:      #6f92c4;
+		--range-grip:      #ffffff;
 	}
 
 	@page { margin: 12mm; }
@@ -278,6 +325,7 @@ html.printing button.fix-btn { display: none !important; }
 
 	/* 画面操作のための要素は印刷しない */
 	.tooltip,
+	.range-bar,
 	button.reset,
 	button.fix-btn,
 	#noscript,

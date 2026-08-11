@@ -265,15 +265,26 @@ function setupCanvas(canvas, cssHeight) {
 	const dpr = window.devicePixelRatio || 1;
 	const w = canvas.parentElement.clientWidth;
 	canvas.style.height = cssHeight + 'px';
-	canvas.width = Math.max(1, Math.round(w * dpr));
-	canvas.height = Math.round(cssHeight * dpr);
+	// width/height への代入は裏のピクセルを確保し直すので、変わっていないときは触らない
+	// （ホバーやドラッグの1コマごとにここを通るため）
+	const wantW = Math.max(1, Math.round(w * dpr));
+	const wantH = Math.round(cssHeight * dpr);
+	if (canvas.width !== wantW) canvas.width = wantW;
+	if (canvas.height !== wantH) canvas.height = wantH;
 	const ctx = canvas.getContext('2d');
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 	ctx.clearRect(0, 0, w, cssHeight);
 	return { ctx: ctx, w: w, h: cssHeight };
 }
 
-let state = { sim: null, cfg: null, view: 'real', fanGeom: null, histGeom: null, hist: null };
+let state = {
+	sim: null, cfg: null, view: 'real',
+	fanGeom: null, histGeom: null, hist: null,
+	range: null,      // { lo, hi, fullN, baseAge } 表示する年インデックス（両端を含む）
+	rangeGeom: null,  // スライダーの当たり判定に使う座標
+	drag: null,       // { mode:'move'|'lo'|'hi', pointerId, grabY, grabLo, grabHi }
+	rafPending: false
+};
 
 /* ---------- ファンチャート ---------- */
 function drawFan() {
@@ -290,15 +301,19 @@ function drawFan() {
 	const real = state.view === 'real';
 	const conv = function (v, y) { return real ? v / sim.realFactor(y) : v; };
 
-	// 縦軸の上限
+	// 下の帯で選んだ期間だけを描く（初回は範囲がまだ無いので全期間）
+	const r = state.range || { lo: 0, hi: N };
+	const lo = r.lo, hi = r.hi, span = Math.max(1, hi - lo);
+
+	// 縦軸の上限。見えている範囲だけで取り直すが、0 は必ず底に残す
 	let maxV = 0;
-	for (let y = 0; y <= N; y++) {
+	for (let y = lo; y <= hi; y++) {
 		maxV = Math.max(maxV, conv(sim.stats[y].p95, y), conv(sim.principal[y], y));
 	}
 	if (maxV <= 0) maxV = 1;
 	const ticks = niceTicks(maxV * 1.06, 5);
 	const top = ticks[ticks.length - 1];
-	const X = function (y) { return padL + (N === 0 ? 0 : (y / N) * plotW); };
+	const X = function (y) { return padL + ((y - lo) / span) * plotW; };
 	const Y = function (v) { return padT + plotH - (v / top) * plotH; };
 
 	// グリッド
@@ -315,8 +330,8 @@ function drawFan() {
 	// 帯（5–95 → 25–75 の順に重ねる）
 	function band(lowKey, highKey, color) {
 		ctx.beginPath();
-		for (let y = 0; y <= N; y++) { const p = conv(sim.stats[y][highKey], y); if (y === 0) ctx.moveTo(X(y), Y(p)); else ctx.lineTo(X(y), Y(p)); }
-		for (let y = N; y >= 0; y--) { const p = conv(sim.stats[y][lowKey], y); ctx.lineTo(X(y), Y(p)); }
+		for (let y = lo; y <= hi; y++) { const p = conv(sim.stats[y][highKey], y); if (y === lo) ctx.moveTo(X(y), Y(p)); else ctx.lineTo(X(y), Y(p)); }
+		for (let y = hi; y >= lo; y--) { const p = conv(sim.stats[y][lowKey], y); ctx.lineTo(X(y), Y(p)); }
 		ctx.closePath();
 		ctx.fillStyle = color;
 		ctx.fill();
@@ -331,9 +346,9 @@ function drawFan() {
 		ctx.strokeStyle = css('--path'); ctx.lineWidth = 1;
 		for (let k = 0; k < sim.samples.length; k++) {
 			ctx.beginPath();
-			for (let y = 0; y <= N; y++) {
+			for (let y = lo; y <= hi; y++) {
 				const v = conv(sim.samples[k][y], y);
-				if (y === 0) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v));
+				if (y === lo) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v));
 			}
 			ctx.stroke();
 		}
@@ -342,14 +357,22 @@ function drawFan() {
 
 	// 取り崩し開始の目印
 	const retY = cfg.ageRetire - cfg.ageNow;
-	if (retY > 0 && retY < N) {
+	if (retY > lo && retY < hi) {
 		const rx = Math.round(X(retY)) + 0.5;
 		ctx.strokeStyle = css('--axis'); ctx.lineWidth = 1;
 		ctx.beginPath(); ctx.moveTo(rx, padT); ctx.lineTo(rx, padT + plotH); ctx.stroke();
 		ctx.fillStyle = css('--text-secondary');
 		ctx.font = '11px system-ui, sans-serif';
-		ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-		ctx.fillText('取り崩し開始 ' + cfg.ageRetire + '歳', rx + 5, padT + 2);
+		ctx.textBaseline = 'top';
+		// 期間を絞ると目印が右端に寄ることがあるので、はみ出すときは左向きに回す
+		const retLabel = '取り崩し開始 ' + cfg.ageRetire + '歳';
+		if (rx + 5 + ctx.measureText(retLabel).width > padL + plotW) {
+			ctx.textAlign = 'right';
+			ctx.fillText(retLabel, rx - 5, padT + 2);
+		} else {
+			ctx.textAlign = 'left';
+			ctx.fillText(retLabel, rx + 5, padT + 2);
+		}
 	}
 
 	// 運用しなかった場合（破線）
@@ -358,7 +381,7 @@ function drawFan() {
 	ctx.strokeStyle = css('--series-2'); ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
 	ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 	ctx.beginPath();
-	for (let y = 0; y <= N; y++) { const v = conv(sim.principal[y], y); if (y === 0) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v)); }
+	for (let y = lo; y <= hi; y++) { const v = conv(sim.principal[y], y); if (y === lo) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v)); }
 	ctx.stroke();
 	ctx.setLineDash([]);
 	ctx.restore();
@@ -367,18 +390,18 @@ function drawFan() {
 	ctx.strokeStyle = css('--series-1'); ctx.lineWidth = 2;
 	ctx.lineJoin = 'round'; ctx.lineCap = 'round';
 	ctx.beginPath();
-	for (let y = 0; y <= N; y++) { const v = conv(sim.stats[y].p50, y); if (y === 0) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v)); }
+	for (let y = lo; y <= hi; y++) { const v = conv(sim.stats[y].p50, y); if (y === lo) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v)); }
 	ctx.stroke();
 
-	// 中央値の終端に丸と直接ラベル
-	const endV = conv(sim.stats[N].p50, N);
-	ctx.beginPath(); ctx.arc(X(N), Y(endV), 4.5, 0, Math.PI * 2);
+	// 中央値の終端（表示している範囲の右端）に丸と直接ラベル
+	const endV = conv(sim.stats[hi].p50, hi);
+	ctx.beginPath(); ctx.arc(X(hi), Y(endV), 4.5, 0, Math.PI * 2);
 	ctx.fillStyle = css('--series-1'); ctx.fill();
 	ctx.lineWidth = 2; ctx.strokeStyle = css('--surface-1'); ctx.stroke();
 	ctx.fillStyle = css('--text-primary');
 	ctx.font = '600 12px system-ui, sans-serif';
 	ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-	ctx.fillText(money(endV), X(N) - 2, Y(endV) - 9);
+	ctx.fillText(money(endV), X(hi) - 2, Y(endV) - 9);
 
 	// 横軸
 	ctx.strokeStyle = css('--axis'); ctx.lineWidth = 1;
@@ -387,18 +410,360 @@ function drawFan() {
 	ctx.stroke();
 	ctx.fillStyle = css('--muted');
 	ctx.font = '11px system-ui, sans-serif';
-	ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-	const ageStep = N <= 20 ? 5 : N <= 45 ? 10 : 15;
-	for (let y = 0; y <= N; y++) {
+	ctx.textBaseline = 'top';
+	const ageStep = span <= 20 ? 5 : span <= 45 ? 10 : 15;
+	// 両端はどんなに狭くても出す。間は刻みで間引いたうえ、
+	// 端のラベルが占める幅を実測して、そこへ食い込むものを落とす
+	const headLabel = (cfg.ageNow + lo) + '歳', tailLabel = (cfg.ageNow + hi) + '歳';
+	const leftEnd = X(lo) + ctx.measureText(headLabel).width + 6;
+	const rightEnd = X(hi) - ctx.measureText(tailLabel).width - 6;
+	for (let y = lo + 1; y < hi; y++) {
 		const age = cfg.ageNow + y;
-		if (age % ageStep !== 0 && y !== N) continue;
-		if (y !== N && (X(N) - X(y)) < 26) continue;
-		ctx.fillText(age + '歳', X(y), padT + plotH + 7);
+		if (age % ageStep !== 0) continue;
+		const label = age + '歳';
+		const half = ctx.measureText(label).width / 2;
+		if (X(y) - half < leftEnd || X(y) + half > rightEnd) continue;
+		ctx.textAlign = 'center';
+		ctx.fillText(label, X(y), padT + plotH + 7);
 	}
+	ctx.textAlign = 'left';
+	ctx.fillText(headLabel, X(lo), padT + plotH + 7);
+	ctx.textAlign = 'right';
+	ctx.fillText(tailLabel, X(hi), padT + plotH + 7);
 	ctx.textAlign = 'right';
 	ctx.fillText('（' + (real ? '実質・現在の物価' : '名目') + '／万円）', padL + plotW, padT + plotH + 20);
 
-	state.fanGeom = { padL: padL, padT: padT, plotW: plotW, plotH: plotH, N: N, X: X, Y: Y, conv: conv, top: top };
+	state.fanGeom = {
+		padL: padL, padT: padT, plotW: plotW, plotH: plotH,
+		N: N, lo: lo, hi: hi, span: span,
+		X: X, Y: Y, conv: conv, top: top
+	};
+}
+
+/* ---------- 表示期間スライダー ----------
+   全期間を縮めた帯の上に「窓」を重ね、つまんで動かすと上のグラフがその期間だけになる。
+   範囲は年インデックス（整数）で持つ。stats も横軸のラベルもホバーの十字線も整数で
+   引いているので、端数を許しても読みやすさは上がらない。 */
+
+const RANGE_MIN_SPAN = 2;   // 3点。帯が線ではなく面になる下限
+const RANGE_HIT = 11;       // 左右のつまみの当たり判定（px）
+
+function fullRange(N) { return { lo: 0, hi: N, fullN: N, baseAge: state.cfg.ageNow }; }
+
+function isFullRange() {
+	const r = state.range;
+	return !r || (r.lo === 0 && r.hi === r.fullN);
+}
+
+// lo/hi を整数・最小幅・0..N に収める唯一の入口。
+// つまみが相手を追い越したときは入れ替えず手前で止める（掴んだ端が途中で入れ替わらないように）
+function setRange(lo, hi, N) {
+	const minSpan = Math.min(RANGE_MIN_SPAN, N);
+	lo = Math.round(lo); hi = Math.round(hi);
+	lo = Math.max(0, Math.min(N - minSpan, lo));
+	hi = Math.max(lo + minSpan, Math.min(N, hi));
+	if (hi - lo < minSpan) lo = Math.max(0, hi - minSpan);
+	state.range = { lo: lo, hi: hi, fullN: N, baseAge: state.cfg.ageNow };
+}
+
+// 新しい計算結果に範囲を合わせる。期間の長さか開始年齢が変わったら
+// 窓の下の年齢の意味が変わってしまうので、全期間に戻す
+function syncRange(cfg, N) {
+	const r = state.range;
+	if (!r || r.fullN !== N || r.baseAge !== cfg.ageNow) { state.range = fullRange(N); return; }
+	setRange(r.lo, r.hi, N);
+}
+
+function resetRange() {
+	if (!state.sim) return;
+	state.range = fullRange(state.sim.years);
+	applyRange();
+}
+
+// 年齢の目盛の刻み。ラベルが「45歳」で10px、間を空けて46pxあれば窮屈にならない。
+// 入らなくなったら次の刻みへ送る（5→10→15…）
+function rangeAgeStep(plotW, N) {
+	const STEPS = [5, 10, 15, 20, 25, 50];
+	for (let i = 0; i < STEPS.length; i++) {
+		if (plotW * STEPS[i] / Math.max(1, N) >= 46) return STEPS[i];
+	}
+	return STEPS[STEPS.length - 1];
+}
+
+function drawRange() {
+	const sim = state.sim;
+	if (!sim) return;
+	const cssH = window.innerWidth < 700 ? 64 : 72;
+	const g = setupCanvas($('rangeChart'), cssH);
+	const ctx = g.ctx;
+	// padL・padR は drawFan と同じ値にして、上のグラフと横位置をそろえる。
+	// padT はドラッグ中に出す年齢の吹き出しのぶん（出ていなくても場所は空けておき、
+	// 掴んだ瞬間に帯の高さが変わらないようにする）、padB は下の年齢の目盛のぶん
+	const padL = 62, padR = 16, padT = 20, padB = 15;
+	const plotW = Math.max(10, g.w - padL - padR);
+	const plotH = Math.max(6, g.h - padT - padB);
+	const N = sim.years;
+	const real = state.view === 'real';
+	const conv = function (v, y) { return real ? v / sim.realFactor(y) : v; };
+	const X = function (y) { return padL + (N === 0 ? 0 : (y / N) * plotW); };
+
+	// 全期間の中央値だけを1本の面グラフにする。
+	// 帯まで入れると上位側の伸びに引っ張られて中央値が底に張り付き、形が読めなくなる。
+	// 縦の上限は常に全期間で取る（窓を動かしても形が動かないように）
+	let maxV = 0;
+	for (let y = 0; y <= N; y++) maxV = Math.max(maxV, conv(sim.stats[y].p50, y));
+	if (maxV <= 0) maxV = 1;
+	maxV *= 1.1;
+	const Y = function (v) { return padT + plotH - (v / maxV) * plotH; };
+
+	const base = padT + plotH;
+	ctx.beginPath();
+	ctx.moveTo(X(0), base);
+	for (let y = 0; y <= N; y++) ctx.lineTo(X(y), Y(conv(sim.stats[y].p50, y)));
+	ctx.lineTo(X(N), base);
+	ctx.closePath();
+	ctx.fillStyle = css('--band-outer');
+	ctx.fill();
+
+	ctx.strokeStyle = css('--series-1'); ctx.lineWidth = 1.5;
+	ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+	ctx.beginPath();
+	for (let y = 0; y <= N; y++) { const v = conv(sim.stats[y].p50, y); if (y === 0) ctx.moveTo(X(y), Y(v)); else ctx.lineTo(X(y), Y(v)); }
+	ctx.stroke();
+
+	// 左の余白は上のグラフの縦軸ラベルと同じ幅を空けてあるので、そこに帯の名前を置く
+	ctx.fillStyle = css('--muted');
+	ctx.font = '11px system-ui, sans-serif';
+	ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+	ctx.fillText('表示期間', padL - 8, padT + plotH / 2);
+
+	// 年齢の目盛。両端は必ず出し、間は 5歳・10歳… と切りのいい刻みで入るぶんだけ置く。
+	// 窓を絞っても、全体のどこを見ているかが分かるように
+	ctx.fillStyle = css('--muted');
+	ctx.font = '10px system-ui, sans-serif';
+	ctx.textBaseline = 'top';
+	const ty = base + 3;
+	const headLabel = state.cfg.ageNow + '歳', tailLabel = (state.cfg.ageNow + N) + '歳';
+	// 両端のラベルが実際に占める幅を測り、そこへ食い込むものは置かない
+	const leftEnd = padL + ctx.measureText(headLabel).width + 6;
+	const rightEnd = padL + plotW - ctx.measureText(tailLabel).width - 6;
+	const ageStep = rangeAgeStep(plotW, N);
+	ctx.textAlign = 'center';
+	for (let y = 1; y < N; y++) {
+		const age = state.cfg.ageNow + y;
+		if (age % ageStep !== 0) continue;
+		const label = age + '歳';
+		const half = ctx.measureText(label).width / 2;
+		if (X(y) - half < leftEnd || X(y) + half > rightEnd) continue;
+		ctx.fillText(label, X(y), ty);
+	}
+	ctx.textAlign = 'left';
+	ctx.fillText(headLabel, padL, ty);
+	ctx.textAlign = 'right';
+	ctx.fillText(tailLabel, padL + plotW, ty);
+
+	// 範囲の外を薄い膜で覆う（上下の余白の行は覆わない）
+	const r = state.range || { lo: 0, hi: N };
+	const xl = X(r.lo), xh = X(r.hi);
+	ctx.fillStyle = css('--range-scrim');
+	if (xl > padL) ctx.fillRect(padL, padT, xl - padL, plotH);
+	if (xh < padL + plotW) ctx.fillRect(xh, padT, padL + plotW - xh, plotH);
+
+	// 窓の枠と、左右のつまみ
+	ctx.strokeStyle = css('--range-edge'); ctx.lineWidth = 1;
+	ctx.strokeRect(Math.round(xl) + 0.5, padT + 0.5, Math.max(1, Math.round(xh - xl) - 1), plotH - 1);
+
+	const gw = 6, gh = plotH - 6, gy = padT + 3;
+	ctx.fillStyle = css('--range-edge');
+	ctx.strokeStyle = css('--range-grip'); ctx.lineWidth = 1;
+	[xl, xh].forEach(function (x) {
+		const gx = Math.round(x - gw / 2);
+		ctx.beginPath();
+		if (ctx.roundRect) ctx.roundRect(gx, gy, gw, gh, 3); else ctx.rect(gx, gy, gw, gh);
+		ctx.fill();
+		// つまみの中の2本線。掴めることの目印
+		ctx.beginPath();
+		ctx.moveTo(gx + 2.5, gy + gh * 0.32); ctx.lineTo(gx + 2.5, gy + gh * 0.68);
+		ctx.moveTo(gx + gw - 2.5, gy + gh * 0.32); ctx.lineTo(gx + gw - 2.5, gy + gh * 0.68);
+		ctx.stroke();
+	});
+
+	// つまみを動かしている間だけ、その上に今の年齢を出す
+	if (isRangePinned()) drawRangePins(ctx, r, xl, xh, padL, plotW, padT);
+
+	state.rangeGeom = { padL: padL, padT: padT, plotW: plotW, plotH: plotH, N: N, X: X };
+}
+
+// 年齢の吹き出しを出すのは、つまみをドラッグしている間と、
+// キーボードで操作している間（＝キー操作でフォーカスの輪が出ている間）
+function isRangePinned() {
+	if (state.drag) return true;
+	const wrap = $('rangeWrap');
+	try { return wrap.matches(':focus-visible'); } catch (e) { return false; }
+}
+
+function drawRangePins(ctx, r, xl, xh, padL, plotW, padT) {
+	const age = function (y) { return (state.cfg.ageNow + y) + '歳'; };
+	const H = 15, PAD = 5, cy = (padT - H) / 2;
+	ctx.font = '600 10px system-ui, sans-serif';
+	ctx.textBaseline = 'middle';
+
+	function pin(text, cx) {
+		const w = ctx.measureText(text).width + PAD * 2;
+		// 帯からはみ出さないように収める
+		let x = Math.max(padL, Math.min(padL + plotW - w, cx - w / 2));
+		ctx.beginPath();
+		if (ctx.roundRect) ctx.roundRect(x, cy, w, H, 4); else ctx.rect(x, cy, w, H);
+		ctx.fillStyle = css('--tooltip-bg'); ctx.fill();
+		ctx.strokeStyle = css('--tooltip-border'); ctx.lineWidth = 1; ctx.stroke();
+		ctx.fillStyle = css('--tooltip-text');
+		ctx.textAlign = 'center';
+		ctx.fillText(text, x + w / 2, cy + H / 2 + 0.5);
+		return { x: x, w: w };
+	}
+
+	// 2つが重なるほど窓が狭いときは、1つにまとめて範囲ごと出す
+	const wl = ctx.measureText(age(r.lo)).width + PAD * 2;
+	const wh = ctx.measureText(age(r.hi)).width + PAD * 2;
+	if (xh - xl < (wl + wh) / 2 + 6) {
+		pin(age(r.lo) + '〜' + age(r.hi), (xl + xh) / 2);
+	} else {
+		pin(age(r.lo), xl);
+		pin(age(r.hi), xh);
+	}
+}
+
+function updateRangeUi() {
+	const cfg = state.cfg, sim = state.sim;
+	if (!cfg || !sim) return;
+	const r = state.range || fullRange(sim.years);
+	const a1 = cfg.ageNow + r.lo, a2 = cfg.ageNow + r.hi;
+	const full = isFullRange();
+	$('rangeReset').hidden = full;
+	const wrap = $('rangeWrap');
+	wrap.setAttribute('aria-valuemin', cfg.ageNow);
+	wrap.setAttribute('aria-valuemax', cfg.ageEnd);
+	wrap.setAttribute('aria-valuenow', a1);
+	wrap.setAttribute('aria-valuetext', a1 + '歳から' + a2 + '歳');
+	$('fanSub').textContent = fanSubText();
+}
+
+// ドラッグ中の描き直しを1コマにまとめる（高頻度のポインタでも1フレーム1回）
+function applyRange() {
+	if (state.rafPending) return;
+	state.rafPending = true;
+	requestAnimationFrame(function () {
+		state.rafPending = false;
+		drawFan();
+		drawRange();
+		updateRangeUi();
+	});
+}
+
+function setupRange() {
+	const wrap = $('rangeWrap'), canvas = $('rangeChart');
+
+	function pxToYear(clientX) {
+		const geo = state.rangeGeom;
+		const x = clientX - canvas.getBoundingClientRect().left;
+		return Math.max(0, Math.min(geo.N, ((x - geo.padL) / geo.plotW) * geo.N));
+	}
+
+	// 押した場所から操作の種類を決める
+	function pickMode(clientX) {
+		const geo = state.rangeGeom, r = state.range;
+		const x = clientX - canvas.getBoundingClientRect().left;
+		const xl = geo.X(r.lo), xh = geo.X(r.hi);
+		if (Math.abs(x - xl) <= RANGE_HIT) return 'lo';
+		if (Math.abs(x - xh) <= RANGE_HIT) return 'hi';
+		if (x > xl && x < xh) return 'move';
+		return 'jump';
+	}
+
+	// 二度押しで全期間に戻す仕掛けは置かない。同じ場所から続けて掴み直したときに
+	// 意図せず範囲が飛ぶため、戻す道は「全期間に戻す」ボタンと Esc の2つに絞る
+	wrap.addEventListener('pointerdown', function (ev) {
+		if (!state.sim || !state.rangeGeom || !state.range) return;
+		if (ev.button !== undefined && ev.button !== 0) return; // 右・中クリックは相手にしない
+		const N = state.rangeGeom.N;
+		const yr = pxToYear(ev.clientX);
+		let mode = pickMode(ev.clientX);
+		if (mode === 'jump') {
+			// 窓の外を押したら、いまの幅のままそこへ飛ばして、そのまま動かせるようにする
+			const half = (state.range.hi - state.range.lo) / 2;
+			setRange(yr - half, yr + half, N);
+			mode = 'move';
+		}
+		state.drag = {
+			mode: mode, pointerId: ev.pointerId,
+			grabY: yr, grabLo: state.range.lo, grabHi: state.range.hi
+		};
+		try { wrap.setPointerCapture(ev.pointerId); } catch (e) { /* すでに離れている */ }
+		wrap.classList.add('dragging');
+		$('fanTip').style.opacity = 0; // 直前のホバーの吹き出しを残さない
+		ev.preventDefault();
+		applyRange();
+	});
+
+	wrap.addEventListener('pointermove', function (ev) {
+		const d = state.drag;
+		if (!d || d.pointerId !== ev.pointerId || !state.rangeGeom) return;
+		const N = state.rangeGeom.N;
+		const yr = pxToYear(ev.clientX);
+		if (d.mode === 'lo') {
+			setRange(yr, d.grabHi, N);
+		} else if (d.mode === 'hi') {
+			setRange(d.grabLo, yr, N);
+		} else {
+			// 端に当たっても幅を保つ。先に lo を収めてから hi を導く
+			const sp = d.grabHi - d.grabLo;
+			let lo = Math.round(d.grabLo + (yr - d.grabY));
+			lo = Math.max(0, Math.min(N - sp, lo));
+			setRange(lo, lo + sp, N);
+		}
+		applyRange();
+	});
+
+	function endDrag(ev) {
+		const d = state.drag;
+		if (!d || (ev && ev.pointerId !== undefined && d.pointerId !== ev.pointerId)) return;
+		state.drag = null;
+		wrap.classList.remove('dragging');
+		try { wrap.releasePointerCapture(d.pointerId); } catch (e) { /* すでに離れている */ }
+		applyRange();
+	}
+	wrap.addEventListener('pointerup', endDrag);
+	wrap.addEventListener('pointercancel', endDrag);
+	wrap.addEventListener('lostpointercapture', endDrag);
+
+	wrap.addEventListener('keydown', function (ev) {
+		if (!state.sim || !state.range) return;
+		const N = state.sim.years, r = state.range;
+		const step = ev.shiftKey ? 5 : 1;
+		const sp = r.hi - r.lo;
+		if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+			const d = ev.key === 'ArrowLeft' ? -step : step;
+			if (ev.altKey) {
+				setRange(r.lo, r.hi + d, N);                  // 右端だけ動かして幅を変える
+			} else {
+				// 幅を保って窓ごと動かす。端に当たっても縮まないよう lo を先に収める
+				const lo = Math.max(0, Math.min(N - sp, r.lo + d));
+				setRange(lo, lo + sp, N);
+			}
+		} else if (ev.key === 'Home') {
+			setRange(0, sp, N);
+		} else if (ev.key === 'End') {
+			setRange(N - sp, N, N);
+		} else if (ev.key === 'Escape') {
+			state.range = fullRange(N);
+		} else {
+			return;
+		}
+		ev.preventDefault();
+		applyRange();
+	});
+
+	$('rangeReset').addEventListener('click', resetRange);
 }
 
 /* ---------- ヒストグラム ---------- */
@@ -613,7 +978,8 @@ function setupHover() {
 		const mx = ev.clientX - rect.left;
 		const my = ev.clientY - rect.top;
 		if (mx < geo.padL - 6 || mx > geo.padL + geo.plotW + 6 || my < 0 || my > geo.padT + geo.plotH + 6) { fanTip.style.opacity = 0; drawFan(); return; }
-		const y = Math.max(0, Math.min(geo.N, Math.round(((mx - geo.padL) / geo.plotW) * geo.N)));
+		const y = Math.max(geo.lo, Math.min(geo.hi,
+			geo.lo + Math.round(((mx - geo.padL) / geo.plotW) * geo.span)));
 		const s = sim.stats[y];
 		drawFan();
 		// クロスヘア
@@ -895,15 +1261,24 @@ function run() {
 	state.sim = simulate(cfg);
 	const ms = performance.now() - t0;
 
-	const sim = state.sim;
-	$('fanSub').textContent = comma(sim.trials) + '回の試行、' + cfg.ageNow + '歳から' + cfg.ageEnd + '歳まで' + sim.years + '年間。金額は' +
-		(state.view === 'real' ? '実質（現在の物価）' : '名目') + '。';
+	syncRange(cfg, state.sim.years);
+	$('fanSub').textContent = fanSubText();
 	state.ms = ms;
 
 	renderTiles();
 	drawFan();
+	drawRange();
+	updateRangeUi();
 	drawHist();
 	renderTable();
+}
+
+function fanSubText() {
+	const sim = state.sim, cfg = state.cfg, r = state.range;
+	let s = comma(sim.trials) + '回の試行、' + cfg.ageNow + '歳から' + cfg.ageEnd + '歳まで' + sim.years + '年間。金額は' +
+		(state.view === 'real' ? '実質（現在の物価）' : '名目') + '。';
+	if (r && !isFullRange()) s += 'グラフは ' + (cfg.ageNow + r.lo) + '歳〜' + (cfg.ageNow + r.hi) + '歳 を表示中。';
+	return s;
 }
 
 let timer = null;
@@ -915,6 +1290,8 @@ function scheduleRun() {
 function redrawOnly() {
 	if (!state.sim) return;
 	drawFan();
+	drawRange();
+	updateRangeUi();
 	drawHist();
 }
 
@@ -966,5 +1343,6 @@ window.addEventListener('DOMContentLoaded', function () {
 	window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(redrawOnly, 120); });
 
 	setupHover();
+	setupRange();
 	run();
 });
