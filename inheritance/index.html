@@ -18,16 +18,31 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="二次相続シミュレーター">
 <meta name="twitter:card" content="summary_large_image">
+<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+     名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
+		{"@type": "ListItem", "position": 2, "name": "二次相続シミュレーター", "item": "https://pure-create.github.io/finance/inheritance/"}
+	]
+}
+</script>
 <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+     アイコンと開始URLは manifest.json 側に書いてある -->
+<link rel="manifest" href="../manifest.json">
 <title>二次相続シミュレーター</title>
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813e">
+<link rel="stylesheet" href="../common/site.css?v=20260813i">
 <link rel="stylesheet" type="text/css" href="./css/main.css?v=20260813d">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
 </head>
@@ -57,7 +72,7 @@
     </div>
     <!-- 入力欄は下の各カードに散っているので、まとめて戻すボタンは見出しの行に置く -->
     <div class="page-tools">
-      <button class="btn" id="resetAllBtn" type="button">初期値に戻す</button>
+      <button class="btn" id="resetAllBtn" type="button">入力をリセット</button>
     </div>
   </div>
 
@@ -186,7 +201,7 @@
 <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
-<script src="../common/tool-nav.js?v=20260813d"></script>
-<script src="./js/inheritance.js?v=20260812a"></script>
+<script src="../common/tool-nav.js?v=20260813h"></script>
+<script src="./js/inheritance.js?v=20260813e"></script>
 </body>
 </html>

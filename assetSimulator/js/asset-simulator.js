@@ -5,7 +5,7 @@
 const $ = function (id) { return document.getElementById(id); };
 
 /* 入力欄の一覧：[要素のid, 初期値, 共有URLでの短いキー]。
-   保存・共有・「初期値に戻す」はすべてこの表を元にする */
+   保存・共有・「入力をリセット」はすべてこの表を元にする */
 const FIELDS = [
 	['ageNow', 40, 'a'], ['ageRetire', 65, 'ar'], ['ageEnd', 95, 'ae'],
 	['assetNow', 1000, 'as'], ['contribution', 120, 'ct'],

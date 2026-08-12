@@ -39,27 +39,38 @@
 		label.className = 'tool-nav-label';
 		label.textContent = '他のツール';
 
-		var list = document.createElement('ul');
+		var list = document.createElement('div');
+		list.className = 'tool-nav-links';
 
 		for (var i = 0; i < TOOLS.length; i++) {
 			var tool = TOOLS[i];
 			var dirUrl = new URL(base + tool.dir, global.location.href);
-			var item = document.createElement('li');
+
+			if (i > 0) {
+				/* 区切りの縦棒。線そのものはCSSが描くので、中身は空でよい。
+				   読み上げソフトが「たてぼう」と読んでも意味が無いので aria-hidden にする
+				   （CSSの ::before では aria-hidden を指定できないため要素で置いている） */
+				var sep = document.createElement('span');
+				sep.className = 'tool-nav-sep';
+				sep.setAttribute('aria-hidden', 'true');
+				list.appendChild(sep);
+			}
 
 			if (here.indexOf(dirUrl.pathname) === 0) {
-				// 今いる区画。押しても同じ場所なので、リンクにはしない
+				/* 今いる区画。押しても同じ場所なので、リンクにせずただの文字にする。
+				   「表示中」と書き添えはしない（色と、押せないことで足りる）が、
+				   目で見えない人には色が伝わらないので aria-current は必ず付ける */
 				var cur = document.createElement('span');
 				cur.className = 'current';
 				cur.setAttribute('aria-current', 'page');
-				cur.textContent = tool.label + '（表示中）';
-				item.appendChild(cur);
+				cur.textContent = tool.label;
+				list.appendChild(cur);
 			} else {
 				var a = document.createElement('a');
 				a.href = base + tool.href;
 				a.textContent = tool.label;
-				item.appendChild(a);
+				list.appendChild(a);
 			}
-			list.appendChild(item);
 		}
 
 		host.className = 'tool-nav';

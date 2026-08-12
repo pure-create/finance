@@ -18,15 +18,30 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="公務員退職手当計算">
 <meta name="twitter:card" content="summary_large_image">
+<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+     名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
+		{"@type": "ListItem", "position": 2, "name": "退職手当計算", "item": "https://pure-create.github.io/finance/retirement/"}
+	]
+}
+</script>
 <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
 <link rel="icon" href="../favicon.ico" sizes="32x32">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+     アイコンと開始URLは manifest.json 側に書いてある -->
+<link rel="manifest" href="../manifest.json">
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813e">
+<link rel="stylesheet" href="../common/site.css?v=20260813i">
 <title>退職手当計算</title>
 <style>
   body {
@@ -140,7 +155,7 @@
 <!-- QRと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、この2つが届くまで本文が出ない）。
      下のインラインの renderQr / Share.init より前であればよい -->
-<script src="../common/tool-nav.js?v=20260813d"></script>
+<script src="../common/tool-nav.js?v=20260813h"></script>
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
 <script>

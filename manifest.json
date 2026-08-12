@@ -1,0 +1,20 @@
+{
+  "name": "資産運用・金融シミュレーター",
+  "short_name": "金融シミュレーター",
+  "description": "資産運用・NISA利用状況・公務員の退職手当・年金・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行います。",
+  "lang": "ja",
+  "dir": "ltr",
+
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+
+  "background_color": "#f4f6f9",
+  "theme_color": "#f4f6f9",
+
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

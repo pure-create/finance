@@ -19,16 +19,32 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="公務員退職手当計算">
 <meta name="twitter:card" content="summary_large_image">
+<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+     名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
+		{"@type": "ListItem", "position": 2, "name": "退職手当計算", "item": "https://pure-create.github.io/finance/retirement/"},
+		{"@type": "ListItem", "position": 3, "name": "退職手当計算（国家公務員）", "item": "https://pure-create.github.io/finance/retirement/national/"}
+	]
+}
+</script>
 <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
 <link rel="icon" href="../../favicon.ico" sizes="32x32">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+     アイコンと開始URLは manifest.json 側に書いてある -->
+<link rel="manifest" href="../../manifest.json">
 <script src="../../common/analytics.js?v=20260805a" async></script>
 <script src="../../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../../common/site.css?v=20260813e">
-<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260809a">
+<link rel="stylesheet" href="../../common/site.css?v=20260813i">
+<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260813e">
 <link rel="stylesheet" type="text/css" href="../css/print.css?v=20260808a" media="print">
 <script src="./config.js?v=20260805a"></script>
 <title>退職手当計算（国家公務員）</title>
@@ -63,7 +79,7 @@
 
 <div class='section-header'>
 <h2>計算の基準</h2>
-<button type='button' id='clearBtn' class='btn'>入力をクリア</button>
+<button type='button' id='clearBtn' class='btn'>入力をリセット</button>
 </div>
 <div class="basis-row">
 <label for="birthYear">生年:</label>
@@ -248,7 +264,7 @@
      （<head> で同期に読むと、これらが届くまで本文が出ない）。retire-core.js は
      window の load で動き出すので、ここに移しても動きは変わらない。
      config.js だけは本文中の document.write が値を使うため <head> に残す -->
-<script src="../../common/tool-nav.js?v=20260813d"></script>
+<script src="../../common/tool-nav.js?v=20260813h"></script>
 <script src="../../common/qrcode.js?v=20260805a"></script>
 <script src="../../common/share.js?v=20260808a"></script>
 <script src="../js/retire-core.js?v=20260807b"></script>

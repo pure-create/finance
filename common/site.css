@@ -433,8 +433,11 @@ main:focus { outline: none; }
 
    区切り線1本だと本文の続きに見えて素通りされるので、
    帯（--surface-2）で囲って「ここから先は別の話」と分かるようにする。
-   各ツールは白い錠剤形にして、押せることと押す範囲をはっきりさせる
-   （狭い画面で指で押す先でもあるため、行の高さより広めに取っている）。
+   中身は縦棒で区切った文字だけにする。ページ末尾の補助的な導線なので、
+   ヘッダーの操作ボタンと同じ強さの形（枠付きの錠剤）にはしない。
+
+   ただし文字のままだと指で押す的が行の高さ（約20px）しかないので、
+   リンクに上下の余白を持たせて32px程度を確保している。
    ============================================================= */
 .tool-nav {
 	display: block;
@@ -450,36 +453,31 @@ main:focus { outline: none; }
 	color: var(--muted);
 	font-weight: 600;
 }
-.tool-nav ul {
-	list-style: none;
+.tool-nav-links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
-	margin: 8px 0 0;
-	padding: 0;
+	align-items: center;
+	margin-top: 2px;
 }
 .tool-nav a,
 .tool-nav .current {
 	display: inline-block;
-	padding: 5px 14px;
-	border-radius: 999px;
+	padding: 6px 0;
 	line-height: 1.5;
 }
-.tool-nav a {
-	background: var(--surface);
-	border: 1px solid var(--border-action);
-	text-decoration: none;
-}
-.tool-nav a::before { content: "→"; margin-right: .4em; color: var(--accent); }
-.tool-nav a:hover {
-	border-color: var(--accent);
-	background: var(--accent-soft);
-	text-decoration: none;
-}
-/* 今いるツール。押せないことが形でも分かるよう、枠線を持たせず地に沈める */
-.tool-nav .current {
-	color: var(--muted);
-	border: 1px solid transparent;
+.tool-nav a { text-decoration: none; }
+.tool-nav a:hover { text-decoration: underline; }
+/* 今いるツール。リンクの青に対して沈んだ色にして、押せないことを色でも示す */
+.tool-nav .current { color: var(--muted); }
+/* 区切りの縦棒。「｜」の文字は書体によって細さも高さもまちまちで、
+   薄い色にすると地に沈んで見えなくなるため、CSSで1本の線として描く。
+   色は説明文と同じ濃さ（--muted）。名前より淡いことは変わらない */
+.tool-nav-sep {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 1.05em;
+	margin: 0 .9em;
+	background: var(--muted);
 }
 
 /* この導線のすぐ下に注記が続くときは、帯と注記の線が続けて出て窮屈になるので詰める */

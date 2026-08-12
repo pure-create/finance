@@ -139,7 +139,7 @@ div.section-header {
 div.section-header h2 {
 	margin: 28px 0 12px;
 }
-/* 「入力をクリア」は「計算の基準」の見出し行に置く。
+/* 「入力をリセット」は「計算の基準」の見出し行に置く。
    h2の下余白（12px）と同じだけ下に余白を取ると、見出しの箱と下端が揃う */
 div.section-header .btn {
 	margin-bottom: 12px;
