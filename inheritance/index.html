@@ -56,6 +56,10 @@
       <h1>二次相続シミュレーター</h1>
       <p class="sub">一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較</p>
     </div>
+    <!-- 入力欄は下の各カードに散っているので、まとめて戻すボタンは見出しの行に置く -->
+    <div class="page-tools">
+      <button class="btn" id="resetAllBtn" type="button">初期値に戻す</button>
+    </div>
   </div>
 
   <!-- 家族構成 -->
@@ -67,7 +71,7 @@
         <div class="person me">
           <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
           <span class="plabel">自分（被相続人）</span>
-          <span class="asset-in"><input type="number" id="assetMe" value="3000" min="0" step="100" inputmode="numeric" aria-label="自分の資産額（万円）"><span class="unit">万円</span></span>
+          <span class="asset-in"><input type="number" id="assetMe" value="7000" min="0" step="100" inputmode="numeric" aria-label="自分の資産額（万円）"><span class="unit">万円</span></span>
           <span class="oku" id="okuMe"></span>
         </div>
         <div class="marriage" id="marriageLine"></div>
@@ -124,8 +128,8 @@
           <input type="range" id="spShare" min="0" max="100" step="1" value="50">
         </div>
         <div class="split-legend">
-          <span id="legendSp">配偶者 1,500万円</span>
-          <span id="legendCh">子 1,500万円</span>
+          <span id="legendSp">配偶者 3,500万円</span>
+          <span id="legendCh">子 3,500万円</span>
         </div>
       </div>
     </div>
@@ -175,6 +179,6 @@
   </footer>
 </div>
 
-<script src="./js/inheritance.js?v=20260805b"></script>
+<script src="./js/inheritance.js?v=20260812a"></script>
 </body>
 </html>

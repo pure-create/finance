@@ -1,9 +1,13 @@
 'use strict';
 
 /* ---------- 状態 ---------- */
+/* 入力の初期値。HTMLの value 属性と「初期値に戻す」はこの表にそろえる。
+   資産額は、配偶者の取得割合によって合計税額がはっきり動く額にしている
+   （配偶者の税額軽減が効く一方、二次相続では基礎控除が減るため） */
+const DEFAULTS = { me: 7000, sp: 3000, spouse: true, children: 1, delta: 0, years: 10 };
 const state = {
-  hasSpouse: true,
-  nChildren: 1,
+  hasSpouse: DEFAULTS.spouse,
+  nChildren: DEFAULTS.children,
   spSharePct: 50,   // 一次相続で配偶者が取得する割合(%)
   userMoved: false, // スライダーを手動調整したか
 };
@@ -138,7 +142,7 @@ function loadState() {
 function renderFamily() {
   const slot = $('spouseSlot');
   if (state.hasSpouse) {
-    const prev = getAssetSp() || 3000;
+    const prev = getAssetSp() || DEFAULTS.sp;
     slot.innerHTML = `
       <div class="person sp">
         <button class="remove-btn" id="delSpouse" title="配偶者を削除" aria-label="配偶者を削除">×</button>
@@ -511,6 +515,24 @@ $('spShare').oninput = e => {
   update();
 };
 $('resetBtn').onclick = () => { state.userMoved = false; update(); };
+
+// 家族構成も含めてすべてを初期値に戻す
+$('resetAllBtn').onclick = () => {
+  state.hasSpouse = DEFAULTS.spouse;
+  state.nChildren = DEFAULTS.children;
+  state.userMoved = false;
+  $('assetMe').value = DEFAULTS.me;
+  $('spDelta').value = DEFAULTS.delta;
+  $('yearsGap').value = DEFAULTS.years;
+  renderFamily();
+  // 配偶者の欄は renderFamily で作り直されるが、値は直前の入力を引き継ぐので明示的に戻す
+  $('assetSp').value = DEFAULTS.sp;
+  // 共有リンクで開いていた場合、再読み込みで元の条件に戻らないようクエリを外す
+  try {
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+  } catch (e) { /* file:// などで履歴を操作できない場合は何もしない */ }
+  update(); // 保存内容も初期値で上書きされる
+};
 
 Share.init({ buildUrl: buildShareUrl });
 
