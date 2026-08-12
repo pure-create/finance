@@ -25,9 +25,9 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>資産運用・金融シミュレーター</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260807a"></script>
+<script src="common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="common/theme.css?v=20260808b">
-<link rel="stylesheet" href="common/site.css?v=20260811a">
+<link rel="stylesheet" href="common/site.css?v=20260813b">
 <script src="common/qrcode.js?v=20260805a"></script>
 <script src="common/share.js?v=20260808a"></script>
 <style>
@@ -88,6 +88,15 @@
     margin: 0 0 .3rem;
   }
 
+  /* その分類に入口ページがあるものは、見出し自体をそこへのリンクにする
+     （404ページの一覧と同じ形）。見出しの見た目は他と揃えたいので、
+     色は継がせ、下線はホバーのときだけ出す */
+  .item h2 a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .item h2 a:hover { text-decoration: underline; }
+
   /* 同じ分類の入口は横に並べる。NISAは年末ごとに増えていくので、
      入りきらない分は折り返す */
   .links {
@@ -125,7 +134,8 @@
 </style>
 </head>
 <body>
-<main>
+<a class="skip-link" href="#main">本文へ</a>
+<main id="main" tabindex="-1">
   <div class="page-head">
     <div class="page-title">
       <h1>資産運用・金融シミュレーター</h1>
@@ -160,7 +170,7 @@
   </section>
 
   <section class="item item-retire">
-    <h2>公務員退職手当計算</h2>
+    <h2><a href="retirement/">公務員退職手当計算</a></h2>
     <ul class="links">
       <li><a href="retirement/local/">地方公務員</a></li>
       <li><a href="retirement/national/">国家公務員</a></li>
@@ -171,7 +181,7 @@
   <section class="item item-pension">
     <h2>年金</h2>
     <ul class="links">
-      <li><a href="pension/">受給開始年齢別シミュレーター</a></li>
+      <li><a href="pension/">受給開始年齢別 損益分岐点シミュレーター</a></li>
     </ul>
     <p class="desc">金利を考慮した年金受給開始年齢別シミュレーター</p>
   </section>

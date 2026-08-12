@@ -52,6 +52,34 @@
 	function applyAttribute(m) {
 		root.setAttribute('data-theme', m === 'system' ? systemTheme() : m);
 		colorCache = {};
+		applyThemeColor();
+	}
+
+	/* スマートフォンのブラウザは、アドレスバーなど自分の枠の色を
+	   <meta name="theme-color"> で決める。指定が無いと枠は白のままなので、
+	   ダークにするとページだけが黒くなり、上下に白い帯が残って浮いて見える。
+	   テーマを書き込むたびに、ページの地色（--bg）をここへ写す。
+
+	   色をJSに書き写さず theme.css のトークンから取るのは、
+	   定義を1箇所に保つため（Theme.color と同じ考え方）。
+	   ただし theme.js は theme.css より前に読み込む決まりなので、
+	   最初の同期実行の時点ではまだ値が取れない。そのときは何もせず、
+	   下の DOMContentLoaded でもう一度呼んで付ける。
+
+	   meta 自体もここで作る。各ページのHTMLに書くと11ページに同じ行が並ぶうえ、
+	   切り替えのたびに書き換える相手はどのみちここになるため。 */
+	function applyThemeColor() {
+		if (!document.head) return;
+		var bg = getComputedStyle(root).getPropertyValue('--bg').trim();
+		if (!bg) return;   // まだ theme.css が当たっていない
+
+		var meta = document.head.querySelector('meta[name="theme-color"]');
+		if (!meta) {
+			meta = document.createElement('meta');
+			meta.setAttribute('name', 'theme-color');
+			document.head.appendChild(meta);
+		}
+		meta.setAttribute('content', bg);
 	}
 
 	// ---- ここだけは同期実行。スタイルが当たる前に確定させる ----
@@ -305,6 +333,8 @@
 		var hosts = document.querySelectorAll('[data-theme-toggle]');
 		for (var i = 0; i < hosts.length; i++) buildWidget(hosts[i]);
 		updateWidgets();
+		// 読み込み順の都合で最初は付けられていないので、ここで改めて付ける
+		applyThemeColor();
 	}
 
 	if (document.readyState === 'loading') {

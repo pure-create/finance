@@ -25,6 +25,38 @@ a:hover { color: var(--accent-hover); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* =============================================================
+   本文へのスキップリンク
+
+   キーボードだけで操作する人と読み上げソフトの利用者は、ページを開くたびに
+   「トップページに戻る」「共有」「テーマ切替」を順に通過しないと本文に届かない。
+   Tabを最初に1回押したときだけ現れるリンクを先頭に置き、
+   ヘッダーを飛ばして <main> へ移れるようにする。
+
+   隠すのに display: none は使えない。消えた要素はTabの順路から外れてしまい、
+   そもそも現れる機会が無くなるため。画面の外に置いておき、
+   focus が当たったときだけ左上に呼び戻す。
+   ============================================================= */
+.skip-link {
+	position: absolute;
+	top: 8px;
+	left: -9999px;
+	z-index: 100;
+	padding: 8px 14px;
+	background: var(--surface);
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	box-shadow: var(--shadow-md);
+	font-size: 13px;
+	text-decoration: none;
+}
+.skip-link:focus { left: 8px; }
+
+/* 飛んだ先の <main> は tabindex="-1" で focus を受けられるようにしてある。
+   ここに枠が出ると、押した覚えのない囲みが本文全体に付いたように見えるので消す
+   （移動したことは画面が動くことで伝わる） */
+main:focus { outline: none; }
+
+/* =============================================================
    サイト内ヘッダー（戻る導線＋制度データの時点＋操作ボタン群）
    トップページ自身には置かない。
 
