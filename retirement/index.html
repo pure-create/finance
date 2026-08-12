@@ -26,9 +26,7 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813b">
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260808a"></script>
+<link rel="stylesheet" href="../common/site.css?v=20260813e">
 <title>退職手当計算</title>
 <style>
   body {
@@ -136,8 +134,15 @@
 		<span class="qr" id="qrNational" aria-hidden="true"></span>
 	</a>
 </div>
+<nav data-tool-nav></nav>
 <p class="site-privacy">・ アクセス状況の把握に Google Analytics を利用しています（<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Googleによるデータ使用について</a>）。</p>
 </main>
+<!-- QRと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+     （<head> で同期に読むと、この2つが届くまで本文が出ない）。
+     下のインラインの renderQr / Share.init より前であればよい -->
+<script src="../common/tool-nav.js?v=20260813d"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
 <script>
 	/* カードのQRは、地方・国家それぞれの計算ページをスマートフォンで開くためのもの。
 	   ヘッダーの共有ボタンが配るのはこの入口ページのURLなので、指す先が別になる。

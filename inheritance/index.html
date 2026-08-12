@@ -27,12 +27,9 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813b">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260807a">
+<link rel="stylesheet" href="../common/site.css?v=20260813e">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260813d">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
-<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260808a"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">本文へ</a>
@@ -66,7 +63,7 @@
 
   <!-- 家族構成 -->
   <div class="card">
-    <div class="sec-title">家族構成と資産額</div>
+    <h2 class="sec-title">家族構成と資産額</h2>
     <div class="family" id="famBox">
       <svg class="tree-svg" id="treeSvg" aria-hidden="true" focusable="false"></svg>
       <div class="couple">
@@ -86,7 +83,7 @@
 
   <!-- 二次相続の前提 -->
   <div class="card" id="secondCard">
-    <div class="sec-title">二次相続の前提</div>
+    <h2 class="sec-title">二次相続の前提</h2>
     <div class="assume-row">
       <div class="assume">
         <label for="spDelta">二次相続までの配偶者の資産増減</label>
@@ -111,7 +108,7 @@
 
   <!-- 遺産分割スライダー -->
   <div class="card" id="splitCard">
-    <div class="sec-title">一次相続の遺産分割</div>
+    <h2 class="sec-title">一次相続の遺産分割</h2>
     <div class="slider-head">
       <label for="spShare">配偶者の取得割合</label>
       <span class="slider-head-actions">
@@ -140,7 +137,7 @@
 
   <!-- 結果 -->
   <div class="card">
-    <div class="sec-title">相続税の試算結果</div>
+    <h2 class="sec-title">相続税の試算結果</h2>
     <div class="results">
       <div class="res-box first">
         <h3><span class="badge">一次</span>自分が亡くなったとき</h3>
@@ -163,10 +160,11 @@
 
   <!-- グラフ -->
   <div class="card" id="chartCard">
-    <div class="sec-title">配偶者の取得割合と税額の関係</div>
+    <h2 class="sec-title">配偶者の取得割合と税額の関係</h2>
     <div class="chart-wrap"><canvas id="chart" role="img" aria-label="配偶者の取得割合（0〜100％）に応じた一次相続・二次相続・合計の税額を示す折れ線グラフ"></canvas></div>
   </div>
 
+<nav data-tool-nav></nav>
   <footer class="site-foot">
     <p class="foot-note">
       ・ 相続税の速算表（平成27年1月1日以後）に基づく簡易試算です。基礎控除は「3,000万円＋600万円×法定相続人の数」。<br>
@@ -182,6 +180,13 @@
   </main>
 </div>
 
+<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+     （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
+     このページのスクリプトより前であれば、呼び出し順は変わらない -->
+<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
+<script src="../common/tool-nav.js?v=20260813d"></script>
 <script src="./js/inheritance.js?v=20260812a"></script>
 </body>
 </html>

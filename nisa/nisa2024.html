@@ -27,12 +27,8 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813b">
+<link rel="stylesheet" href="../common/site.css?v=20260813e">
 <link rel="stylesheet" href="nisa-common.css?v=20260811a">
-<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
-<script src="../common/vendor/chartjs-plugin-datalabels.min.js?v=2.2.0"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260808a"></script>
 </head>
 <body>
 <a class="skip-link" href="#main">本文へ</a>
@@ -159,8 +155,17 @@ const nisaData = {
   '80歳以上':{'0':1331766,'60':110252,'120':54231, '180':37059, '240':206919,'300':13021, '360':15665 },
 };
 </script>
+<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+     （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
+     このページのスクリプトより前であれば、呼び出し順は変わらない -->
+<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+<script src="../common/vendor/chartjs-plugin-datalabels.min.js?v=2.2.0"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
+<script src="../common/tool-nav.js?v=20260813d"></script>
 <script src="nisa-common.js?v=20260808a"></script>
 
+<nav data-tool-nav></nav>
 <footer class="site-foot">
 <p class="foot-note">
   NISA口座数は<a href="https://www.fsa.go.jp/policy/nisa/20250617.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2024年12月末時点）」</a>、人口は<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20240&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2024年12月報」</a>の<strong>総人口</strong>（2024年7月1日確定値）を使用しています。<br>

@@ -65,7 +65,8 @@ body{padding:16px;min-height:100vh}
 .chart-wrap{position:relative;height:370px}
 
 /* Timeline */
-.sec-title{font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:12px}
+/* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
+.sec-title{font-size:13px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
 .timeline{display:flex;flex-direction:column;gap:6px}
 .period{
   display:flex;align-items:center;gap:0;

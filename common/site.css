@@ -425,6 +425,68 @@ main:focus { outline: none; }
 	border-top: 1px solid var(--border);
 }
 
+/* =============================================================
+   他のツールへの導線（ページ末尾、注記の前）
+
+   ツール同士を行き来する道がトップページ経由しか無かったので、
+   読み終える位置に一覧を置く。中身は common/tool-nav.js が描く。
+
+   区切り線1本だと本文の続きに見えて素通りされるので、
+   帯（--surface-2）で囲って「ここから先は別の話」と分かるようにする。
+   各ツールは白い錠剤形にして、押せることと押す範囲をはっきりさせる
+   （狭い画面で指で押す先でもあるため、行の高さより広めに取っている）。
+   ============================================================= */
+.tool-nav {
+	display: block;
+	margin-top: 28px;
+	padding: 12px 16px 14px;
+	background: var(--surface-2);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	font-size: 13px;
+}
+.tool-nav-label {
+	display: block;
+	color: var(--muted);
+	font-weight: 600;
+}
+.tool-nav ul {
+	list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 8px 0 0;
+	padding: 0;
+}
+.tool-nav a,
+.tool-nav .current {
+	display: inline-block;
+	padding: 5px 14px;
+	border-radius: 999px;
+	line-height: 1.5;
+}
+.tool-nav a {
+	background: var(--surface);
+	border: 1px solid var(--border-action);
+	text-decoration: none;
+}
+.tool-nav a::before { content: "→"; margin-right: .4em; color: var(--accent); }
+.tool-nav a:hover {
+	border-color: var(--accent);
+	background: var(--accent-soft);
+	text-decoration: none;
+}
+/* 今いるツール。押せないことが形でも分かるよう、枠線を持たせず地に沈める */
+.tool-nav .current {
+	color: var(--muted);
+	border: 1px solid transparent;
+}
+
+/* この導線のすぐ下に注記が続くときは、帯と注記の線が続けて出て窮屈になるので詰める */
+.tool-nav + .site-foot {
+	margin-top: 16px;
+}
+
 .foot-note,
 .foot-disclaimer {
 	color: var(--muted);
@@ -533,7 +595,9 @@ html.printing .share-msg,
 html.printing .tipbox,
 /* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
 html.printing .site-privacy,
-html.printing .foot-privacy {
+html.printing .foot-privacy,
+/* 他のツールへの導線も、紙の上では押せないので出さない */
+html.printing .tool-nav {
 	display: none !important;
 }
 
@@ -570,7 +634,9 @@ html.printing .share-pop > .share-qr { display: block; }
 	.tipbox,
 	/* アクセス解析の断り書きは画面を見ている人に向けたもので、紙には要らない */
 	.site-privacy,
-	.foot-privacy {
+	.foot-privacy,
+	/* 他のツールへの導線も、紙の上では押せないので出さない */
+	.tool-nav {
 		display: none !important;
 	}
 
