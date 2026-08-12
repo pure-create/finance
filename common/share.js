@@ -79,6 +79,28 @@
 		});
 	}
 
+	// コピー結果はHTMLとして差し込むので、URLに現れうる文字はそのまま出さない
+	function escapeHtml(text) {
+		return String(text)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;');
+	}
+
+	// コピーしたURLの現物。長くても窓からはみ出さないよう、囲みはCSS側で折り返す
+	function urlBox(url) {
+		return '<span class="share-url">' + escapeHtml(url) + '</span>';
+	}
+
+	/* コピーしたURLは、何が渡るのかを見て確かめられるよう必ず添える。
+	   「?」以降の断りだけは、試算条件が載っているときに限る。入力が初期値のままだと
+	   クエリの付かないページがあるほか、トップページなどそもそも入力を持たないページもあり、
+	   そこで「?」の話をしても当てはまらない */
+	function okNote(url) {
+		var note = url.indexOf('?') >= 0 ? '<br>URLの「?」以降に試算条件が含まれています。' : '';
+		return note + urlBox(url);
+	}
+
 	function popEl() { return cfg ? byId(cfg.popId) : null; }
 	// 開いているかどうかは .show の有無で持つ。閉じるときにフェードさせたいので、
 	// hidden 属性（display:none）ではなく opacity / visibility で切り替えている
@@ -155,7 +177,8 @@
 			msgId:    options.msgId || 'shareMsg',
 			popId:    options.popId || 'sharePop',
 			buildUrl: options.buildUrl,
-			okMsg:    options.okMsg || '試算結果のURLをコピーしました。<br>URLには入力内容が含まれます。',
+			// 入力内容がURLに載ることと、URLの現物は、この後ろに okNote が付け足す
+			okMsg:    options.okMsg || '試算結果のURLをコピーしました。',
 			ngMsg:    options.ngMsg || 'コピーできませんでした。'
 		};
 
@@ -168,8 +191,9 @@
 
 				var url = cfg.buildUrl();
 				copyToClipboard(url).then(
-					function () { flash(cfg.okMsg); },
-					function () { flash(cfg.ngMsg + '<br>URL: ' + url); }
+					function () { flash(cfg.okMsg + okNote(url)); },
+					// コピーできなかったときは、手で拾えるようにURLをそのまま見せる
+					function () { flash(cfg.ngMsg + urlBox(url)); }
 				);
 				setOpen(true);
 			});

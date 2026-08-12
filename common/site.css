@@ -277,7 +277,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 
 /* ポップオーバーの中では、消える吹き出しではなく静的な説明行として置く。
    窓が既に枠で囲われているので、吹き出しの地色・枠・影は外す（囲みが二重になるため）。
-   コピーに失敗したときはURLをそのまま載せるので、途中で折り返せるようにする
+   下にコピーしたURLを載せるので、途中で折り返せるようにする
    （区切りの無い長いURLだと、折り返せずに窓からはみ出す） */
 .share-pop .share-msg {
 	position: static;
@@ -294,6 +294,24 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 	opacity: 1;
 	transform: none;
 	transition: none;
+}
+
+/* コピーしたURLの現物（share.js が説明の下に差し込む）。
+   「?」以降に試算条件が載っていることを、文だけでなく目で確かめられるようにする。
+   説明とは別のものだと分かるように枠で囲み、地色も一段落とす。
+   URLは区切りの無い長い文字列になりうるので、語の途中でも折り返す */
+.share-url {
+	display: block;
+	margin-top: 6px;
+	padding: 4px 6px;
+	background: var(--bg);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 10px;
+	line-height: 1.45;
+	text-align: left;
+	overflow-wrap: anywhere;
 }
 
 /* QRコードは常に白地・黒モジュール。読み取り精度が落ちるのでテーマで反転させない。
