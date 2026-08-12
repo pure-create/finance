@@ -436,28 +436,35 @@ main:focus { outline: none; }
    中身は縦棒で区切った文字だけにする。ページ末尾の補助的な導線なので、
    ヘッダーの操作ボタンと同じ強さの形（枠付きの錠剤）にはしない。
 
+   「他のツール：」の見出しは一覧と同じ行に置く。改行して1行使うほどの
+   内容ではなく、帯の高さが増えるだけなので、コロンで続けて読ませる。
+   一覧の入れ物（.tool-nav-links）を display:contents にして中のリンクを
+   直接この行に並べるのは、入れ物のままだと横幅が足りないときに一覧が
+   丸ごと次の行へ落ち、見出しだけの行ができてしまうため。
+   （display:contents を解さないブラウザでは、その落ちる形に戻るだけ）
+
    ただし文字のままだと指で押す的が行の高さ（約20px）しかないので、
-   リンクに上下の余白を持たせて32px程度を確保している。
+   リンクに上下の余白を持たせて32px程度を確保している。帯の上下の余白は
+   その分を含めて考え、狭くしている。
    ============================================================= */
 .tool-nav {
-	display: block;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
 	margin-top: 28px;
-	padding: 12px 16px 14px;
+	padding: 3px 16px 5px;
 	background: var(--surface-2);
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	font-size: 13px;
 }
 .tool-nav-label {
-	display: block;
+	flex: 0 0 auto;
 	color: var(--muted);
 	font-weight: 600;
 }
 .tool-nav-links {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	margin-top: 2px;
+	display: contents;
 }
 .tool-nav a,
 .tool-nav .current {

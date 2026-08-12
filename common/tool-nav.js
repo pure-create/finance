@@ -37,7 +37,7 @@
 
 		var label = document.createElement('span');
 		label.className = 'tool-nav-label';
-		label.textContent = '他のツール';
+		label.textContent = '他のツール：';
 
 		var list = document.createElement('div');
 		list.className = 'tool-nav-links';
