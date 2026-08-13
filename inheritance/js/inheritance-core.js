@@ -39,7 +39,7 @@ const SMALL_LOT_RATE = 0.80;  // 減額割合
 
 /* 自宅の土地の評価額から差し引ける額。
    減額されるのは限度面積までの部分なので、それを超える広さの土地は
-   330㎡ぶんだけが対象になる（面積に対する割合で按分する）。 */
+   330㎡分だけが対象になる（面積に対する割合で按分する）。 */
 function smallLotReduction(landValue, areaSqm) {
   if (!(landValue > 0)) return 0;
   const area = areaSqm > 0 ? areaSqm : SMALL_LOT_LIMIT;
@@ -91,7 +91,7 @@ function simulate(assetMe, assetSp, hasSpouse, nChildren, spPct, spDelta, years,
     r.first = r.spTax + r.chTax1;
     r.estate2 = Math.max(0, assetSp + spAcq - r.spTax + spDelta);
 
-    /* 二次相続にある自宅は、一次で配偶者が取得したぶんだけ。
+    /* 二次相続にある自宅は、一次で配偶者が取得した割合分だけ。
        取得割合0%なら自宅も配偶者の手には渡らず、二次では特例の対象が無い */
     r.cut2 = 0;
     if (land && land.second) {

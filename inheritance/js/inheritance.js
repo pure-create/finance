@@ -324,7 +324,7 @@ function updateLandCard(land, assetMe) {
     ? '一次相続で適用する（配偶者が自宅を取得するため、要件を問わず適用）'
     : '一次相続で適用する（子が同居しているなど、要件を満たす場合）';
 
-  // 限度面積を超えていれば、対象になるのは330㎡ぶんだけだと伝える
+  // 限度面積を超えていれば、対象になるのは330㎡分だけだと伝える
   const area = land.area;
   $('landAreaNote').textContent = (on && area > 330)
     ? `330㎡を超える部分は対象外です（評価額のうち ${Math.round(330 / area * 100)}% が80%減額）`
@@ -336,8 +336,10 @@ function updateLandCard(land, assetMe) {
     note.className = 'assume-note warn';
     note.textContent = '自宅の土地の評価額が「自分の資産額」を超えています。自宅の土地は資産額に含めて入力してください';
   } else if (on && state.hasSpouse && !$('landSecond').checked) {
+    /* チェックが外れている＝この試算では二次相続に特例を適用していない、という
+       「今の設定」の説明。制度として使えないという意味に読めないようにする */
     note.className = 'assume-note';
-    note.textContent = '二次相続では、配偶者が取得したぶんの自宅に特例を使えません。同居していない子が相続する場合はこのままにしてください';
+    note.textContent = '今は二次相続に特例を適用しない設定です。一次相続と違って自動では適用されないので、自宅を相続する子が要件を満たす場合だけチェックを入れてください';
   } else {
     note.className = 'assume-note';
     note.textContent = '';
