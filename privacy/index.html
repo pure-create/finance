@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="資産運用・金融シミュレーターにおける利用者の情報の取り扱い。個人情報の入力は不要で、計算はすべてブラウザ内で行われます。共有URLに試算条件が含まれることとアクセス解析についても説明しています。">
+<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+     og:image はツール別の1枚を使うが、このページはツールではないのでサイト共通の1枚を指す -->
+<link rel="canonical" href="https://pure-create.github.io/finance/privacy/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="資産運用・金融シミュレーター">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://pure-create.github.io/finance/privacy/">
+<meta property="og:title" content="プライバシーポリシー">
+<meta property="og:description" content="資産運用・金融シミュレーターにおける利用者の情報の取り扱い。個人情報の入力は不要で、計算はすべてブラウザ内で行われます。共有URLに試算条件が含まれることとアクセス解析についても説明しています。">
+<meta property="og:image" content="https://pure-create.github.io/finance/og/site.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="資産運用・金融シミュレーター">
+<meta name="twitter:card" content="summary_large_image">
+<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+     名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
+		{"@type": "ListItem", "position": 2, "name": "プライバシーポリシー", "item": "https://pure-create.github.io/finance/privacy/"}
+	]
+}
+</script>
+<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+     このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+     アイコンと開始URLは manifest.json 側に書いてある -->
+<link rel="manifest" href="../manifest.json">
+<title>プライバシーポリシー</title>
+<script src="../common/analytics.js?v=20260805a" async></script>
+<script src="../common/theme.js?v=20260813a"></script>
+<link rel="stylesheet" href="../common/theme.css?v=20260808b">
+<link rel="stylesheet" href="../common/site.css?v=20260813l">
+<style>
+  /* 読み物のページなので、体裁はトップページ・404と同じくここに書く。
+     専用のCSSファイルを作るほどの量ではない */
+  body {
+    padding: 1.25rem 1rem 1.75rem;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* 本文の幅は年金・相続・NISAと揃えて840px */
+  main { max-width: 840px; margin: 0 auto; }
+
+  .policy p { margin: 0 0 .9em; }
+
+  /* 節の見出し。試算のページの h2（.sec-title）は結果の枠の中で使うものなので、
+     ここでは本文用に別に持つ。上の余白を広く取って節の切れ目を作る */
+  .policy h2 {
+    margin: 1.9em 0 .5em;
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.5;
+  }
+  .policy h2:first-of-type { margin-top: 1.4em; }
+
+  .policy ul {
+    margin: 0 0 .9em;
+    padding-left: 1.2em;
+  }
+  .policy li { margin-bottom: .5em; }
+
+  /* 本文中のリンクは下線を引く。注記（.foot-note）と同じ扱い。
+     色は共通の a と同じなので指定しない */
+  .policy a { text-decoration: underline; }
+
+  /* 一番伝えたい一文（共有URLに試算条件が入ること）だけ太字にしている。
+     色は変えない。太さだけで足りるうえ、色を足すとリンクに見えるため */
+  .policy strong { font-weight: 650; }
+
+  /* 最終更新日。本文ではないので小さく、区切り線で本文と分ける */
+  .policy-updated {
+    margin: 2.2em 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">本文へ</a>
+<div class="site-head">
+  <!-- 制度データの時点は試算をするページのものなので置かない。
+       共有ボタンも、このページには共有する試算が無いので置かない -->
+  <div class="page-tools">
+    <span data-theme-toggle></span>
+  </div>
+</div>
+<main id="main" tabindex="-1">
+  <div class="page-head">
+    <div class="page-title">
+      <h1>プライバシーポリシー</h1>
+      <p class="sub">当サイトが扱う情報の扱い方と、試算結果の位置づけについて</p>
+    </div>
+  </div>
+
+  <div class="policy">
+    <p>「資産運用・金融シミュレーター」（以下「当サイト」）における利用者の情報の取り扱いについて、次のとおり定めます。</p>
+
+    <h2>個人情報を入力する欄はありません</h2>
+    <p>当サイトの各シミュレーターには、氏名・住所・電話番号・メールアドレスなどの個人情報を入力する欄そのものがありません。会員登録の仕組みや問い合わせフォームも設けていないため、これらの情報を当サイトが受け取ることはありません。</p>
+    <p>試算にあたって年齢・勤続年数・金額などを入力していただく箇所がありますが、これらは計算のためだけに使われます（生年月日についても、退職手当の計算で「生まれた年度」を選んでいただくだけで、月日までは伺いません）。</p>
+
+    <h2>計算はお使いのブラウザの中で行われます</h2>
+    <ul>
+      <li>各シミュレーターの計算は、すべてお使いのブラウザの中で行われます。入力した内容がサーバーへ送信されることはなく、サーバーに試算データが保存されることもありません。</li>
+      <li>入力内容と画面の設定（配色など）は、お使いのブラウザ内（ローカルストレージ）にのみ保存され、次に開いたときに前回の続きから始められるようにしています。ブラウザの保存データを消すと初期状態に戻ります。他の端末や他のブラウザへ引き継がれることはありません。</li>
+    </ul>
+
+    <h2>試算結果の共有（URL・QRコード）について</h2>
+    <p>「試算結果を共有」で作られるURLには、<strong>そのときの試算条件がURLの一部として含まれます</strong>。画面に表示されるQRコードも、同じURLを表したものです。</p>
+    <ul>
+      <li>そのURLを第三者にお渡しになると、URLを知った方は同じ条件の試算を開き、入力された内容を確認できます。お渡しになる相手にご注意ください。</li>
+      <li>共有用のURLを開いたときは、URLに含まれる試算条件も通信に乗り、下記のアクセス解析にも記録されます。入力している間に送信されることはありません（試算条件がURLに入るのは、共有の操作をしたときだけです）。</li>
+    </ul>
+
+    <h2>アクセス解析（Google Analytics）について</h2>
+    <p>当サイトでは、利用状況の把握とページの改善のために、Google LLC の提供する Google Analytics を利用しています。</p>
+    <ul>
+      <li>Google Analytics は Cookie を使用し、閲覧されたページのURL・参照元・ブラウザや端末の種類・おおよその地域などの情報を収集します。氏名など個人を特定する情報は含まれません。</li>
+      <li>収集された情報は Google のプライバシーポリシーに基づいて管理されます。詳しくは「<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Google のサービスを使用するサイトやアプリから収集した情報の Google による使用</a>」をご覧ください。</li>
+      <li>収集を望まれない場合は、ブラウザの設定で Cookie を無効にするか、Google の提供する「<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google アナリティクス オプトアウト アドオン</a>」をご利用ください。</li>
+    </ul>
+
+    <h2>サイトの公開場所について</h2>
+    <p>当サイトは GitHub Pages（GitHub, Inc.）上で公開しています。ページの閲覧に伴う技術的な情報（IPアドレス・ブラウザの種類など）が、同社のサーバーに記録される場合があります。</p>
+
+    <h2>外部サイトへのリンクについて</h2>
+    <p>当サイトには、金融庁・国税庁・総務省などの外部サイトへのリンクがあります。リンク先での情報の取り扱いについては、各サイトのプライバシーポリシーをご確認ください。</p>
+
+    <h2>試算結果について</h2>
+    <p>各シミュレーターは、入力していただいた条件と、その時点で当サイトが用いている制度・税率などに基づいて計算を行うものです。結果は概算であり、将来の受取額・税額・運用成果を保証するものではありません。</p>
+    <p>特に運用に関する試算は、想定利回りなどの仮定を置いて計算した見込みであり、実際の運用成果を示すものではありません。制度の改正や運用状況、個別の事情によって結果は変わります。重要な判断の際は、公的機関の情報や専門家にご確認ください。</p>
+
+    <h2>本ポリシーの変更について</h2>
+    <p>内容を変更した場合は、このページに掲載します。</p>
+
+    <p class="policy-updated">最終更新: 2026年8月13日</p>
+  </div>
+<nav data-tool-nav="../"></nav>
+</main>
+<script src="../common/tool-nav.js?v=20260813k"></script>
+</body>
+</html>

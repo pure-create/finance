@@ -25,13 +25,18 @@
 
 	/* dir は「そのツールの区画」。今いるページがこの下にあれば、
 	   リンクではなく「表示中」にする。年度違い（NISA）や
-	   地方/国家（退職手当）で開いているときも、区画としては同じと扱う。 */
+	   地方/国家（退職手当）で開いているときも、区画としては同じと扱う。
+
+	   最後のプライバシーポリシーだけはツールではないが、どのページからも
+	   同じ位置で辿れるようにここへ並べている（注記の中のリンクだけだと、
+	   ページによって注記の長さが違い、探す場所が定まらない）。 */
 	var TOOLS = [
-		{ label: '資産運用',       dir: 'assetSimulator/', href: 'assetSimulator/' },
-		{ label: 'NISA利用状況',   dir: 'nisa/',           href: 'nisa/nisa2025.html' },
-		{ label: '公務員退職手当', dir: 'retirement/',     href: 'retirement/' },
-		{ label: '年金',           dir: 'pension/',        href: 'pension/' },
-		{ label: '相続',           dir: 'inheritance/',    href: 'inheritance/' }
+		{ label: '資産運用',           dir: 'assetSimulator/', href: 'assetSimulator/' },
+		{ label: 'NISA利用状況',       dir: 'nisa/',           href: 'nisa/nisa2025.html' },
+		{ label: '公務員退職手当',     dir: 'retirement/',     href: 'retirement/' },
+		{ label: '年金',               dir: 'pension/',        href: 'pension/' },
+		{ label: '相続',               dir: 'inheritance/',    href: 'inheritance/' },
+		{ label: 'プライバシーポリシー', dir: 'privacy/',       href: 'privacy/' }
 	];
 
 	function link(href, label) {

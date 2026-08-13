@@ -167,6 +167,11 @@ button.fix-btn:hover { color: var(--text-primary); border-color: var(--muted); }
 /* ===== 結果 ===== */
 .results { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
+/* ページ間の導線（common/site.css）を、この列の最後に並べたときの調整。
+   縦の間隔は .results の gap が持つので上余白は要らず、角丸だけ
+   同じ列に並ぶカード（figure）の12pxに合わせる */
+.results > .tool-nav { margin-top: 0; border-radius: 12px; }
+
 #alert {
 	display: none;
 	background: var(--surface-1);
