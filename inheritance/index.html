@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814a">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814b">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
 </head>
 <body>
@@ -119,6 +119,27 @@
           <label class="land-check"><input type="checkbox" id="landSecond"><span>二次相続で適用する（子が同居しているなど、要件を満たす場合）</span></label>
         </div>
         <p class="assume-note" id="landNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 生命保険金の非課税枠。自宅の土地と同じく課税価格を下げる仕組みだが、
+       枠が法定相続人の数で決まるぶん、二次相続では配偶者が減って枠も縮む。
+       扱うのは自分の保険金だけ（配偶者自身の保険は別の契約の話になるため） -->
+  <div class="card" id="insCard">
+    <h2 class="sec-title">生命保険
+      <span class="help" tabindex="0" aria-label="生命保険金の非課税枠とは" aria-describedby="insTip">？<span class="tipbox" id="insTip" role="tooltip">死亡保険金は受取人固有の財産ですが、相続税では「みなし相続財産」として課税対象になります。ただし「500万円 × 法定相続人の数」までは非課税です。法定相続人の数で枠が決まるため、配偶者がいなくなる二次相続では枠も小さくなります。</span></span>
+    </h2>
+    <div class="assume-row">
+      <div class="assume">
+        <label for="insurance">自分の死亡保険金</label>
+        <span class="asset-in"><input type="number" id="insurance" value="0" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
+        <span class="oku" id="okuIns"></span>
+        <p class="assume-note">上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち死亡保険金にあたる額を入力してください（0なら非課税枠を使いません）</p>
+      </div>
+      <div class="assume">
+        <p class="ins-limit" id="insLimit"></p>
+        <p class="assume-note" id="insNote"></p>
       </div>
     </div>
   </div>
@@ -213,7 +234,8 @@
       ・ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br>
       ・ 相次相続控除は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br>
       ・ 小規模宅地等の特例は、特定居住用宅地等（330㎡までの部分を80%減額）のみを扱います。自宅の土地は配偶者が取得する前提とし、二次相続では一次相続で配偶者が取得した割合ぶんだけを特例の対象としています。事業用・貸付用の宅地や、他の宅地との併用の限度は考慮していません。<br>
-      ・ 生命保険の非課税枠、債務・葬式費用、未成年者・障害者控除などは考慮していません。<br>
+      ・ 生命保険金の非課税枠（500万円×法定相続人の数）は、一次相続でのみ適用します。配偶者自身が加入する保険は扱いません。また死亡保険金も、他の財産と同じ割合で取得する前提で按分しています。<br>
+      ・ 債務・葬式費用、未成年者・障害者控除などは考慮していません。<br>
       ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
     </p>
     <p class="foot-disclaimer">・ 試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。</p>
@@ -230,7 +252,7 @@
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
 <script src="../common/tool-nav.js?v=20260813k"></script>
-<script src="./js/inheritance-core.js?v=20260814c"></script>
-<script src="./js/inheritance.js?v=20260814b"></script>
+<script src="./js/inheritance-core.js?v=20260814d"></script>
+<script src="./js/inheritance.js?v=20260814c"></script>
 </body>
 </html>

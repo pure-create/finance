@@ -8,7 +8,7 @@
    この項目を持たない既存の共有URLを開いたときに前と違う税額が出てしまうため */
 const DEFAULTS = {
   me: 7000, sp: 3000, spouse: true, children: 1, delta: 0, years: 10,
-  land: 0, area: 200, landFirst: 1, landSecond: 0,
+  land: 0, area: 200, landFirst: 1, landSecond: 0, insurance: 0,
 };
 const state = {
   hasSpouse: DEFAULTS.spouse,
@@ -33,17 +33,22 @@ function getDelta() { return +$('spDelta').value || 0; }
 function getYears() { return Math.min(10, Math.max(0, Math.floor(+$('yearsGap').value || 0))); }
 function getLandValue() { return Math.max(0, +$('landValue').value || 0); }
 function getLandArea() { return Math.max(0, +$('landArea').value || 0); }
+function getInsurance() { return Math.max(0, +$('insurance').value || 0); }
+function heirCount() { return (state.hasSpouse ? 1 : 0) + state.nChildren; }
 
 /* 特例を simulate へ渡す形にまとめる。
    一次相続は、配偶者がいれば自宅を配偶者が取得する前提なので無条件で適用できる
    （配偶者が取得する場合、同居などの要件は問われない）。配偶者がいないときだけ、
    子が要件を満たすかどうかをチェックで受け取る。 */
-function getLand() {
+function getOpts() {
   return {
-    value: getLandValue(),
-    area: getLandArea(),
-    first: state.hasSpouse ? true : $('landFirst').checked,
-    second: $('landSecond').checked,
+    land: {
+      value: getLandValue(),
+      area: getLandArea(),
+      first: state.hasSpouse ? true : $('landFirst').checked,
+      second: $('landSecond').checked,
+    },
+    insurance: getInsurance(),
   };
 }
 
@@ -62,7 +67,7 @@ function collectState() {
     me: getAssetMe(), sp: getAssetSp(), s: state.hasSpouse ? 1 : 0,
     c: state.nChildren, pct: state.spSharePct, mv: state.userMoved ? 1 : 0,
     d: getDelta(), y: getYears(),
-    lv: getLandValue(), la: getLandArea(),
+    lv: getLandValue(), la: getLandArea(), ins: getInsurance(),
     l1: $('landFirst').checked ? 1 : 0, l2: $('landSecond').checked ? 1 : 0,
   };
 }
@@ -84,7 +89,7 @@ function loadState() {
     src = {};
     /* 自宅の土地（lv/la/l1/l2）は後から足した項目。これらを持たない
        古い共有URLでは初期値（＝特例なし）のままになり、当時と同じ結果が出る */
-    for (const k of ['me', 'sp', 's', 'c', 'pct', 'mv', 'd', 'y', 'lv', 'la', 'l1', 'l2']) {
+    for (const k of ['me', 'sp', 's', 'c', 'pct', 'mv', 'd', 'y', 'lv', 'la', 'l1', 'l2', 'ins']) {
       if (q.has(k)) src[k] = +q.get(k);
     }
   } else {
@@ -339,6 +344,30 @@ function updateLandCard(land, assetMe) {
   }
 }
 
+/* 生命保険のカード。非課税枠は法定相続人の数で決まるので、
+   家族構成を変えたときに枠がどう動くかをその場に出す */
+function updateInsuranceCard(payout, assetMe) {
+  const heirs = heirCount();
+  const cap = 500 * heirs;
+  const used = Math.min(payout, cap);
+  const limit = $('insLimit');
+  limit.innerHTML =
+    `非課税枠 <b>${fmt(cap)}万円</b><span class="ins-formula">（500万円 × 法定相続人${heirs}人）</span>` +
+    (payout > 0 ? `<span class="ins-used">このうち <b>${fmt(used)}万円</b> が課税価格から外れます</span>` : '');
+
+  const note = $('insNote');
+  if (payout > 0 && payout > assetMe) {
+    note.className = 'assume-note warn';
+    note.textContent = '死亡保険金が「自分の資産額」を超えています。保険金は資産額に含めて入力してください';
+  } else if (payout > cap) {
+    note.className = 'assume-note';
+    note.textContent = `非課税枠を超える ${fmt(payout - cap)}万円は、他の財産と同じように課税されます`;
+  } else {
+    note.className = 'assume-note';
+    note.textContent = '';
+  }
+}
+
 /* ---------- 画面更新 ---------- */
 function update() {
   const assetMe = getAssetMe();
@@ -367,11 +396,13 @@ function update() {
   if (okuSp) okuSp.textContent = okuText(getAssetSp());
   $('okuDelta').textContent = okuText(spDelta);
   $('okuLand').textContent = okuText(getLandValue());
+  $('okuIns').textContent = okuText(getInsurance());
 
-  const land = getLand();
-  updateLandCard(land, assetMe);
+  const opts = getOpts();
+  updateLandCard(opts.land, assetMe);
+  updateInsuranceCard(opts.insurance, assetMe);
 
-  const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct, spDelta, years, land);
+  const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct, spDelta, years, opts);
 
   // 相次相続控除の適用可能性の表示
   // 配偶者に一次の税額が出るのは取得額が max(1.6億, 法定相続分) を超えるときだけ
@@ -396,7 +427,7 @@ function update() {
   let sweep = null;
   if (showSplit) {
     sweep = [];
-    for (let p = 0; p <= 100; p++) sweep.push(simulate(assetMe, assetSp, true, state.nChildren, p, spDelta, years, land));
+    for (let p = 0; p <= 100; p++) sweep.push(simulate(assetMe, assetSp, true, state.nChildren, p, spDelta, years, opts));
   }
 
   // 分割バー
@@ -458,6 +489,9 @@ function update() {
   if (r.cut1 > 0) {
     h1 += `<div class="rline dim"><span>小規模宅地等の特例</span><span class="v">−${fmt(r.cut1)}万円</span></div>`;
   }
+  if (r.cutIns > 0) {
+    h1 += `<div class="rline dim"><span>生命保険金の非課税枠</span><span class="v">−${fmt(r.cutIns)}万円</span></div>`;
+  }
   h1 += `<div class="rline dim"><span>基礎控除（法定相続人${heirs1}人）</span><span class="v">−${fmt(ded1)}万円</span></div>`;
   if (state.hasSpouse && state.nChildren > 0) {
     h1 += `
@@ -518,6 +552,7 @@ $('assetMe').oninput = update;
 $('spDelta').oninput = update;
 $('yearsGap').oninput = update;
 $('landValue').oninput = update;
+$('insurance').oninput = update;
 $('landArea').oninput = update;
 $('landFirst').onchange = update;
 $('landSecond').onchange = update;
@@ -536,6 +571,7 @@ $('resetAllBtn').onclick = () => {
   $('assetMe').value = DEFAULTS.me;
   $('spDelta').value = DEFAULTS.delta;
   $('yearsGap').value = DEFAULTS.years;
+  $('insurance').value = DEFAULTS.insurance;
   $('landValue').value = DEFAULTS.land;
   $('landArea').value = DEFAULTS.area;
   $('landFirst').checked = DEFAULTS.landFirst === 1;
@@ -569,6 +605,7 @@ if (saved) {
   if (spEl && Number.isFinite(saved.sp)) spEl.value = saved.sp;
   if (Number.isFinite(saved.d)) $('spDelta').value = saved.d;
   if (Number.isFinite(saved.y)) $('yearsGap').value = Math.min(10, Math.max(0, saved.y));
+  if (Number.isFinite(saved.ins)) $('insurance').value = Math.max(0, saved.ins);
   if (Number.isFinite(saved.lv)) $('landValue').value = Math.max(0, saved.lv);
   if (Number.isFinite(saved.la)) $('landArea').value = Math.max(0, saved.la);
   if (saved.l1 != null) $('landFirst').checked = saved.l1 !== 0;

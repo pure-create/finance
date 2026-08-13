@@ -165,6 +165,15 @@ body{padding:16px;min-height:100vh}
 #landUse.off input{cursor:default}
 /* 入力の取り違えを知らせる注記。テーマの警告色を使う */
 .assume-note.warn{color:var(--warn-text);font-weight:600}
+
+/* ---- 生命保険の非課税枠 ---- */
+/* 枠は入力ではなく「今いくらか」を示すものなので、入力欄の高さに合わせて
+   上に余白を置き、左の評価額欄と目線がそろうようにする */
+.ins-limit{font-size:12px;color:var(--text);line-height:1.6;margin:22px 0 0}
+.ins-limit b{font-variant-numeric:tabular-nums}
+/* 枠の内訳と、実際に効いた額は別の行に落とす（1行に続けると読み取りにくい） */
+.ins-formula{color:var(--muted)}
+.ins-used{display:block}
 .help{
   position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:16px;height:16px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);

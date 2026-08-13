@@ -46,19 +46,36 @@ function smallLotReduction(landValue, areaSqm) {
   return landValue * (Math.min(SMALL_LOT_LIMIT, area) / area) * SMALL_LOT_RATE;
 }
 
+/* ---------- 生命保険金の非課税枠 ---------- */
+const INSURANCE_PER_HEIR = 500; // 法定相続人1人あたりの非課税限度額（万円）
+
+// 死亡保険金のうち課税されない額。限度額は 500万円 × 法定相続人の数
+function insuranceExemption(payout, heirs) {
+  if (!(payout > 0) || !(heirs > 0)) return 0;
+  return Math.min(payout, INSURANCE_PER_HEIR * heirs);
+}
+
 // 一次＋二次をまとめて計算
 // spDelta: 二次相続までの配偶者資産の増減（万円、負も可）
 // years:   一次→二次の経過年数（10以上で相次相続控除なし）
-// land:    小規模宅地等の特例 { value: 自宅の土地の評価額, area: 面積㎡,
-//          first: 一次で適用できるか, second: 二次で適用できるか }。省略すれば適用しない
-function simulate(assetMe, assetSp, hasSpouse, nChildren, spPct, spDelta, years, land) {
+// opts:    課税価格を下げる仕組み。省略すればどちらも適用しない
+//   .land      小規模宅地等の特例 { value: 自宅の土地の評価額, area: 面積㎡,
+//              first: 一次で適用できるか, second: 二次で適用できるか }
+//   .insurance 自分の死亡保険金の額（万円）。非課税枠は一次相続にだけ効く
+function simulate(assetMe, assetSp, hasSpouse, nChildren, spPct, spDelta, years, opts) {
   const r = {};
+  const land = opts && opts.land;
+  const heirs = (hasSpouse ? 1 : 0) + nChildren;
 
-  /* 特例は課税価格を下げるだけで、実際に受け継ぐ財産の額は変わらない。
+  /* 特例や非課税枠は課税価格を下げるだけで、実際に受け継ぐ財産の額は変わらない。
      そこで税額は「減額後の課税価格」で、手残りや二次の遺産額は
-     「減額前の実額」で計算する */
+     「減額前の実額」で計算する。
+     どちらも遺産総額の内訳なので、2つ合わせても総額を超えないようにする */
   r.cut1 = (land && land.first) ? Math.min(smallLotReduction(land.value, land.area), assetMe) : 0;
-  r.taxable1 = Math.max(0, assetMe - r.cut1);
+  r.cutIns = Math.min(
+    insuranceExemption(opts && opts.insurance, heirs),
+    Math.max(0, assetMe - r.cut1));
+  r.taxable1 = Math.max(0, assetMe - r.cut1 - r.cutIns);
 
   r.total1 = totalTax(r.taxable1, hasSpouse, nChildren);
   if (hasSpouse) {
@@ -115,7 +132,8 @@ function simulate(assetMe, assetSp, hasSpouse, nChildren, spPct, spDelta, years,
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     taxOnShare: taxOnShare, totalTax: totalTax, simulate: simulate, BRACKETS: BRACKETS,
-    smallLotReduction: smallLotReduction,
-    SMALL_LOT_LIMIT: SMALL_LOT_LIMIT, SMALL_LOT_RATE: SMALL_LOT_RATE
+    smallLotReduction: smallLotReduction, insuranceExemption: insuranceExemption,
+    SMALL_LOT_LIMIT: SMALL_LOT_LIMIT, SMALL_LOT_RATE: SMALL_LOT_RATE,
+    INSURANCE_PER_HEIR: INSURANCE_PER_HEIR
   };
 }

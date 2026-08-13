@@ -7,8 +7,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const {
-	taxOnShare, totalTax, simulate, smallLotReduction,
-	SMALL_LOT_LIMIT, SMALL_LOT_RATE
+	taxOnShare, totalTax, simulate, smallLotReduction, insuranceExemption,
+	SMALL_LOT_LIMIT, SMALL_LOT_RATE, INSURANCE_PER_HEIR
 } = require('../inheritance/js/inheritance-core.js');
 
 /* 万円単位の金額を比べる。既定では円未満のずれを無視する。
@@ -185,18 +185,19 @@ test('特例の減額：面積が未入力なら限度面積とみなす', () =>
 	near(smallLotReduction(5000, 0), 4000, 1e-9);
 });
 
-test('特例を使わなければ、これまでと同じ結果になる', () => {
-	// land を渡さない場合と、評価額0で渡した場合が一致すること
+test('特例も非課税枠も使わなければ、これまでと同じ結果になる', () => {
+	// opts を渡さない場合と、額を0で渡した場合が一致すること
 	const withoutArg = simulate(20000, 3000, true, 2, 50, 0, 5);
-	const zeroLand = simulate(20000, 3000, true, 2, 50, 0, 5,
-		{ value: 0, area: 200, first: true, second: true });
-	assert.deepStrictEqual(zeroLand, withoutArg, '既存の共有URLの結果が変わってはいけない');
+	const zeroOpts = simulate(20000, 3000, true, 2, 50, 0, 5,
+		{ land: { value: 0, area: 200, first: true, second: true }, insurance: 0 });
+	assert.deepStrictEqual(zeroOpts, withoutArg, '既存の共有URLの結果が変わってはいけない');
 	near(withoutArg.cut1, 0);
 	near(withoutArg.cut2, 0);
+	near(withoutArg.cutIns, 0);
 });
 
 test('一次相続で特例を使うと、その分だけ課税価格が下がる', () => {
-	const land = { value: 5000, area: 200, first: true, second: false };
+	const land = { land: { value: 5000, area: 200, first: true, second: false } };
 	const r = simulate(20000, 0, true, 1, 50, 0, 10, land);
 	near(r.cut1, 4000, 1e-9, '減額（5,000×80%）');
 	near(r.taxable1, 16000, 1e-9, '課税価格');
@@ -210,7 +211,7 @@ test('一次相続で特例を使うと、その分だけ課税価格が下が�
 
 test('特例を使っても、実際に受け継ぐ財産の額は減らない', () => {
 	// 課税価格は下がるが、手残りは「減額前の資産−税額」のまま
-	const land = { value: 5000, area: 200, first: true, second: false };
+	const land = { land: { value: 5000, area: 200, first: true, second: false } };
 	const r = simulate(20000, 3000, true, 2, 50, 500, 10, land);
 	near(r.keep, 20000 + 3000 + 500 - r.grand, 1e-9, '手残りと税額合計の関係');
 	// 二次の遺産額も減額前の実額で積み上げる
@@ -219,16 +220,16 @@ test('特例を使っても、実際に受け継ぐ財産の額は減らない',
 
 test('特例を使うと税額は必ず下がる（同じ条件の比較）', () => {
 	const base = [30000, 5000, true, 2, 50, 0, 10];
-	const off = simulate(...base, { value: 8000, area: 200, first: false, second: false });
-	const on1 = simulate(...base, { value: 8000, area: 200, first: true, second: false });
-	const both = simulate(...base, { value: 8000, area: 200, first: true, second: true });
+	const off = simulate(...base, { land: { value: 8000, area: 200, first: false, second: false } });
+	const on1 = simulate(...base, { land: { value: 8000, area: 200, first: true, second: false } });
+	const both = simulate(...base, { land: { value: 8000, area: 200, first: true, second: true } });
 	assert.ok(on1.first < off.first, '一次で特例を使っても税額が下がっていない');
 	assert.ok(both.second < on1.second, '二次で特例を使っても税額が下がっていない');
 	assert.ok(both.grand < on1.grand && on1.grand < off.grand, '合計税額の大小関係');
 });
 
 test('二次相続の特例は、配偶者が取得した割合ぶんだけ効く', () => {
-	const land = { value: 6000, area: 200, first: true, second: true };
+	const land = { land: { value: 6000, area: 200, first: true, second: true } };
 	// 配偶者が100%取得 → 自宅もすべて配偶者の手に渡る
 	const all = simulate(30000, 0, true, 1, 100, 0, 10, land);
 	near(all.cut2, 4800, 1e-9, '6,000×80%');
@@ -242,7 +243,7 @@ test('二次相続の特例は、配偶者が取得した割合ぶんだけ効�
 
 test('二次相続の特例は、面積の限度も取得割合に応じて見る', () => {
 	// 660㎡のうち半分（330㎡）を配偶者が取得 → 限度内に収まるので全額が80%減額
-	const land = { value: 6000, area: 660, first: true, second: true };
+	const land = { land: { value: 6000, area: 660, first: true, second: true } };
 	const half = simulate(30000, 0, true, 1, 50, 0, 10, land);
 	near(half.cut2, 3000 * 0.8, 1e-9, '取得した3,000万円分がまるごと対象');
 	// 一次のほうは660㎡のままなので、半分だけが対象
@@ -251,24 +252,111 @@ test('二次相続の特例は、面積の限度も取得割合に応じて見�
 
 test('特例の減額は遺産額を超えない', () => {
 	// 資産より大きい土地評価額を入れても、課税価格はマイナスにならない
-	const r = simulate(3000, 0, true, 1, 100, 0, 10, { value: 9000, area: 100, first: true, second: true });
+	const r = simulate(3000, 0, true, 1, 100, 0, 10, { land: { value: 9000, area: 100, first: true, second: true } });
 	assert.ok(r.taxable1 >= 0, '一次の課税価格がマイナス');
 	assert.ok(r.taxable2 >= 0, '二次の課税価格がマイナス');
 	near(r.grand, 0, 1e-9, '基礎控除以下なので税額なし');
 });
 
 test('配偶者がいない場合でも一次の特例は効く', () => {
-	const off = simulate(20000, 0, false, 1, 0, 0, 10, { value: 5000, area: 200, first: false, second: false });
-	const on = simulate(20000, 0, false, 1, 0, 0, 10, { value: 5000, area: 200, first: true, second: false });
+	const off = simulate(20000, 0, false, 1, 0, 0, 10, { land: { value: 5000, area: 200, first: false, second: false } });
+	const on = simulate(20000, 0, false, 1, 0, 0, 10, { land: { value: 5000, area: 200, first: true, second: false } });
 	near(on.cut1, 4000, 1e-9);
 	assert.ok(on.first < off.first, '子だけが相続する場合も税額が下がる');
 	near(on.cut2, 0, 1e-9, '配偶者がいなければ二次相続は起きない');
 });
 
 test('特例を使っても、取得割合を動かした税額合計は有限で正', () => {
-	const land = { value: 8000, area: 400, first: true, second: true };
+	const land = { land: { value: 8000, area: 400, first: true, second: true } };
 	for (let p = 0; p <= 100; p++) {
 		const r = simulate(25000, 4000, true, 2, p, -1000, 3, land);
+		assert.ok(Number.isFinite(r.grand) && r.grand >= 0, p + '%で税額合計が不正');
+		assert.ok(Number.isFinite(r.keep) && r.keep >= 0, p + '%で手残りが不正');
+	}
+});
+
+/* ---------- 生命保険金の非課税枠 ---------- */
+
+test('非課税枠は法定相続人1人あたり500万円', () => {
+	assert.strictEqual(INSURANCE_PER_HEIR, 500);
+	near(insuranceExemption(3000, 1), 500, '相続人1人');
+	near(insuranceExemption(3000, 3), 1500, '相続人3人');
+	near(insuranceExemption(3000, 7), 3000, '枠が保険金を上回れば保険金が上限');
+});
+
+test('非課税枠：保険金が枠に満たなければ保険金の額まで', () => {
+	near(insuranceExemption(800, 3), 800, '枠1,500に対して保険金800');
+	near(insuranceExemption(1500, 3), 1500, '枠ちょうど');
+	near(insuranceExemption(1501, 3), 1500, '枠を1万円超える');
+});
+
+test('非課税枠：保険金なし・相続人なしでは0', () => {
+	near(insuranceExemption(0, 3), 0);
+	near(insuranceExemption(3000, 0), 0);
+	near(insuranceExemption(-100, 3), 0);
+});
+
+test('生命保険の非課税枠は一次相続の課税価格を下げる', () => {
+	// 配偶者＋子1人 ＝ 相続人2人 → 枠は1,000万円
+	const r = simulate(20000, 0, true, 1, 50, 0, 10, { insurance: 3000 });
+	near(r.cutIns, 1000, 1e-9, '非課税枠');
+	near(r.taxable1, 19000, 1e-9, '課税価格');
+	// 課税価格1.9億円 → 基礎控除4,200 → 課税遺産総額14,800
+	//   配偶者・子 各7,400 → 7,400×30%−700 ＝ 1,520、合計3,040
+	near(r.total1, 3040, 1e-9, '相続税の総額');
+});
+
+test('非課税枠は法定相続人が増えるほど大きくなる', () => {
+	const one = simulate(20000, 0, true, 1, 50, 0, 10, { insurance: 5000 });
+	const three = simulate(20000, 0, true, 3, 50, 0, 10, { insurance: 5000 });
+	near(one.cutIns, 1000, 1e-9, '配偶者＋子1人');
+	near(three.cutIns, 2000, 1e-9, '配偶者＋子3人');
+	assert.ok(three.taxable1 < one.taxable1, '枠が大きいほど課税価格は小さい');
+});
+
+test('非課税枠は二次相続には効かない（配偶者自身の保険は扱わない）', () => {
+	const r = simulate(20000, 3000, true, 1, 100, 0, 10, { insurance: 3000 });
+	// 二次で下がるのは小規模宅地だけ。保険の枠は一次で使い切っている
+	near(r.cut2, 0, 1e-9);
+	near(r.taxable2, r.estate2, 1e-9);
+});
+
+test('保険金を受け取っても、手残りは実額のまま', () => {
+	// 非課税枠は課税価格を下げるだけで、受け取る保険金そのものは減らない
+	const r = simulate(20000, 3000, true, 2, 50, 0, 10, { insurance: 2000 });
+	near(r.keep, 20000 + 3000 - r.grand, 1e-9);
+});
+
+test('小規模宅地等の特例と非課税枠は同時に効く', () => {
+	const opts = {
+		land: { value: 5000, area: 200, first: true, second: false },
+		insurance: 2000,
+	};
+	const r = simulate(30000, 0, true, 1, 50, 0, 10, opts);
+	near(r.cut1, 4000, 1e-9, '宅地の減額');
+	near(r.cutIns, 1000, 1e-9, '保険の非課税枠');
+	near(r.taxable1, 25000, 1e-9, '両方を引いた課税価格');
+});
+
+test('2つを合わせても遺産総額を超えて減らない', () => {
+	// 土地も保険も資産額いっぱいに入れた極端な場合
+	const opts = {
+		land: { value: 4000, area: 100, first: true, second: true },
+		insurance: 4000,
+	};
+	const r = simulate(4000, 0, true, 3, 100, 0, 10, opts);
+	assert.ok(r.taxable1 >= 0, '課税価格がマイナス');
+	near(r.cut1 + r.cutIns, 4000, 1e-9, '減額の合計は遺産総額まで');
+	near(r.grand, 0, 1e-9, '課税価格0なので税額なし');
+});
+
+test('非課税枠を使っても、取得割合を動かした結果は壊れない', () => {
+	const opts = {
+		land: { value: 6000, area: 400, first: true, second: true },
+		insurance: 3000,
+	};
+	for (let p = 0; p <= 100; p++) {
+		const r = simulate(25000, 4000, true, 2, p, -500, 4, opts);
 		assert.ok(Number.isFinite(r.grand) && r.grand >= 0, p + '%で税額合計が不正');
 		assert.ok(Number.isFinite(r.keep) && r.keep >= 0, p + '%で手残りが不正');
 	}
