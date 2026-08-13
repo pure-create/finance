@@ -17,6 +17,12 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
+/* 文章として読める形にする（タグを外す）。
+   見張りたいのは数字であって印付けではないので、説明文の中にリンクや
+   <strong> を足しても落ちないようにする。表の行や入力欄の属性を見る
+   ところだけは、構造そのものが対象なので read() の生のHTMLを使う */
+const prose = rel => read(rel).replace(/<[^>]+>/g, '');
+
 const asset = require('../assetSimulator/js/asset-core.js');
 const inherit = require('../inheritance/js/inheritance-core.js');
 const retire = require('../retirement/js/retire-calc.js');
@@ -44,32 +50,30 @@ function must(html, re, where) {
 /* ---------- 資産運用シミュレーター ---------- */
 
 test('資産運用：NISAの投資枠の説明が定数と一致する', () => {
-	const html = read('assetSimulator/index.html');
-	const m = must(html, /NISAは年間(\d+)万円・生涯(\d+)万円（簿価）まで/, 'assetSimulator/index.html');
+	const text = prose('assetSimulator/index.html');
+	const m = must(text, /NISAは年間(\d+)万円・生涯(\d+)万円（簿価）まで/, 'assetSimulator/index.html');
 	assert.strictEqual(Number(m[1]), asset.NISA_ANNUAL, '年間投資枠');
 	assert.strictEqual(Number(m[2]), asset.NISA_LIFETIME, '生涯投資枠');
 
 	// 「実質表示」の注記にも同じ額が出てくる
-	const m2 = must(html, /名目の金額（年(\d+)万円・生涯(\d+)万円）で固定/, 'assetSimulator/index.html');
+	const m2 = must(text, /名目の金額（年(\d+)万円・生涯(\d+)万円）で固定/, 'assetSimulator/index.html');
 	assert.strictEqual(Number(m2[1]), asset.NISA_ANNUAL, '注記の年間投資枠');
 	assert.strictEqual(Number(m2[2]), asset.NISA_LIFETIME, '注記の生涯投資枠');
 
 	// 入力欄の上限も生涯投資枠に合わせてある
-	const m3 = must(html, /id="nisaUsed"[^>]*max="(\d+)"/, 'assetSimulator/index.html');
+	const m3 = must(read('assetSimulator/index.html'), /id="nisaUsed"[^>]*max="(\d+)"/, 'assetSimulator/index.html');
 	assert.strictEqual(Number(m3[1]), asset.NISA_LIFETIME, 'NISA使用済み欄の上限');
 });
 
 test('資産運用：譲渡益税率の表示が定数と一致する', () => {
-	const html = read('assetSimulator/index.html');
-	const m = must(html, /売却益に課税する（([\d.]+)%）/, 'assetSimulator/index.html');
+	const m = must(prose('assetSimulator/index.html'), /売却益に課税する（([\d.]+)%）/, 'assetSimulator/index.html');
 	ratioEquals(m[1], asset.TAX_RATE, '譲渡益税率');
 });
 
 /* ---------- 二次相続シミュレーター ---------- */
 
 test('相続：基礎控除の式が計算と一致する', () => {
-	const html = read('inheritance/index.html');
-	const m = must(html, /基礎控除は「([\d,]+)万円＋([\d,]+)万円×法定相続人の数」/, 'inheritance/index.html');
+	const m = must(prose('inheritance/index.html'), /基礎控除は「([\d,]+)万円＋([\d,]+)万円×法定相続人の数」/, 'inheritance/index.html');
 	const base = yen(m[1]), perHeir = yen(m[2]);
 
 	// 書かれている式のとおりの額なら課税されず、1万円超えると課税される
@@ -85,8 +89,7 @@ test('相続：基礎控除の式が計算と一致する', () => {
 });
 
 test('相続：配偶者の税額軽減の額が計算と一致する', () => {
-	const html = read('inheritance/index.html');
-	const m = must(html, /配偶者の税額軽減（([\d億,]+)万円または法定相続分/, 'inheritance/index.html');
+	const m = must(prose('inheritance/index.html'), /配偶者の税額軽減（([\d億,]+)万円または法定相続分/, 'inheritance/index.html');
 	// 「1億6,000万円」→ 16000
 	const parts = m[1].match(/(?:(\d+)億)?([\d,]*)/);
 	const cap = (Number(parts[1] || 0)) * 10000 + yen(parts[2] || 0);
@@ -100,27 +103,27 @@ test('相続：配偶者の税額軽減の額が計算と一致する', () => {
 });
 
 test('相続：小規模宅地等の特例の説明が定数と一致する', () => {
-	const html = read('inheritance/index.html');
+	const text = prose('inheritance/index.html');
 	// 説明ツールチップ
-	const tip = must(html, /(\d+)㎡までの部分の評価額を(\d+)%減額/, 'inheritance/index.html（ツールチップ）');
+	const tip = must(text, /(\d+)㎡までの部分の評価額を(\d+)%減額/, 'inheritance/index.html（ツールチップ）');
 	assert.strictEqual(Number(tip[1]), inherit.SMALL_LOT_LIMIT, '限度面積');
 	ratioEquals(tip[2], inherit.SMALL_LOT_RATE, '減額割合');
 	// 注記
-	const note = must(html, /特定居住用宅地等（(\d+)㎡までの部分を(\d+)%減額）/, 'inheritance/index.html（注記）');
+	const note = must(text, /特定居住用宅地等（(\d+)㎡までの部分を(\d+)%減額）/, 'inheritance/index.html（注記）');
 	assert.strictEqual(Number(note[1]), inherit.SMALL_LOT_LIMIT, '注記の限度面積');
 	ratioEquals(note[2], inherit.SMALL_LOT_RATE, '注記の減額割合');
 	// 入力欄の初期の案内
-	const hint = must(html, /(\d+)㎡までの部分が(\d+)%減額の対象です/, 'inheritance/index.html（案内）');
+	const hint = must(text, /(\d+)㎡までの部分が(\d+)%減額の対象です/, 'inheritance/index.html（案内）');
 	assert.strictEqual(Number(hint[1]), inherit.SMALL_LOT_LIMIT, '案内の限度面積');
 	ratioEquals(hint[2], inherit.SMALL_LOT_RATE, '案内の減額割合');
 });
 
 test('相続：生命保険金の非課税枠の説明が定数と一致する', () => {
-	const html = read('inheritance/index.html');
-	const tip = must(html, /「([\d,]+)万円 × 法定相続人の数」までは非課税/, 'inheritance/index.html（ツールチップ）');
+	const text = prose('inheritance/index.html');
+	const tip = must(text, /「([\d,]+)万円 × 法定相続人の数」までは非課税/, 'inheritance/index.html（ツールチップ）');
 	assert.strictEqual(yen(tip[1]), inherit.INSURANCE_PER_HEIR, '1人あたりの非課税枠');
 
-	const note = must(html, /生命保険金の非課税枠（([\d,]+)万円×法定相続人の数）/, 'inheritance/index.html（注記）');
+	const note = must(text, /生命保険金の非課税枠（([\d,]+)万円×法定相続人の数）/, 'inheritance/index.html（注記）');
 	assert.strictEqual(yen(note[1]), inherit.INSURANCE_PER_HEIR, '注記の1人あたりの非課税枠');
 
 	// 書かれている額どおりに枠が増える
@@ -231,9 +234,9 @@ test('退職手当：定年の引き上げの説明がteinenAgeと一致する',
 /* ---------- 年金の損益分岐点 ---------- */
 
 test('年金：繰上げ・繰下げの増減率の説明がpRateと一致する', () => {
-	const html = read('pension/index.html');
-	const down = must(html, /繰上げ減額率: ([\d.]+)%\/月（最大(\d+)%減）/, 'pension/index.html');
-	const up = must(html, /繰下げ増額率: ([\d.]+)%\/月（最大(\d+)%増）/, 'pension/index.html');
+	const text = prose('pension/index.html');
+	const down = must(text, /繰上げ減額率: ([\d.]+)%\/月（最大(\d+)%減）/, 'pension/index.html');
+	const up = must(text, /繰下げ増額率: ([\d.]+)%\/月（最大(\d+)%増）/, 'pension/index.html');
 
 	const downPerMonth = Number(down[1]) / 100, downMax = Number(down[2]) / 100;
 	const upPerMonth = Number(up[1]) / 100, upMax = Number(up[2]) / 100;
@@ -252,8 +255,7 @@ test('年金：繰上げ・繰下げの増減率の説明がpRateと一致する
 });
 
 test('年金：受給開始年齢ごとの年金額の割合が表示と一致する', () => {
-	const html = read('pension/index.html');
-	const m = must(html,
+	const m = must(prose('pension/index.html'),
 		/60歳：(\d+)%、70歳：(\d+)%、75歳：(\d+)%/, 'pension/index.html');
 	const stated = { 60: Number(m[1]), 70: Number(m[2]), 75: Number(m[3]) };
 
@@ -266,17 +268,15 @@ test('年金：受給開始年齢ごとの年金額の割合が表示と一致�
 });
 
 test('年金：課税率の表示が定数と一致する', () => {
-	const html = read('pension/index.html');
-	const m = must(html, /（課税率 ([\d.]+)%）/, 'pension/index.html');
+	const m = must(prose('pension/index.html'), /（課税率 ([\d.]+)%）/, 'pension/index.html');
 	ratioEquals(m[1], pension.TAX_RATE, '課税率');
 	// 資産運用シミュレーターと同じ税率を使っている
 	assert.strictEqual(pension.TAX_RATE, asset.TAX_RATE, '2つのツールで税率が食い違っている');
 });
 
 test('年金：想定利回りのスライダーの範囲が説明と一致する', () => {
-	const html = read('pension/index.html');
-	const m = must(html, /([\d.]+)%〜([\d.]+)%の範囲で設定できます/, 'pension/index.html');
-	const slider = must(html, /id="rSlider"[^>]*min="([\d.]+)"[^>]*max="([\d.]+)"/, 'pension/index.html');
+	const m = must(prose('pension/index.html'), /([\d.]+)%〜([\d.]+)%の範囲で設定できます/, 'pension/index.html');
+	const slider = must(read('pension/index.html'), /id="rSlider"[^>]*min="([\d.]+)"[^>]*max="([\d.]+)"/, 'pension/index.html');
 	assert.strictEqual(Number(slider[1]), Number(m[1]), 'スライダーの下限');
 	assert.strictEqual(Number(slider[2]), Number(m[2]), 'スライダーの上限');
 });
@@ -290,7 +290,7 @@ test('「制度データ」の時点が全ページでそろっている', () =>
 		.concat(RETIRE_PAGES);
 	const seen = new Map();
 	for (const page of pages) {
-		const m = must(read(page), /制度データ: (\d{4})年(\d{1,2})月時点/, page);
+		const m = must(prose(page), /制度データ: (\d{4})年(\d{1,2})月時点/, page);
 		seen.set(page, m[1] + '-' + m[2]);
 	}
 	const values = [...new Set(seen.values())];

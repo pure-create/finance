@@ -225,3 +225,33 @@ test('sitemap.xml のURLは canonical と同じ形（末尾のスラッシュま
 		assert.strictEqual(url, canonical, file + ' の sitemap のURLと canonical の形が違う');
 	}
 });
+
+test('外部サイトへのリンクは別タブで開き、rel に noopener が付いている', () => {
+	/* 出典（国税庁・金融庁・e-Gov など）へのリンクは、試算の途中で
+	   ページを離れてしまわないよう別タブで開く。target="_blank" を付けたら
+	   rel="noopener" も要る（開いた先から元のタブを操作されないようにするため）。
+	   出典を足すたびに手で確かめるのは続かないので、ここで見る */
+	for (const file of HTML_FILES) {
+		const html = read(file);
+		for (const m of html.matchAll(/<a\s[^>]*href=['"]https?:\/\/[^'"]+['"][^>]*>/g)) {
+			const tag = m[0];
+			// 自サイトへの絶対URLは同じサイト内なので別タブにしない
+			if (tag.includes('pure-create.github.io')) continue;
+			assert.ok(/target=['"]_blank['"]/.test(tag),
+				file + ' の外部リンクに target="_blank" が無い: ' + tag);
+			assert.ok(/rel=['"][^'"]*noopener[^'"]*['"]/.test(tag),
+				file + ' の外部リンクに rel="noopener" が無い: ' + tag);
+		}
+	}
+});
+
+test('外部リンクは https で、リンク文字が空でない', () => {
+	for (const file of HTML_FILES) {
+		const html = read(file);
+		assert.ok(!/<a\s[^>]*href=['"]http:\/\//.test(html), file + ' に http:// のリンクがある');
+		for (const m of html.matchAll(/<a\s[^>]*href=['"]https:\/\/[^'"]+['"][^>]*>([\s\S]*?)<\/a>/g)) {
+			const label = m[1].replace(/<[^>]+>/g, '').trim();
+			assert.ok(label.length > 0, file + ' にリンク文字が空のリンクがある: ' + m[0]);
+		}
+	}
+});
