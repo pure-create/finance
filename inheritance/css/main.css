@@ -148,6 +148,23 @@ body{padding:16px;min-height:100vh}
 .assume-label-row{display:flex;align-items:center;gap:5px;margin-bottom:6px}
 .assume-label-row label{margin-bottom:0}
 .term{font-size:12px;font-weight:700;color:var(--text-sub)}
+
+/* ---- 自宅の土地（小規模宅地等の特例） ---- */
+.land-checks{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+/* .assume label の「1行まるごと・下に余白」を打ち消して、チェックの行に戻す */
+.assume .land-check{
+  display:flex;align-items:flex-start;gap:7px;margin-bottom:0;
+  font-size:12px;font-weight:500;color:var(--text);line-height:1.5;cursor:pointer;
+}
+.land-check input{accent-color:var(--accent);margin-top:1px;flex-shrink:0;cursor:pointer}
+/* 配偶者が取得するため要件を満たす場合など、選ぶ余地が無いときは操作させない */
+.land-check input:disabled{cursor:default}
+.land-check input:disabled + span{color:var(--muted)}
+/* 評価額が0のときは特例そのものが効かないので、面積とチェックを沈める */
+#landUse.off{opacity:.45}
+#landUse.off input{cursor:default}
+/* 入力の取り違えを知らせる注記。テーマの警告色を使う */
+.assume-note.warn{color:var(--warn-text);font-weight:600}
 .help{
   position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:16px;height:16px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);

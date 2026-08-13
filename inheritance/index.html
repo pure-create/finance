@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260813d">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814a">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
 </head>
 <body>
@@ -92,6 +92,34 @@
       </div>
       <div class="children-row" id="childrenRow"></div>
       <p class="fam-note">配偶者・子はクリックで追加／×で削除できます（子は1〜6人）</p>
+    </div>
+  </div>
+
+  <!-- 小規模宅地等の特例。自宅の土地は評価額が大きく、適用できるかどうかで
+       税額が桁で変わる。二次相続では「配偶者が取得 → 無条件で適用」が使えなくなり、
+       同居していない子には適用できないことが多い。このツールの主題そのものなので、
+       他の未考慮の項目（生命保険の非課税枠など）と違ってここだけは扱う -->
+  <div class="card" id="landCard">
+    <h2 class="sec-title">自宅の土地
+      <span class="help" tabindex="0" aria-label="小規模宅地等の特例とは" aria-describedby="landTip">？<span class="tipbox" id="landTip" role="tooltip">小規模宅地等の特例＝亡くなった人の自宅の土地について、330㎡までの部分の評価額を80%減額できる制度（特定居住用宅地等）。配偶者が取得する場合は無条件で使えますが、子が取得する場合は同居していたなどの要件を満たす必要があります。</span></span>
+    </h2>
+    <div class="assume-row">
+      <div class="assume">
+        <label for="landValue">自宅の土地の評価額</label>
+        <span class="asset-in"><input type="number" id="landValue" value="0" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
+        <span class="oku" id="okuLand"></span>
+        <p class="assume-note">上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち自宅の土地にあたる額を入力してください（0なら特例を使いません）</p>
+      </div>
+      <div class="assume" id="landUse">
+        <label for="landArea">土地の面積</label>
+        <span class="asset-in"><input type="number" id="landArea" value="200" min="0" step="10" inputmode="numeric"><span class="unit">㎡</span></span>
+        <p class="assume-note" id="landAreaNote">330㎡までの部分が80%減額の対象です</p>
+        <div class="land-checks">
+          <label class="land-check"><input type="checkbox" id="landFirst" checked><span id="landFirstLabel">一次相続で適用する</span></label>
+          <label class="land-check"><input type="checkbox" id="landSecond"><span>二次相続で適用する（子が同居しているなど、要件を満たす場合）</span></label>
+        </div>
+        <p class="assume-note" id="landNote"></p>
+      </div>
     </div>
   </div>
 
@@ -184,7 +212,8 @@
       ・ 配偶者の税額軽減（1億6,000万円または法定相続分のいずれか大きい額まで非課税）を適用しています。<br>
       ・ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br>
       ・ 相次相続控除は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br>
-      ・ 生命保険の非課税枠、小規模宅地等の特例、債務・葬式費用、未成年者・障害者控除などは考慮していません。<br>
+      ・ 小規模宅地等の特例は、特定居住用宅地等（330㎡までの部分を80%減額）のみを扱います。自宅の土地は配偶者が取得する前提とし、二次相続では一次相続で配偶者が取得した割合ぶんだけを特例の対象としています。事業用・貸付用の宅地や、他の宅地との併用の限度は考慮していません。<br>
+      ・ 生命保険の非課税枠、債務・葬式費用、未成年者・障害者控除などは考慮していません。<br>
       ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
     </p>
     <p class="foot-disclaimer">・ 試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。</p>
@@ -201,7 +230,7 @@
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
 <script src="../common/tool-nav.js?v=20260813k"></script>
-<script src="./js/inheritance-core.js?v=20260814b"></script>
-<script src="./js/inheritance.js?v=20260814a"></script>
+<script src="./js/inheritance-core.js?v=20260814c"></script>
+<script src="./js/inheritance.js?v=20260814b"></script>
 </body>
 </html>

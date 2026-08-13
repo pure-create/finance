@@ -6,11 +6,16 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { taxOnShare, totalTax, simulate } = require('../inheritance/js/inheritance-core.js');
+const {
+	taxOnShare, totalTax, simulate, smallLotReduction,
+	SMALL_LOT_LIMIT, SMALL_LOT_RATE
+} = require('../inheritance/js/inheritance-core.js');
 
-// 万円単位の金額を比べる。円未満のずれは無視する
-function near(actual, expected, msg) {
-	assert.ok(Math.abs(actual - expected) < 1e-6,
+/* 万円単位の金額を比べる。既定では円未満のずれを無視する。
+   面積で按分するところなど、丸めがもう少し大きく出る箇所は tol を渡す */
+function near(actual, expected, tol, msg) {
+	if (typeof tol === 'string') { msg = tol; tol = undefined; }
+	assert.ok(Math.abs(actual - expected) < (tol === undefined ? 1e-6 : tol),
 		(msg || '') + ' 期待 ' + expected + ' / 実際 ' + actual);
 }
 
@@ -152,4 +157,119 @@ test('資産ゼロでも壊れない', () => {
 	const r = simulate(0, 0, true, 1, 50, 0, 5);
 	near(r.grand, 0);
 	near(r.keep, 0);
+});
+
+/* ---------- 小規模宅地等の特例（特定居住用宅地等） ---------- */
+
+test('特例の限度面積と減額割合', () => {
+	assert.strictEqual(SMALL_LOT_LIMIT, 330);
+	assert.strictEqual(SMALL_LOT_RATE, 0.80);
+});
+
+test('特例の減額：330㎡までは評価額の80%', () => {
+	near(smallLotReduction(5000, 200), 4000, 1e-9, '200㎡');
+	near(smallLotReduction(5000, 330), 4000, 1e-9, '330㎡ちょうど');
+	near(smallLotReduction(0, 200), 0, 1e-9, '土地なし');
+});
+
+test('特例の減額：330㎡を超える分は対象外', () => {
+	// 660㎡なら半分（330㎡）だけが対象 → 5,000×0.5×80% ＝ 2,000
+	near(smallLotReduction(5000, 660), 2000, 1e-9, '660㎡');
+	// 面積が増えるほど、減額は330㎡ぶんに収束する
+	near(smallLotReduction(5000, 3300), 5000 * 0.1 * 0.8, 1e-9, '3,300㎡');
+	// 限度面積の前後で減額が飛ばない（330㎡をわずかに超えたところで連続）
+	near(smallLotReduction(5000, 330.001), smallLotReduction(5000, 330), 0.05, '境目');
+});
+
+test('特例の減額：面積が未入力なら限度面積とみなす', () => {
+	near(smallLotReduction(5000, 0), 4000, 1e-9);
+});
+
+test('特例を使わなければ、これまでと同じ結果になる', () => {
+	// land を渡さない場合と、評価額0で渡した場合が一致すること
+	const withoutArg = simulate(20000, 3000, true, 2, 50, 0, 5);
+	const zeroLand = simulate(20000, 3000, true, 2, 50, 0, 5,
+		{ value: 0, area: 200, first: true, second: true });
+	assert.deepStrictEqual(zeroLand, withoutArg, '既存の共有URLの結果が変わってはいけない');
+	near(withoutArg.cut1, 0);
+	near(withoutArg.cut2, 0);
+});
+
+test('一次相続で特例を使うと、その分だけ課税価格が下がる', () => {
+	const land = { value: 5000, area: 200, first: true, second: false };
+	const r = simulate(20000, 0, true, 1, 50, 0, 10, land);
+	near(r.cut1, 4000, 1e-9, '減額（5,000×80%）');
+	near(r.taxable1, 16000, 1e-9, '課税価格');
+	// 課税価格1.6億円・配偶者＋子1人 → 基礎控除4,200 → 課税遺産総額11,800
+	//   配偶者・子 各5,900 → 5,900×30%−700 ＝ 1,070、合計2,140
+	near(r.total1, 2140, 1e-9, '相続税の総額');
+	// 法定相続分どおり（50%）の取得なので配偶者の税額はゼロ、子だけが負担
+	near(r.spTax, 0, 1e-9);
+	near(r.first, 1070, 1e-9, '一次相続の税額');
+});
+
+test('特例を使っても、実際に受け継ぐ財産の額は減らない', () => {
+	// 課税価格は下がるが、手残りは「減額前の資産−税額」のまま
+	const land = { value: 5000, area: 200, first: true, second: false };
+	const r = simulate(20000, 3000, true, 2, 50, 500, 10, land);
+	near(r.keep, 20000 + 3000 + 500 - r.grand, 1e-9, '手残りと税額合計の関係');
+	// 二次の遺産額も減額前の実額で積み上げる
+	near(r.estate2, 3000 + 10000 - r.spTax + 500, 1e-9);
+});
+
+test('特例を使うと税額は必ず下がる（同じ条件の比較）', () => {
+	const base = [30000, 5000, true, 2, 50, 0, 10];
+	const off = simulate(...base, { value: 8000, area: 200, first: false, second: false });
+	const on1 = simulate(...base, { value: 8000, area: 200, first: true, second: false });
+	const both = simulate(...base, { value: 8000, area: 200, first: true, second: true });
+	assert.ok(on1.first < off.first, '一次で特例を使っても税額が下がっていない');
+	assert.ok(both.second < on1.second, '二次で特例を使っても税額が下がっていない');
+	assert.ok(both.grand < on1.grand && on1.grand < off.grand, '合計税額の大小関係');
+});
+
+test('二次相続の特例は、配偶者が取得した割合ぶんだけ効く', () => {
+	const land = { value: 6000, area: 200, first: true, second: true };
+	// 配偶者が100%取得 → 自宅もすべて配偶者の手に渡る
+	const all = simulate(30000, 0, true, 1, 100, 0, 10, land);
+	near(all.cut2, 4800, 1e-9, '6,000×80%');
+	// 半分だけ取得 → 二次にある自宅も半分
+	const half = simulate(30000, 0, true, 1, 50, 0, 10, land);
+	near(half.cut2, 2400, 1e-9, '3,000×80%');
+	// まったく取得しない → 自宅は配偶者の手に渡らないので二次では対象なし
+	const none = simulate(30000, 0, true, 1, 0, 0, 10, land);
+	near(none.cut2, 0, 1e-9);
+});
+
+test('二次相続の特例は、面積の限度も取得割合に応じて見る', () => {
+	// 660㎡のうち半分（330㎡）を配偶者が取得 → 限度内に収まるので全額が80%減額
+	const land = { value: 6000, area: 660, first: true, second: true };
+	const half = simulate(30000, 0, true, 1, 50, 0, 10, land);
+	near(half.cut2, 3000 * 0.8, 1e-9, '取得した3,000万円分がまるごと対象');
+	// 一次のほうは660㎡のままなので、半分だけが対象
+	near(half.cut1, 6000 * 0.5 * 0.8, 1e-9);
+});
+
+test('特例の減額は遺産額を超えない', () => {
+	// 資産より大きい土地評価額を入れても、課税価格はマイナスにならない
+	const r = simulate(3000, 0, true, 1, 100, 0, 10, { value: 9000, area: 100, first: true, second: true });
+	assert.ok(r.taxable1 >= 0, '一次の課税価格がマイナス');
+	assert.ok(r.taxable2 >= 0, '二次の課税価格がマイナス');
+	near(r.grand, 0, 1e-9, '基礎控除以下なので税額なし');
+});
+
+test('配偶者がいない場合でも一次の特例は効く', () => {
+	const off = simulate(20000, 0, false, 1, 0, 0, 10, { value: 5000, area: 200, first: false, second: false });
+	const on = simulate(20000, 0, false, 1, 0, 0, 10, { value: 5000, area: 200, first: true, second: false });
+	near(on.cut1, 4000, 1e-9);
+	assert.ok(on.first < off.first, '子だけが相続する場合も税額が下がる');
+	near(on.cut2, 0, 1e-9, '配偶者がいなければ二次相続は起きない');
+});
+
+test('特例を使っても、取得割合を動かした税額合計は有限で正', () => {
+	const land = { value: 8000, area: 400, first: true, second: true };
+	for (let p = 0; p <= 100; p++) {
+		const r = simulate(25000, 4000, true, 2, p, -1000, 3, land);
+		assert.ok(Number.isFinite(r.grand) && r.grand >= 0, p + '%で税額合計が不正');
+		assert.ok(Number.isFinite(r.keep) && r.keep >= 0, p + '%で手残りが不正');
+	}
 });

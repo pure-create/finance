@@ -4,7 +4,12 @@
 /* 入力の初期値。HTMLの value 属性と「入力をリセット」はこの表にそろえる。
    資産額は、配偶者の取得割合によって合計税額がはっきり動く額にしている
    （配偶者の税額軽減が効く一方、二次相続では基礎控除が減るため） */
-const DEFAULTS = { me: 7000, sp: 3000, spouse: true, children: 1, delta: 0, years: 10 };
+/* 自宅の土地は初期値0（＝特例を使わない）にしてある。ここを0以外にすると、
+   この項目を持たない既存の共有URLを開いたときに前と違う税額が出てしまうため */
+const DEFAULTS = {
+  me: 7000, sp: 3000, spouse: true, children: 1, delta: 0, years: 10,
+  land: 0, area: 200, landFirst: 1, landSecond: 0,
+};
 const state = {
   hasSpouse: DEFAULTS.spouse,
   nChildren: DEFAULTS.children,
@@ -26,6 +31,21 @@ function getAssetSp() {
 }
 function getDelta() { return +$('spDelta').value || 0; }
 function getYears() { return Math.min(10, Math.max(0, Math.floor(+$('yearsGap').value || 0))); }
+function getLandValue() { return Math.max(0, +$('landValue').value || 0); }
+function getLandArea() { return Math.max(0, +$('landArea').value || 0); }
+
+/* 特例を simulate へ渡す形にまとめる。
+   一次相続は、配偶者がいれば自宅を配偶者が取得する前提なので無条件で適用できる
+   （配偶者が取得する場合、同居などの要件は問われない）。配偶者がいないときだけ、
+   子が要件を満たすかどうかをチェックで受け取る。 */
+function getLand() {
+  return {
+    value: getLandValue(),
+    area: getLandArea(),
+    first: state.hasSpouse ? true : $('landFirst').checked,
+    second: $('landSecond').checked,
+  };
+}
 
 // 1億円以上の金額に「= ◯億◯万円」の補助表示
 function okuText(v) {
@@ -42,6 +62,8 @@ function collectState() {
     me: getAssetMe(), sp: getAssetSp(), s: state.hasSpouse ? 1 : 0,
     c: state.nChildren, pct: state.spSharePct, mv: state.userMoved ? 1 : 0,
     d: getDelta(), y: getYears(),
+    lv: getLandValue(), la: getLandArea(),
+    l1: $('landFirst').checked ? 1 : 0, l2: $('landSecond').checked ? 1 : 0,
   };
 }
 function saveState() {
@@ -60,7 +82,11 @@ function loadState() {
   const q = new URLSearchParams(location.search);
   if (q.has('me')) {
     src = {};
-    for (const k of ['me', 'sp', 's', 'c', 'pct', 'mv', 'd', 'y']) if (q.has(k)) src[k] = +q.get(k);
+    /* 自宅の土地（lv/la/l1/l2）は後から足した項目。これらを持たない
+       古い共有URLでは初期値（＝特例なし）のままになり、当時と同じ結果が出る */
+    for (const k of ['me', 'sp', 's', 'c', 'pct', 'mv', 'd', 'y', 'lv', 'la', 'l1', 'l2']) {
+      if (q.has(k)) src[k] = +q.get(k);
+    }
   } else {
     try { src = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) {}
   }
@@ -276,6 +302,43 @@ function renderChart(sweep) {
   });
 }
 
+/* 自宅の土地のカードの表示を、入力と家族構成に合わせて整える */
+function updateLandCard(land, assetMe) {
+  const on = land.value > 0;
+  $('landUse').classList.toggle('off', !on);
+  $('landArea').disabled = !on;
+  $('landSecond').disabled = !on;
+
+  /* 一次相続のチェックは、配偶者がいるときは選ぶ余地が無い（配偶者が取得すれば
+     無条件で適用できる）。チェックを外せてしまうと、実際には起きない前提を
+     選べることになるので、入れたまま操作できなくする */
+  const firstEl = $('landFirst');
+  firstEl.disabled = !on || state.hasSpouse;
+  if (state.hasSpouse) firstEl.checked = true;
+  $('landFirstLabel').textContent = state.hasSpouse
+    ? '一次相続で適用する（配偶者が自宅を取得するため、要件を問わず適用）'
+    : '一次相続で適用する（子が同居しているなど、要件を満たす場合）';
+
+  // 限度面積を超えていれば、対象になるのは330㎡ぶんだけだと伝える
+  const area = land.area;
+  $('landAreaNote').textContent = (on && area > 330)
+    ? `330㎡を超える部分は対象外です（評価額のうち ${Math.round(330 / area * 100)}% が80%減額）`
+    : '330㎡までの部分が80%減額の対象です';
+
+  // 入力の取り違え（自宅の土地だけを別に足してしまう）は結果が大きく狂うので気付かせる
+  const note = $('landNote');
+  if (on && land.value > assetMe) {
+    note.className = 'assume-note warn';
+    note.textContent = '自宅の土地の評価額が「自分の資産額」を超えています。自宅の土地は資産額に含めて入力してください';
+  } else if (on && state.hasSpouse && !$('landSecond').checked) {
+    note.className = 'assume-note';
+    note.textContent = '二次相続では、配偶者が取得したぶんの自宅に特例を使えません。同居していない子が相続する場合はこのままにしてください';
+  } else {
+    note.className = 'assume-note';
+    note.textContent = '';
+  }
+}
+
 /* ---------- 画面更新 ---------- */
 function update() {
   const assetMe = getAssetMe();
@@ -303,19 +366,26 @@ function update() {
   const okuSp = $('okuSp');
   if (okuSp) okuSp.textContent = okuText(getAssetSp());
   $('okuDelta').textContent = okuText(spDelta);
+  $('okuLand').textContent = okuText(getLandValue());
 
-  const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct, spDelta, years);
+  const land = getLand();
+  updateLandCard(land, assetMe);
+
+  const r = simulate(assetMe, assetSp, state.hasSpouse, state.nChildren, pct, spDelta, years, land);
 
   // 相次相続控除の適用可能性の表示
   // 配偶者に一次の税額が出るのは取得額が max(1.6億, 法定相続分) を超えるときだけ
   if (state.hasSpouse) {
-    const neverApplies = assetMe <= 16000; // どの取得割合でも配偶者の税額は0
+    // 判定は特例で減額したあとの課税価格で見る（減額の結果1.6億円以下になることがある）
+    const neverApplies = r.taxable1 <= 16000; // どの取得割合でも配偶者の税額は0
     $('yearsGap').disabled = neverApplies;
     $('yearsAssume').classList.toggle('off', neverApplies);
     if (neverApplies) {
-      $('yearsNote').textContent = '遺産が1.6億円以下の場合、一次相続で配偶者に税額が発生せず、相次相続控除は影響しません';
+      $('yearsNote').textContent = r.cut1 > 0
+        ? '特例の適用後の課税価格が1.6億円以下の場合、一次相続で配偶者に税額が発生せず、相次相続控除は影響しません'
+        : '遺産が1.6億円以下の場合、一次相続で配偶者に税額が発生せず、相次相続控除は影響しません';
     } else if (r.spTax < 1e-9) {
-      const thPct = Math.floor(Math.max(16000, assetMe / 2) / assetMe * 100) + 1;
+      const thPct = Math.floor(Math.max(16000, r.taxable1 / 2) / r.taxable1 * 100) + 1;
       $('yearsNote').textContent = `現在の取得割合では一次相続で配偶者に税額が発生しません（${thPct}%以上で相次相続控除が影響）`;
     } else {
       $('yearsNote').textContent = '10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します';
@@ -326,7 +396,7 @@ function update() {
   let sweep = null;
   if (showSplit) {
     sweep = [];
-    for (let p = 0; p <= 100; p++) sweep.push(simulate(assetMe, assetSp, true, state.nChildren, p, spDelta, years));
+    for (let p = 0; p <= 100; p++) sweep.push(simulate(assetMe, assetSp, true, state.nChildren, p, spDelta, years, land));
   }
 
   // 分割バー
@@ -384,8 +454,11 @@ function update() {
   const heirs1 = (state.hasSpouse ? 1 : 0) + state.nChildren;
   const ded1 = 3000 + 600 * heirs1;
   let h1 = `
-    <div class="rline dim"><span>遺産総額</span><span class="v">${fmt(assetMe)}万円</span></div>
-    <div class="rline dim"><span>基礎控除（法定相続人${heirs1}人）</span><span class="v">−${fmt(ded1)}万円</span></div>`;
+    <div class="rline dim"><span>遺産総額</span><span class="v">${fmt(assetMe)}万円</span></div>`;
+  if (r.cut1 > 0) {
+    h1 += `<div class="rline dim"><span>小規模宅地等の特例</span><span class="v">−${fmt(r.cut1)}万円</span></div>`;
+  }
+  h1 += `<div class="rline dim"><span>基礎控除（法定相続人${heirs1}人）</span><span class="v">−${fmt(ded1)}万円</span></div>`;
   if (state.hasSpouse && state.nChildren > 0) {
     h1 += `
     <div class="rline"><span>配偶者の税額（軽減後）</span><span class="v">${fmt(r.spTax)}万円</span></div>
@@ -394,7 +467,7 @@ function update() {
     h1 += `<div class="rline"><span>配偶者の税額（軽減後）</span><span class="v">${fmt(r.spTax)}万円</span></div>`;
   }
   h1 += `<div class="rline total"><span>一次相続の税額</span><span class="v">${fmt(r.first)}万円</span></div>`;
-  if (assetMe <= ded1) h1 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
+  if (r.taxable1 <= ded1) h1 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
   $('firstDetail').innerHTML = h1;
 
   // 二次相続の内訳
@@ -407,14 +480,16 @@ function update() {
     if (spDelta !== 0) {
       h2 += `<div class="rline dim"><span>二次相続までの資産増減</span><span class="v">${spDelta > 0 ? '＋' : '−'}${fmt(Math.abs(spDelta))}万円</span></div>`;
     }
-    h2 += `
-      <div class="rline"><span>二次相続の遺産額</span><span class="v">${fmt(r.estate2)}万円</span></div>
-      <div class="rline dim"><span>基礎控除（法定相続人${state.nChildren}人）</span><span class="v">−${fmt(ded2)}万円</span></div>`;
+    h2 += `<div class="rline"><span>二次相続の遺産額</span><span class="v">${fmt(r.estate2)}万円</span></div>`;
+    if (r.cut2 > 0) {
+      h2 += `<div class="rline dim"><span>小規模宅地等の特例</span><span class="v">−${fmt(r.cut2)}万円</span></div>`;
+    }
+    h2 += `<div class="rline dim"><span>基礎控除（法定相続人${state.nChildren}人）</span><span class="v">−${fmt(ded2)}万円</span></div>`;
     if (r.deduct > 0) {
       h2 += `<div class="rline"><span>相次相続控除（経過${years}年）</span><span class="v">−${fmt(r.deduct)}万円</span></div>`;
     }
     h2 += `<div class="rline total"><span>二次相続の税額${state.nChildren > 1 ? `（1人 <b class="pc-num">${fmt(r.second / state.nChildren)}万円</b>）` : ''}</span><span class="v">${fmt(r.second)}万円</span></div>`;
-    if (r.estate2 <= ded2) h2 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
+    if (r.taxable2 <= ded2) h2 += `<div class="zero-note">基礎控除以下のため相続税はかかりません</div>`;
     $('secondDetail').innerHTML = h2;
   }
 
@@ -442,6 +517,10 @@ function update() {
 $('assetMe').oninput = update;
 $('spDelta').oninput = update;
 $('yearsGap').oninput = update;
+$('landValue').oninput = update;
+$('landArea').oninput = update;
+$('landFirst').onchange = update;
+$('landSecond').onchange = update;
 $('spShare').oninput = e => {
   state.spSharePct = +e.target.value;
   state.userMoved = true;
@@ -457,6 +536,10 @@ $('resetAllBtn').onclick = () => {
   $('assetMe').value = DEFAULTS.me;
   $('spDelta').value = DEFAULTS.delta;
   $('yearsGap').value = DEFAULTS.years;
+  $('landValue').value = DEFAULTS.land;
+  $('landArea').value = DEFAULTS.area;
+  $('landFirst').checked = DEFAULTS.landFirst === 1;
+  $('landSecond').checked = DEFAULTS.landSecond === 1;
   renderFamily();
   // 配偶者の欄は renderFamily で作り直されるが、値は直前の入力を引き継ぐので明示的に戻す
   $('assetSp').value = DEFAULTS.sp;
@@ -486,5 +569,9 @@ if (saved) {
   if (spEl && Number.isFinite(saved.sp)) spEl.value = saved.sp;
   if (Number.isFinite(saved.d)) $('spDelta').value = saved.d;
   if (Number.isFinite(saved.y)) $('yearsGap').value = Math.min(10, Math.max(0, saved.y));
+  if (Number.isFinite(saved.lv)) $('landValue').value = Math.max(0, saved.lv);
+  if (Number.isFinite(saved.la)) $('landArea').value = Math.max(0, saved.la);
+  if (saved.l1 != null) $('landFirst').checked = saved.l1 !== 0;
+  if (saved.l2 != null) $('landSecond').checked = saved.l2 !== 0;
 }
 update();
