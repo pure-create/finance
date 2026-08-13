@@ -301,5 +301,5 @@ function portfolioStats(alloc, ret, risk, corr) {
 
 /* ノードから読み込んだときに計算部分を公開する（テスト用） */
 if (typeof module !== 'undefined' && module.exports) {
-	module.exports = { simulate: simulate, portfolioStats: portfolioStats, percentile: percentile, logParams: logParams, cholesky3: cholesky3, mulberry32: mulberry32, makeNormal: makeNormal, incomeAt: incomeAt, lumpAt: lumpAt };
+	module.exports = { simulate: simulate, portfolioStats: portfolioStats, percentile: percentile, logParams: logParams, cholesky3: cholesky3, mulberry32: mulberry32, makeNormal: makeNormal, incomeAt: incomeAt, lumpAt: lumpAt, NISA_ANNUAL: NISA_ANNUAL, NISA_LIFETIME: NISA_LIFETIME, TAX_RATE: TAX_RATE };
 }
