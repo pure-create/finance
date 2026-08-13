@@ -320,9 +320,12 @@ function updateLandCard(land, assetMe) {
   const firstEl = $('landFirst');
   firstEl.disabled = !on || state.hasSpouse;
   if (state.hasSpouse) firstEl.checked = true;
+  /* 配偶者がいなければ、一次相続でも「家なき子」の道が開く
+     （その要件は「被相続人に配偶者がいないこと」を前提にしているため）。
+     二次相続のチェックと同じ言い回しにそろえる */
   $('landFirstLabel').textContent = state.hasSpouse
     ? '一次相続で適用する（配偶者が自宅を取得するため、要件を問わず適用）'
-    : '一次相続で適用する（子が同居しているなど、要件を満たす場合）';
+    : '一次相続で適用する（同居していた子、または持ち家のない子が相続する場合）';
 
   // 限度面積を超えていれば、対象になるのは330㎡分だけだと伝える
   const area = land.area;
@@ -339,7 +342,9 @@ function updateLandCard(land, assetMe) {
     /* チェックが外れている＝この試算では二次相続に特例を適用していない、という
        「今の設定」の説明。制度として使えないという意味に読めないようにする */
     note.className = 'assume-note';
-    note.textContent = '今は二次相続に特例を適用しない設定です。一次相続と違って自動では適用されないので、自宅を相続する子が要件を満たす場合だけチェックを入れてください';
+    /* 同居していない子は「自分は無関係」と読み飛ばしやすいので、
+       持ち家が無ければ使える道（家なき子）があることをここで示す */
+    note.textContent = '今は二次相続に特例を適用しない設定です。一次相続と違って自動では適用されませんが、同居していた子のほか、持ち家のない子が相続する場合も対象になり得ます';
   } else {
     note.className = 'assume-note';
     note.textContent = '';
