@@ -255,3 +255,41 @@ test('外部リンクは https で、リンク文字が空でない', () => {
 		}
 	}
 });
+
+/* ---------- 公開対象（GitHub Pages / Jekyll） ---------- */
+
+// _config.yml の exclude を読む（単純な箇条書きなので行で拾う）
+function excludeList() {
+	return [...read('_config.yml').matchAll(/^\s*-\s*([^\s#]+)/gm)]
+		.map(m => m[1].replace(/\/$/, ''));
+}
+
+test('_config.yml がテストと npm の設定を公開対象から外している', () => {
+	const excluded = excludeList();
+	for (const name of ['test', 'package.json']) {
+		assert.ok(excluded.includes(name), '_config.yml の exclude に ' + name + ' が無い');
+	}
+	/* exclude は Jekyll の既定を置き換えてしまうので、既定分も残っている必要がある。
+	   ここが消えると、うっかり npm install したときに node_modules が公開される */
+	assert.ok(excluded.includes('node_modules'), '_config.yml の exclude から node_modules が消えている');
+});
+
+test('公開に必要なファイルが exclude に巻き込まれていない', () => {
+	/* exclude は前方一致で効くので、うっかり「vendor」や「common」を足すと
+	   Chart.js やテーマが配信されなくなる。ページが実際に読み込んでいる
+	   ファイルが除外に当たらないことを見る */
+	const excluded = excludeList();
+	const needed = new Set(HTML_FILES);
+	for (const file of HTML_FILES) {
+		for (const m of read(file).matchAll(/(?:src|href)="([^"?]+\.(?:css|js))(?:\?[^"]*)?"/g)) {
+			const target = resolveLink(file, m[1]);
+			if (target) needed.add(target);
+		}
+	}
+	for (const f of needed) {
+		for (const ex of excluded) {
+			assert.ok(f !== ex && !f.startsWith(ex + '/'),
+				f + ' が _config.yml の exclude（' + ex + '）に当たり、公開されなくなる');
+		}
+	}
+});

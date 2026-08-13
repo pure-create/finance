@@ -1,0 +1,46 @@
+# GitHub Pages（Jekyll）の設定。
+#
+# 【なぜ要るか】
+#   このサイトはビルドの要らない静的HTMLをそのまま公開しているが、公開先の
+#   GitHub Pages は既定で Jekyll を通す（.nojekyll を置いていないため）。
+#   Jekyll はリポジトリ直下のファイルを原則そのまま公開物へ写すので、
+#   何もしないと計算のテストや npm の設定まで
+#   https://pure-create.github.io/finance/test/… として配信されてしまう。
+#   サイトからは1つもリンクしておらず sitemap.xml にも載せていないので実害は
+#   無いが、公開するものではないので外しておく。
+#
+#   更新スクリプト（*.ps1）は .gitignore でリポジトリ自体に入れていないが、
+#   テストは版を残したい。そこで「リポジトリには置くが、公開はしない」形にする。
+#
+# 【注意】
+#   exclude を書くと、Jekyll の既定の除外一覧に足されるのではなく
+#   「置き換え」になる。node_modules などが公開されてしまわないよう、
+#   既定の分もここに書き写してある。減らさないこと。
+#
+#   除外の指定はリポジトリ直下からの相対で見るので、下の vendor/… は
+#   リポジトリ直下の vendor だけに当たる。common/vendor/ の Chart.js は
+#   これまでどおり配信される。
+#
+# 【動かし方】
+#   このファイルは Jekyll の設定なので、それ自体は公開されない
+#   （_ で始まる名前は Jekyll が公開物に含めない）。
+#   変更が効いているかは、公開後に /finance/test/asset-core.test.js を
+#   開いて 404 になることで確かめられる。
+
+exclude:
+  # このリポジトリで公開したくないもの
+  - test              # 計算のテスト（npm test で走らせる）
+  - package.json      # テストを走らせるためだけのファイル
+  - package-lock.json
+
+  # ここから下は Jekyll の既定の除外。上書きになるので書き写している
+  - node_modules
+  - Gemfile
+  - Gemfile.lock
+  - gemfiles
+  - vendor/bundle
+  - vendor/cache
+  - vendor/gems
+  - vendor/ruby
+  - .sass-cache
+  - .jekyll-cache
