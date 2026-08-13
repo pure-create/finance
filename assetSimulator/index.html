@@ -42,15 +42,14 @@
 <script src="../common/analytics.js?v=20260805a" async></script>
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../common/site.css?v=20260813j">
-<link rel="stylesheet" href="./css/main.css?v=20260813a">
+<link rel="stylesheet" href="../common/site.css?v=20260813k">
+<link rel="stylesheet" href="./css/main.css?v=20260813b">
 </head>
 <body>
 <a class="skip-link" href="#main">本文へ</a>
 
 <header>
 	<div class="site-head">
-		<a class="home-link" href="../">トップページに戻る</a>
 		<!-- 制度データの時点。NISAの投資枠や譲渡益税率を直したら、ここも更新すること -->
 		<span class="data-asof">制度データ: 2026年8月時点</span>
 		<div class="page-tools">
@@ -227,18 +226,15 @@
 		<p class="foot-privacy">・ アクセス状況の把握に Google Analytics を利用しています（<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Googleによるデータ使用について</a>）。</p>
 	</figure>
 
-	<!-- 他のツールへの導線は、注記（計算の前提）の下、結果の列の最後に置く。
-	     このページは左の入力欄が縦に長く、レイアウトの外に置くとずっと下に離れてしまう -->
-	<nav data-tool-nav></nav>
-
 </section>
 </div>
+<nav data-tool-nav="../"></nav>
 </main>
 
 <!-- 共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、これらが届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
-<script src="../common/tool-nav.js?v=20260813i"></script>
+<script src="../common/tool-nav.js?v=20260813j"></script>
 <script src="../common/qrcode.js?v=20260805a"></script>
 <script src="../common/share.js?v=20260808a"></script>
 <script src="./js/asset-core.js?v=20260805a"></script>

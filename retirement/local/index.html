@@ -43,7 +43,7 @@
 <script src="../../common/analytics.js?v=20260805a" async></script>
 <script src="../../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../../common/theme.css?v=20260808b">
-<link rel="stylesheet" href="../../common/site.css?v=20260813j">
+<link rel="stylesheet" href="../../common/site.css?v=20260813k">
 <link rel="stylesheet" type="text/css" href="../css/main.css?v=20260813e">
 <link rel="stylesheet" type="text/css" href="../css/print.css?v=20260808a" media="print">
 <script src="./config.js?v=20260805a"></script>
@@ -55,7 +55,6 @@
 	<div class="noscript-warning">このサイトの計算機能はJavaScriptを使用しています。ブラウザの設定でJavaScriptを有効にしてご利用ください。</div>
 </noscript>
 <div class="site-head">
-	<a class="home-link" href="../../">トップページに戻る</a>
 	<!-- 制度データの時点。支給率・調整月額・所得税速算表・定年を直したら、ここも更新すること -->
 	<span class="data-asof">制度データ: 2026年8月時点</span>
 	<div class="page-tools">
@@ -249,7 +248,6 @@
 	</tbody>
 </table>
 </div>
-<nav data-tool-nav></nav>
 <footer class="site-foot">
 <p class="foot-note">
 実際の退職手当は自治体の条例・規則、退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
@@ -259,12 +257,13 @@
 <p class="foot-disclaimer">・ 当サイトの試算は概算です。実際の金額とは異なる場合があります。重要な判断の際は公的機関の情報や専門家にご確認ください。</p>
 <p class="foot-privacy">・ アクセス状況の把握に Google Analytics を利用しています（<a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener">Googleによるデータ使用について</a>）。</p>
 </footer>
+<nav data-tool-nav="../../"></nav>
 </main>
 <!-- 計算と共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、これらが届くまで本文が出ない）。retire-core.js は
      window の load で動き出すので、ここに移しても動きは変わらない。
      config.js だけは本文中の document.write が値を使うため <head> に残す -->
-<script src="../../common/tool-nav.js?v=20260813i"></script>
+<script src="../../common/tool-nav.js?v=20260813j"></script>
 <script src="../../common/qrcode.js?v=20260805a"></script>
 <script src="../../common/share.js?v=20260808a"></script>
 <script src="../js/retire-core.js?v=20260807b"></script>

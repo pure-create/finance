@@ -57,12 +57,14 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
 main:focus { outline: none; }
 
 /* =============================================================
-   サイト内ヘッダー（戻る導線＋制度データの時点＋操作ボタン群）
+   サイト内ヘッダー（制度データの時点＋操作ボタン群）
    トップページ自身には置かない。
 
-   左に「トップページに戻る」、その隣に制度データの時点、
-   右にテーマ切替や共有ボタン（.page-tools）を置く。
+   左に制度データの時点、右にテーマ切替や共有ボタン（.page-tools）を置く。
    操作系をこの行に集めることで、下の見出し行が横幅を全部使えるようになる。
+
+   以前は左端に「トップページに戻る」ボタンを置いていたが、
+   行き先の一覧はページ下部の導線（.tool-nav）にまとめてある。
    ============================================================= */
 .site-head {
 	display: flex;
@@ -78,32 +80,8 @@ main:focus { outline: none; }
 	margin-bottom: 14px;
 	font-size: 13px;
 }
-/* 戻る導線・制度データの時点と、操作ボタン群との間の余白をここで全部吸う */
+/* 制度データの時点と、操作ボタン群との間の余白をここで全部吸う */
 .site-head > .page-tools { margin-left: auto; }
-/* トップへ戻る導線。文字だけだと見出しのラベルに見えて押せることが伝わらないので、
-   枠線を付けてボタンの形にする。文言は行き先そのもの（「トップページ」）にしている。
-   枠線は灰色ではなく、わずかに青みのある --border-action を使う（灰色の枠だけだと
-   ただの囲みに見えて、押せることが触る前に伝わらないため） */
-.home-link {
-	display: inline-flex;
-	align-items: center;
-	padding: 5px 12px;
-	background: var(--surface);
-	border: 1px solid var(--border-action);
-	border-radius: 999px;
-	box-shadow: var(--shadow-sm);
-	color: var(--text-sub);
-	text-decoration: none;
-	transition: color .15s ease, border-color .15s ease, background-color .15s ease;
-}
-.home-link:hover {
-	color: var(--accent);
-	border-color: var(--accent);
-	background: var(--accent-soft);
-}
-/* 上の a:focus-visible が border-radius: 3px を当ててくるので、
-   フォーカス時だけピルの角が四角くならないよう戻す */
-.home-link:focus-visible { border-radius: 999px; }
 
 /* 使っている制度データがいつ時点のものかを示す。
    税率・支給率・年金の増減率は改正されるので、いつの制度で計算しているかが
@@ -183,7 +161,7 @@ main:focus { outline: none; }
 	align-items: center;
 	gap: 6px;
 	background: var(--surface);
-	/* 枠線にわずかな青み。灰色の枠だけだと押せることが伝わらない（.home-link と同じ考え） */
+	/* 枠線にわずかな青み。灰色の枠だけだと、ただの囲みに見えて押せることが伝わらない */
 	border: 1px solid var(--border-action);
 	border-radius: 8px;
 	color: var(--text-sub);
@@ -426,22 +404,21 @@ main:focus { outline: none; }
 }
 
 /* =============================================================
-   他のツールへの導線（ページ末尾、注記の前）
+   ページ間の導線（どのページも一番下、注記より後）
 
    ツール同士を行き来する道がトップページ経由しか無かったので、
    読み終える位置に一覧を置く。中身は common/tool-nav.js が描く。
+   置き場所はページによって注記の上だったり下だったりしていたが、
+   探すときに毎回違う所を見ることになるので一番下に揃えた。
+
+   トップページもこの一覧に並べる。ヘッダーの「トップページに戻る」
+   ボタンは、ここに同じ行き先がある以上二重なのでやめた。
 
    区切り線1本だと本文の続きに見えて素通りされるので、
    帯（--surface-2）で囲って「ここから先は別の話」と分かるようにする。
    中身は縦棒で区切った文字だけにする。ページ末尾の補助的な導線なので、
    ヘッダーの操作ボタンと同じ強さの形（枠付きの錠剤）にはしない。
-
-   「他のツール：」の見出しは一覧と同じ行に置く。改行して1行使うほどの
-   内容ではなく、帯の高さが増えるだけなので、コロンで続けて読ませる。
-   一覧の入れ物（.tool-nav-links）を display:contents にして中のリンクを
-   直接この行に並べるのは、入れ物のままだと横幅が足りないときに一覧が
-   丸ごと次の行へ落ち、見出しだけの行ができてしまうため。
-   （display:contents を解さないブラウザでは、その落ちる形に戻るだけ）
+   青い文字が並んでいれば行き先だと分かるので、見出しの語は付けない。
 
    ただし文字のままだと指で押す的が行の高さ（約20px）しかないので、
    リンクに上下の余白を持たせて32px程度を確保している。帯の上下の余白は
@@ -451,20 +428,12 @@ main:focus { outline: none; }
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	margin-top: 28px;
+	margin-top: 20px;
 	padding: 3px 16px 5px;
 	background: var(--surface-2);
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	font-size: 13px;
-}
-.tool-nav-label {
-	flex: 0 0 auto;
-	color: var(--muted);
-	font-weight: 600;
-}
-.tool-nav-links {
-	display: contents;
 }
 .tool-nav a,
 .tool-nav .current {
@@ -487,9 +456,10 @@ main:focus { outline: none; }
 	background: var(--muted);
 }
 
-/* この導線のすぐ下に注記が続くときは、帯と注記の線が続けて出て窮屈になるので詰める */
-.tool-nav + .site-foot {
-	margin-top: 16px;
+/* 注記（.site-foot）のすぐ後に続くときは、注記の区切り線から見て
+   28px も空けると帯だけが取り残されて見えるので詰める */
+.site-foot + .tool-nav {
+	margin-top: 14px;
 }
 
 .foot-note,
@@ -606,8 +576,6 @@ html.printing .tool-nav {
 	display: none !important;
 }
 
-html.printing .site-head { justify-content: flex-end; }
-html.printing .site-head > .home-link { display: none; }
 html.printing .page-tools { display: block; }
 html.printing .page-tools > * { display: none; }
 html.printing .page-tools > .share-wrap { display: block; }
@@ -645,16 +613,10 @@ html.printing .share-pop > .share-qr { display: block; }
 		display: none !important;
 	}
 
-	/* 戻る導線の行は、共有QRの入れ物（.page-tools）も兼ねている。
-	   行ごと消すとQRまで消えるので、中身を選んで消す */
-	.site-head {
-		justify-content: flex-end;
-	}
-	.site-head > .home-link {
-		display: none;
-	}
+	/* ヘッダーの行は、共有QRの入れ物（.page-tools）も兼ねている。
+	   行ごと消すとQRまで消えるので、中身を選んで消す。
 
-	/* QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
+	   QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
 	   .page-tools には画面を操作するための部品（テーマ切替・ボタン・ページ間リンク）が
 	   ページごとに増えるので、消したいものを列挙するのではなく、
 	   いったん中身を全部消してからQRだけを戻す。

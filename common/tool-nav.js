@@ -1,20 +1,24 @@
 /* =============================================================
-   他のツールへの導線
+   ページ間の導線（トップページ＋各ツール）
 
    ツール同士を行き来する道がトップページ経由しか無かったので、
-   ページを読み終える位置に一覧を出す。
+   ページを読み終える位置に一覧を出す。ヘッダーに「トップページに戻る」
+   ボタンを別に置いていたが、行き先の一覧がここにある以上、
+   トップページもこの一覧の一員として並べれば足りる。
 
    各ページですること:
-     ページ末尾（注記より前）に <nav data-tool-nav></nav> を置き、
+     ページの一番下（注記より後、</main> の直前）に
+     <nav data-tool-nav="サイト直下までの相対パス"></nav> を置き、
      本文のスクリプトと同じ場所でこのファイルを読み込む。
 
    一覧をHTMLに直接書かずここで描くのは、ツールを増やしたときに
    直す場所を1箇所にするため（トップページ・404の一覧・sitemap と
    同じものを4箇所で手入れするのは、いずれ食い違う）。
 
-   リンク先はサイト直下からの相対で持つ。ページごとの深さは、
-   どのページにもある「トップページに戻る」（.home-link）の href が
-   そのまま「ここからサイト直下まで」を表しているので、それを使う。
+   リンク先はサイト直下からの相対で持ち、そこまでの深さは
+   data-tool-nav の値で受け取る（ページごとに ../ か ../../ が決まる）。
+   以前は「トップページに戻る」ボタンの href を借りていたが、
+   そのボタンをやめたので、置き場所そのものに持たせている。
    ============================================================= */
 (function (global) {
 	'use strict';
@@ -30,31 +34,35 @@
 		{ label: '相続',           dir: 'inheritance/',    href: 'inheritance/' }
 	];
 
+	function link(href, label) {
+		var a = document.createElement('a');
+		a.href = href;
+		a.textContent = label;
+		return a;
+	}
+
+	/* 区切りの縦棒。線そのものはCSSが描くので、中身は空でよい。
+	   読み上げソフトが「たてぼう」と読んでも意味が無いので aria-hidden にする
+	   （CSSの ::before では aria-hidden を指定できないため要素で置いている） */
+	function separator() {
+		var sep = document.createElement('span');
+		sep.className = 'tool-nav-sep';
+		sep.setAttribute('aria-hidden', 'true');
+		return sep;
+	}
+
 	function render(host) {
-		var homeLink = document.querySelector('.home-link');
-		var base = homeLink ? homeLink.getAttribute('href') : './';
+		var base = host.getAttribute('data-tool-nav') || './';
 		var here = global.location.pathname;
 
-		var label = document.createElement('span');
-		label.className = 'tool-nav-label';
-		label.textContent = '他のツール：';
-
-		var list = document.createElement('div');
-		list.className = 'tool-nav-links';
+		/* トップページはこの一覧を持たないので、必ずリンクになる */
+		host.appendChild(link(base, 'トップページ'));
 
 		for (var i = 0; i < TOOLS.length; i++) {
 			var tool = TOOLS[i];
 			var dirUrl = new URL(base + tool.dir, global.location.href);
 
-			if (i > 0) {
-				/* 区切りの縦棒。線そのものはCSSが描くので、中身は空でよい。
-				   読み上げソフトが「たてぼう」と読んでも意味が無いので aria-hidden にする
-				   （CSSの ::before では aria-hidden を指定できないため要素で置いている） */
-				var sep = document.createElement('span');
-				sep.className = 'tool-nav-sep';
-				sep.setAttribute('aria-hidden', 'true');
-				list.appendChild(sep);
-			}
+			host.appendChild(separator());
 
 			if (here.indexOf(dirUrl.pathname) === 0) {
 				/* 今いる区画。押しても同じ場所なので、リンクにせずただの文字にする。
@@ -64,19 +72,14 @@
 				cur.className = 'current';
 				cur.setAttribute('aria-current', 'page');
 				cur.textContent = tool.label;
-				list.appendChild(cur);
+				host.appendChild(cur);
 			} else {
-				var a = document.createElement('a');
-				a.href = base + tool.href;
-				a.textContent = tool.label;
-				list.appendChild(a);
+				host.appendChild(link(base + tool.href, tool.label));
 			}
 		}
 
 		host.className = 'tool-nav';
-		host.setAttribute('aria-label', '他のツール');
-		host.appendChild(label);
-		host.appendChild(list);
+		host.setAttribute('aria-label', 'サイト内のページ');
 	}
 
 	function init() {
