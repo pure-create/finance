@@ -1,0 +1,8 @@
+{
+  "name": "finance-simulators",
+  "private": true,
+  "description": "資産運用・金融シミュレーターの計算部分のテスト。サイト自体はビルド不要の静的HTMLで、このファイルはテストを走らせるためだけにある",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
