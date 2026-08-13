@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="iDeCoの掛金による節税額と、受け取るときの税金を試算。退職金との受取順序・間隔で退職所得控除がどう削られるか（10年ルール）を比較できます。">
+<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+     og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
+<link rel="canonical" href="https://pure-create.github.io/finance/ideco/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="資産運用・金融シミュレーター">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://pure-create.github.io/finance/ideco/">
+<meta property="og:title" content="iDeCoシミュレーター">
+<meta property="og:description" content="iDeCoの掛金による節税額と、受け取るときの税金を試算。退職金との受取順序・間隔で退職所得控除がどう削られるか（10年ルール）を比較できます。">
+<meta property="og:image" content="https://pure-create.github.io/finance/og/ideco.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="iDeCoシミュレーター">
+<meta name="twitter:card" content="summary_large_image">
+<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+     名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
+		{"@type": "ListItem", "position": 2, "name": "iDeCoシミュレーター", "item": "https://pure-create.github.io/finance/ideco/"}
+	]
+}
+</script>
+<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+     このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+     アイコンと開始URLは manifest.json 側に書いてある -->
+<link rel="manifest" href="../manifest.json">
+<title>iDeCoシミュレーター</title>
+<script src="../common/analytics.js?v=20260805a" async></script>
+<script src="../common/theme.js?v=20260813a"></script>
+<link rel="stylesheet" href="../common/theme.css?v=20260808b">
+<link rel="stylesheet" href="../common/site.css?v=20260813l">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814b">
+<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260814b" media="print">
+</head>
+<body>
+<a class="skip-link" href="#main">本文へ</a>
+<div class="wrap">
+  <div class="site-head">
+    <!-- 制度データの時点。拠出限度額・加入年齢・重複期間のルールを直したら、ここも更新すること -->
+    <span class="data-asof">制度データ: 2026年8月時点</span>
+    <div class="page-tools">
+      <div class="share-wrap">
+        <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">試算結果を共有</button>
+        <div class="share-pop" id="sharePop">
+          <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+          <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+        </div>
+      </div>
+      <span data-theme-toggle></span>
+    </div>
+  </div>
+  <main id="main" tabindex="-1">
+  <div class="page-head">
+    <div class="page-title">
+      <h1>iDeCoシミュレーター</h1>
+      <p class="sub">掛金の節税額と、受け取るときの税金を通して試算。退職金との受取順序で手取りがどう変わるかを比較します</p>
+    </div>
+    <div class="page-tools">
+      <button class="btn" id="resetAllBtn" type="button">入力をリセット</button>
+    </div>
+  </div>
+
+  <!-- 加入区分と掛金 -->
+  <div class="card">
+    <h2 class="sec-title">加入区分と掛金</h2>
+    <div class="grid2">
+      <div class="fld">
+        <label for="category">加入区分</label>
+        <select id="category">
+          <option value="self">第1号（自営業者など）</option>
+          <!-- 初期値は js/ideco.js の DEFAULTS と合わせること。
+               selected を付けないと先頭の第1号で開いてしまう -->
+          <option value="employee" selected>第2号（会社員・企業年金なし）</option>
+          <option value="corporate">第2号（会社員・企業年金あり）</option>
+          <option value="publicSv">第2号（公務員）</option>
+          <option value="spouse">第3号（専業主婦・主夫）</option>
+        </select>
+        <p class="limit-note" id="limitNote"></p>
+      </div>
+      <div class="fld" id="otherPlanField">
+        <label for="otherPlan">企業年金の掛金相当額
+          <span class="help" tabindex="0" aria-label="掛金相当額について" aria-describedby="otherPlanTip">？<span class="tipbox" id="otherPlanTip" role="tooltip">2026年12月の改正後、第2号被保険者の枠は「月6.2万円 −（企業型確定拠出年金の事業主掛金 ＋ 確定給付企業年金の他制度掛金相当額）」になります。勤め先から通知される額を入れてください。分からなければ0のままで構いません。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="otherPlan" value="0" min="0" step="1000" inputmode="numeric"><span class="unit">円/月</span></span>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="fld">
+        <label for="monthly">毎月の掛金</label>
+        <span class="num-in"><input type="number" id="monthly" value="23000" min="0" step="1000" inputmode="numeric"><span class="unit">円</span></span>
+      </div>
+      <div class="fld">
+        <label for="nowAge">現在の年齢</label>
+        <span class="num-in"><input type="number" id="nowAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+      </div>
+      <div class="fld">
+        <label for="balance">現在のiDeCo残高</label>
+        <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
+      </div>
+    </div>
+    <div class="ctrl">
+      <label for="yieldRate">想定利回り</label>
+      <div class="srow">
+        <input type="range" id="yieldRate" min="0" max="8" step="0.1" value="3">
+        <span class="sval"><span id="yieldVal">3.0</span>%</span>
+      </div>
+    </div>
+    <p class="note" id="limitWarn"></p>
+  </div>
+
+  <!-- 節税額 -->
+  <div class="card">
+    <h2 class="sec-title">掛金による節税（入口）</h2>
+    <div class="grid2">
+      <div class="fld">
+        <label for="taxableIncome">課税所得
+          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
+      </div>
+      <div class="fld">
+        <p class="saving-line" id="savingLine"></p>
+      </div>
+    </div>
+    <div class="stack" id="stackBox">
+      <div class="stack-bar" aria-hidden="true">
+        <div class="seg seg-paid" id="segPaid"></div>
+        <div class="seg seg-gain" id="segGain"></div>
+        <div class="seg seg-save" id="segSave"></div>
+      </div>
+      <div class="stack-legend">
+        <span class="lg lg-paid" id="lgPaid">払った掛金</span>
+        <span class="lg lg-gain" id="lgGain">運用益</span>
+        <span class="lg lg-save" id="lgSave">節税額</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 受け取り方 -->
+  <div class="card">
+    <h2 class="sec-title">受け取り方（出口）</h2>
+    <div class="grid3">
+      <div class="fld">
+        <label for="joinAge">iDeCoに加入した年齢</label>
+        <span class="num-in"><input type="number" id="joinAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+      </div>
+      <div class="fld">
+        <label for="payAge">iDeCoを受け取る年齢</label>
+        <span class="num-in"><input type="number" id="payAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+      </div>
+      <div class="fld">
+        <label for="payMethod">受け取り方</label>
+        <select id="payMethod">
+          <option value="lump">一時金</option>
+          <option value="annuity">年金（分割）</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="fld">
+        <label for="retireAmount">退職金（額面）</label>
+        <span class="num-in"><input type="number" id="retireAmount" value="2000" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
+      </div>
+      <div class="fld">
+        <label for="hireAge">就職した年齢</label>
+        <span class="num-in"><input type="number" id="hireAge" value="22" min="15" max="70" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+      </div>
+      <div class="fld">
+        <label for="retireAge">退職金を受け取る年齢</label>
+        <span class="num-in"><input type="number" id="retireAge" value="60" min="15" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+      </div>
+    </div>
+    <div class="grid2" id="annuityFields">
+      <div class="fld">
+        <label for="annuityYears">年金で受け取る年数</label>
+        <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
+      </div>
+      <div class="fld">
+        <label for="publicPension">老齢年金の見込額
+          <span class="help" tabindex="0" aria-label="老齢年金の見込額について" aria-describedby="ppTip">？<span class="tipbox" id="ppTip" role="tooltip">ねんきん定期便に載っている年額の見込みです。iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="publicPension" value="180" min="0" step="10" inputmode="numeric"><span class="unit">万円/年</span></span>
+      </div>
+    </div>
+    <p class="note rule-note" id="ruleNote"></p>
+  </div>
+
+  <!-- 結果 -->
+  <div class="card">
+    <h2 class="sec-title">受け取るときの税金</h2>
+    <div class="results">
+      <div class="res-box lump" id="lumpBox">
+        <h3><span class="badge">一時金</span>まとめて受け取る</h3>
+        <div id="lumpDetail"></div>
+      </div>
+      <div class="res-box annuity" id="annuityBox">
+        <h3><span class="badge">年金</span>分割で受け取る</h3>
+        <div id="annuityDetail"></div>
+      </div>
+    </div>
+    <div class="grand" aria-live="polite">
+      <span class="glabel" id="grandLabel">選んだ受け取り方の手取り合計</span>
+      <span class="gval" id="grandVal">0<small>万円</small></span>
+    </div>
+    <div class="grand net" aria-live="polite">
+      <span class="glabel">掛金の節税額を含めた通算の得</span>
+      <span class="gval" id="totalVal">0<small>万円</small></span>
+    </div>
+  </div>
+
+  <!-- グラフ -->
+  <div class="card" id="chartCard">
+    <h2 class="sec-title">iDeCoを受け取る年齢と手取りの関係</h2>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢（60〜75歳）ごとの、退職金と合わせた手取り合計を示す折れ線グラフ"></canvas></div>
+    <p class="note" id="chartNote"></p>
+  </div>
+
+  <footer class="site-foot">
+    <p class="foot-note">
+      ・ 掛金は全額が<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1135.htm' target='_blank' rel='noopener noreferrer'>小規模企業共済等掛金控除</a>になります。節税額は「税率×掛金」ではなく、掛金を差し引く前後の税額の差で計算しています（税率の区分をまたぐ場合に前者では合わないため）。<br>
+      ・ 拠出限度額は2026年12月の改正で引き上げられます（適用は2027年1月拠出分から）。このツールは拠出する年で現行と改正後を切り替えます。第1号は月68,000円→75,000円、第2号は月20,000〜23,000円→62,000円（企業年金の掛金相当額を差し引いた残り）、第3号は月23,000円で変わりません。<br>
+      ・ 加入できる年齢の上限も、同じ改正で65歳未満から70歳未満に広がります。<br>
+      ・ 一時金で受け取ると<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>退職所得</a>になり、加入年数に応じた退職所得控除が使えます。ただし退職金を前後に受け取っていると、勤続期間と加入期間の重なりぶんだけ控除が削られます（<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2732.htm' target='_blank' rel='noopener noreferrer'>国税庁 No.2732</a>）。対象になるのは、iDeCoを先に受け取った場合は前年以前9年内（令和8年1月1日以後の支給。従来は4年内）、退職金を先に受け取った場合は前年以前19年内です。<br>
+      ・ 年金で受け取ると雑所得になり、老齢年金と合わせて<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1600.htm' target='_blank' rel='noopener noreferrer'>公的年金等控除</a>を分け合います。税額は「iDeCoによって増えた雑所得」に税率を当てた簡易計算で、給与など他の所得があると実際の税率は変わります。<br>
+      ・ 年金受取で雑所得が増えると、国民健康保険料や介護保険料も上がりますが、自治体による差が大きいため考慮していません。<br>
+      ・ 運用は入力した利回りで一定に増えるものとして計算します。信託報酬・口座管理手数料・給付事務手数料は考慮していません。<br>
+      ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
+    </p>
+    <p class="foot-disclaimer">・ 試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。</p>
+    <p class="foot-privacy">・ 入力内容やアクセス解析の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
+  </footer>
+  <nav data-tool-nav="../"></nav>
+  </main>
+</div>
+
+<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+     （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
+     このページのスクリプトより前であれば、呼び出し順は変わらない -->
+<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+<script src="../common/qrcode.js?v=20260805a"></script>
+<script src="../common/share.js?v=20260808a"></script>
+<script src="../common/tool-nav.js?v=20260814a"></script>
+<script src="../common/tax-core.js?v=20260814b"></script>
+<script src="./js/ideco-core.js?v=20260814b"></script>
+<script src="./js/ideco.js?v=20260814b"></script>
+</body>
+</html>

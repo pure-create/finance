@@ -35,6 +35,7 @@
 		{ label: 'NISA利用状況',       dir: 'nisa/',           href: 'nisa/nisa2025.html' },
 		{ label: '公務員退職手当',     dir: 'retirement/',     href: 'retirement/' },
 		{ label: '年金',               dir: 'pension/',        href: 'pension/' },
+		{ label: 'iDeCo',              dir: 'ideco/',          href: 'ideco/' },
 		{ label: '相続',               dir: 'inheritance/',    href: 'inheritance/' },
 		{ label: 'プライバシーポリシー', dir: 'privacy/',       href: 'privacy/' }
 	];

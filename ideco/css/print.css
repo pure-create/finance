@@ -1,0 +1,44 @@
+/* 白地・黒文字への切り替えは common/theme.css の @media print が行う。
+   ここには印刷用のレイアウトと、このページ固有の打ち消しだけを置く。 */
+
+@page{margin:12mm}
+
+body{padding:0;font-size:10pt}
+
+.wrap{max-width:100%}
+
+.card{
+  background:none;
+  border:1px solid var(--border);
+  box-shadow:none;
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+/* 説明の吹き出しと、入力を戻すボタンは紙面では意味を持たない。
+   共有QRは印刷する（紙から同じ条件の試算を開き直せるようにするため） */
+.help,.share-btn,#resetAllBtn{display:none !important}
+
+/* 入力欄らしい装飾を落として、値だけが読めるようにする */
+.num-in input,.fld select{
+  border:none;background:none;padding:0;
+  font-size:10pt;font-weight:700;
+  -webkit-appearance:none;appearance:none;
+}
+/* 利回りのスライダーは紙では読めないので、右の数値だけを残す */
+.srow input[type=range]{display:none}
+.srow{height:auto}
+
+.results{break-inside:avoid;page-break-inside:avoid}
+.res-box{background:none;break-inside:avoid}
+/* 画面では選んでいないほうを沈めているが、紙では両方を同じ濃さで比べたい */
+.res-box.dim{opacity:1}
+
+.chart-wrap{height:240px;break-inside:avoid;page-break-inside:avoid}
+
+.stack,.grand,.rule-note{break-inside:avoid;page-break-inside:avoid}
+/* 帯の塗り分けは意味を持つので紙にも出す（色は theme.css の印刷用に従う） */
+.stack-bar .seg,.lg::before,.badge{
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}

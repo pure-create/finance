@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="資産運用・NISA利用状況・公務員の退職手当・年金・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
+<meta name="description" content="資産運用・NISA利用状況・公務員の退職手当・年金・iDeCo・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
 <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
 <link rel="canonical" href="https://pure-create.github.io/finance/">
@@ -12,7 +12,7 @@
 <meta property="og:locale" content="ja_JP">
 <meta property="og:url" content="https://pure-create.github.io/finance/">
 <meta property="og:title" content="資産運用・金融シミュレーター">
-<meta property="og:description" content="資産運用・NISA利用状況・公務員の退職手当・年金・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
+<meta property="og:description" content="資産運用・NISA利用状況・公務員の退職手当・年金・iDeCo・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
 <meta property="og:image" content="https://pure-create.github.io/finance/og/site.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -39,6 +39,7 @@
     --edge-nisa: #16a34a;
     --edge-retire: #d97706;
     --edge-pension: #2563eb;
+    --edge-ideco:   #db2777;
     --edge-inherit: #8b5cf6;
   }
   /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
@@ -48,6 +49,7 @@
     --edge-nisa: #4ade80;
     --edge-retire: #fbbf24;
     --edge-pension: #60a5fa;
+    --edge-ideco:   #f472b6;
     --edge-inherit: #a78bfa;
   }
 
@@ -80,6 +82,7 @@
   .item-nisa    { --edge: var(--edge-nisa); }
   .item-retire  { --edge: var(--edge-retire); }
   .item-pension { --edge: var(--edge-pension); }
+  .item-ideco   { --edge: var(--edge-ideco); }
   .item-inherit { --edge: var(--edge-inherit); }
 
   .item h2 {
@@ -185,6 +188,14 @@
       <li><a href="pension/">年金の損益分岐点シミュレーター</a></li>
     </ul>
     <p class="desc">受給開始年齢ごとの累積受取総額を、運用利回りを考慮して比較</p>
+  </section>
+
+  <section class="item item-ideco">
+    <h2>iDeCo</h2>
+    <ul class="links">
+      <li><a href="ideco/">iDeCoシミュレーター</a></li>
+    </ul>
+    <p class="desc">掛金の節税額と、受け取るときの税金を試算。退職金との受取順序による差も比較</p>
   </section>
 
   <section class="item item-inherit">

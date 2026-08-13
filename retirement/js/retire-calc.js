@@ -39,20 +39,6 @@ function getRate(arr, years){
 	return arr[idx];
 }
 
-// 退職所得控除額（勤続年数から。20年までは1年40万円、超えた分は1年70万円。下限80万円）
-function retireDeduction(years){
-	var koujo;
-	if(years <= 20){
-		koujo = years * 400000;
-	}else{
-		koujo = 8000000 + (years - 20) * 700000;
-	}
-	if(koujo < 800000){
-		koujo = 800000;
-	}
-	return koujo;
-}
-
 // その年度の定年年齢（2023年度から2年に1歳ずつ、65歳まで段階的に引き上げ）
 function teinenAge(fiscalYear){
 	if(fiscalYear < 2023){
@@ -61,36 +47,14 @@ function teinenAge(fiscalYear){
 	return Math.min(65, 61 + Math.floor((fiscalYear - 2023) / 2));
 }
 
-// 所得税・住民税の計算（自己都合／定年勧奨で共通のロジック）
-function calcTax(price, koujo){
-	if(price <= koujo){
-		return { tax: 0, inhabitTax: 0 };
-	}
-	var kazei = Math.floor((price - koujo) / 2 / 1000) * 1000;
-	var tax;
-	if(kazei > 40000000){
-		tax = (kazei * 0.45 - 4796000) * 1.021;
-	}else if(kazei > 18000000){
-		tax = (kazei * 0.4 - 2796000) * 1.021;
-	}else if(kazei > 9000000){
-		tax = (kazei * 0.33 - 1536000) * 1.021;
-	}else if(kazei > 6950000){
-		tax = (kazei * 0.23 - 636000) * 1.021;
-	}else if(kazei > 3300000){
-		tax = (kazei * 0.20 - 427500) * 1.021;
-	}else if(kazei > 1950000){
-		tax = (kazei * 0.10 - 97500) * 1.021;
-	}else{
-		tax = (kazei * 0.05) * 1.021;
-	}
-	return { tax: Math.floor(tax), inhabitTax: kazei / 10 };
-}
+/* 退職所得控除（retireDeduction）と税額（calcTax）、その元になる
+   所得税の速算表は common/tax-core.js にある。iDeCoの掛金による節税額でも
+   同じ速算表を使うため、片方にベタ書きしないよう共通側へ移した。
 
-/* ノードから読み込んだときに計算部分を公開する（テスト用） */
+   ノードから読み込んだときは、このファイルが持つぶんだけを公開する（テスト用） */
 if (typeof module !== 'undefined' && module.exports) {
 	module.exports = {
 		own_rate: own_rate, compulsory_rate: compulsory_rate,
-		getRate: getRate, retireDeduction: retireDeduction,
-		teinenAge: teinenAge, calcTax: calcTax
+		getRate: getRate, teinenAge: teinenAge
 	};
 }

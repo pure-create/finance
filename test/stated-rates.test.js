@@ -26,6 +26,7 @@ const prose = rel => read(rel).replace(/<[^>]+>/g, '');
 const asset = require('../assetSimulator/js/asset-core.js');
 const inherit = require('../inheritance/js/inheritance-core.js');
 const retire = require('../retirement/js/retire-calc.js');
+const tax = require('../common/tax-core.js');
 const pension = require('../pension/js/pension-core.js');
 
 // 「1,536,000円」のような表記を数値にする
@@ -157,7 +158,7 @@ test('退職手当：所得税の速算表がcalcTaxと一致する', () => {
 			   最後に復興特別所得税の1.021を掛けて切り捨てる */
 			const koujo = 800000;
 			const kazei = hi === null ? lo + 1000000 : Math.floor((lo + hi) / 2 / 1000) * 1000;
-			const got = retire.calcTax(koujo + kazei * 2, koujo).tax;
+			const got = tax.calcTax(koujo + kazei * 2, koujo).tax;
 			const want = Math.floor((kazei * rate - ded) * 1.021);
 			assert.ok(Math.abs(got - want) <= 1,
 				page + ' の速算表 ' + r[1] + '円～ の行が計算と合わない' +
@@ -180,13 +181,13 @@ test('退職手当：速算表の区分の切れ目がcalcTaxの切り替わり�
 			if (lo <= 1000) continue;  // 最初の行に「手前」は無い
 			const rate = Number(r[3]) / 100, ded = yen(r[4]);
 
-			const atLo = retire.calcTax(koujo + lo * 2, koujo).tax;
+			const atLo = tax.calcTax(koujo + lo * 2, koujo).tax;
 			assert.ok(Math.abs(atLo - Math.floor((lo * rate - ded) * 1.021)) <= 1,
 				page + '：' + r[1] + '円ちょうどが表の区分と合わない');
 
 			const below = lo - 1000;
 			const belowByThisRow = Math.floor((below * rate - ded) * 1.021);
-			const belowActual = retire.calcTax(koujo + below * 2, koujo).tax;
+			const belowActual = tax.calcTax(koujo + below * 2, koujo).tax;
 			assert.ok(Math.abs(belowActual - belowByThisRow) > 1,
 				page + '：' + r[1] + '円の1つ下も同じ税率で計算されている（区分の切れ目がずれている）');
 		}
@@ -210,7 +211,7 @@ test('退職手当：退職所得控除の説明がretireDeductionと一致す�
 			const want = y <= border
 				? Math.max(floor, perYear * y)
 				: baseLong + perYearLong * (y - border);
-			assert.strictEqual(retire.retireDeduction(y), want,
+			assert.strictEqual(tax.retireDeduction(y), want,
 				page + '：勤続' + y + '年の退職所得控除が表の式と合わない');
 		}
 	}
@@ -296,4 +297,91 @@ test('「制度データ」の時点が全ページでそろっている', () =>
 	const values = [...new Set(seen.values())];
 	assert.strictEqual(values.length, 1,
 		'ページによって時点が違う: ' + JSON.stringify([...seen], null, 1));
+});
+
+/* ---------- iDeCoシミュレーター ---------- */
+
+const ideco = require('../ideco/js/ideco-core.js');
+
+test('iDeCo：注記の拠出限度額が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	// 第1号
+	const self = must(text, /第1号は月([\d,]+)円→([\d,]+)円/, 'ideco/index.html');
+	assert.strictEqual(yen(self[1]), ideco.CONTRIBUTION_LIMITS.self.current, '第1号の現行');
+	assert.strictEqual(yen(self[2]), ideco.CONTRIBUTION_LIMITS.self.reformed, '第1号の改正後');
+
+	// 第2号（現行は区分で20,000〜23,000円、改正後は62,000円）
+	const emp = must(text, /第2号は月([\d,]+)〜([\d,]+)円→([\d,]+)円/, 'ideco/index.html');
+	assert.strictEqual(yen(emp[1]), ideco.CONTRIBUTION_LIMITS.corporate.current, '第2号の現行の下限');
+	assert.strictEqual(yen(emp[2]), ideco.CONTRIBUTION_LIMITS.employee.current, '第2号の現行の上限');
+	assert.strictEqual(yen(emp[3]), ideco.CONTRIBUTION_LIMITS.employee.reformed, '第2号の改正後');
+
+	// 第3号は変わらない
+	const sp = must(text, /第3号は月([\d,]+)円で変わりません/, 'ideco/index.html');
+	assert.strictEqual(yen(sp[1]), ideco.CONTRIBUTION_LIMITS.spouse.current, '第3号の現行');
+	assert.strictEqual(yen(sp[1]), ideco.CONTRIBUTION_LIMITS.spouse.reformed, '第3号は改正後も同じ');
+});
+
+test('iDeCo：注記の改正の時期が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /適用は(\d{4})年1月拠出分から/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.LIMIT_REFORM_YEAR, '改正後の限度額を使い始める年');
+});
+
+test('iDeCo：注記の加入年齢の上限が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /(\d+)歳未満から(\d+)歳未満に広がります/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.JOIN_AGE_LIMIT.current, '現行の上限');
+	assert.strictEqual(Number(m[2]), ideco.JOIN_AGE_LIMIT.reformed, '改正後の上限');
+});
+
+test('iDeCo：注記の重複期間のルールが定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	/* 2つの年数は文中で離れており、間に括弧書き（句点を含む）が挟まる。
+	   1本の正規表現でまたごうとすると壊れやすいので、別々に拾う */
+	const first = must(text, /iDeCoを先に受け取った場合は前年以前(\d+)年内/, 'ideco/index.html');
+	assert.strictEqual(Number(first[1]), ideco.OVERLAP_YEARS_IDECO_FIRST, 'iDeCoが先の場合');
+	const later = must(text, /退職金を先に受け取った場合は前年以前(\d+)年内/, 'ideco/index.html');
+	assert.strictEqual(Number(later[1]), ideco.OVERLAP_YEARS_RETIRE_FIRST, '退職金が先の場合');
+});
+
+test('iDeCo：受取年齢の入力欄の範囲が定数と一致する', () => {
+	const html = read('ideco/index.html');
+	const m = must(html, /id="payAge"[^>]*min="(\d+)"[^>]*max="(\d+)"/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.PAYOUT_AGE_MIN, '受給開始の下限');
+	assert.strictEqual(Number(m[2]), ideco.PAYOUT_AGE_MAX, '受給開始の上限');
+});
+
+test('iDeCo：区分の選択肢が定数の一覧とそろっている', () => {
+	const html = read('ideco/index.html');
+	const options = [...html.matchAll(/<option value="(self|employee|corporate|publicSv|spouse)"[^>]*>/g)]
+		.map(m => m[1]);
+	const keys = Object.keys(ideco.CONTRIBUTION_LIMITS);
+	assert.deepStrictEqual(options.slice().sort(), keys.slice().sort(),
+		'画面の選択肢と拠出限度額の表が食い違っている');
+});
+
+test('iDeCo：選択肢の初期値がJS側の初期値と一致する', () => {
+	/* select に selected を付け忘れると、先頭の選択肢で開いてしまい、
+	   「入力をリセット」した後と初回表示で結果が食い違う */
+	const html = read('ideco/index.html');
+	const js = read('ideco/js/ideco.js');
+	for (const id of ['category', 'payMethod']) {
+		const open = '<select id="' + id + '">';
+		const from = html.indexOf(open);
+		assert.ok(from >= 0, 'ideco/index.html に ' + open + ' が無い');
+		const block = html.slice(from, html.indexOf('</select>', from));
+
+		const selected = block.match(/<option value="([^"]+)"[^>]*\sselected/);
+		const first = must(block, /<option value="([^"]+)"/, id + ' の選択肢');
+		const actual = selected ? selected[1] : first[1];
+
+		const mark = "['" + id + "', '";
+		const at = js.indexOf(mark);
+		assert.ok(at >= 0, 'ideco/js/ideco.js の FIELDS に ' + id + ' が無い');
+		const def = js.slice(at + mark.length, js.indexOf("'", at + mark.length));
+
+		assert.strictEqual(actual, def,
+			id + ' の初期表示（' + actual + '）とJSの初期値（' + def + '）が食い違っている');
+	}
 });

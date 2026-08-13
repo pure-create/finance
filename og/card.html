@@ -23,6 +23,7 @@
     v=nisa        → og/nisa.png         （NISA利用状況・2年分で共用）
     v=retirement  → og/retirement.png   （退職手当・入口/地方/国家で共用）
     v=pension     → og/pension.png      （年金）
+    v=ideco       → og/ideco.png        （iDeCo）
     v=inheritance → og/inheritance.png  （相続）
 
   og:image に置き場所の決まりは無いので、版下と同じここにまとめている
@@ -56,6 +57,7 @@
 	body.v-nisa        { --key: #4ade80; }
 	body.v-retirement  { --key: #fbbf24; }
 	body.v-pension     { --key: #60a5fa; }
+	body.v-ideco       { --key: #f472b6; }
 	body.v-inheritance { --key: #a78bfa; }
 
 	* { box-sizing: border-box; }
@@ -186,6 +188,7 @@
 	.tag-nisa        { --dot: #4ade80; }
 	.tag-retirement  { --dot: #fbbf24; }
 	.tag-pension     { --dot: #60a5fa; }
+	.tag-ideco       { --dot: #f472b6; }
 	.tag-inheritance { --dot: #a78bfa; }
 </style>
 </head>
@@ -222,9 +225,9 @@ var VARIANTS = {
 	site: {
 		site:  'FINANCE SIMULATOR',
 		title: '資産運用・金融シミュレーター',
-		lead:  '積立と取り崩し、退職手当、年金、相続税。<br>条件を入れて試算し、結果はURLでそのまま共有できます。',
+		lead:  '積立と取り崩し、退職手当、年金、iDeCo、相続税。<br>条件を入れて試算し、結果はURLでそのまま共有できます。',
 		tags:  [['資産運用', 'asset'], ['NISA利用状況', 'nisa'], ['退職手当', 'retirement'],
-		        ['年金', 'pension'], ['相続', 'inheritance']]
+		        ['年金', 'pension'], ['iDeCo', 'ideco'], ['相続', 'inheritance']]
 	},
 	asset: {
 		title: '資産運用シミュレーター',
@@ -245,6 +248,11 @@ var VARIANTS = {
 		title: '年金の損益分岐点シミュレーター',
 		lead:  '60〜75歳の受給開始年齢ごとに累積受取総額を比較。<br>運用利回りを変えながら損益分岐点を探せます。',
 		tags:  [['繰上げ・繰下げ'], ['累積受取総額'], ['損益分岐点']]
+	},
+	ideco: {
+		title: 'iDeCoシミュレーター',
+		lead:  '掛金の節税額と、受け取るときの税金を通して試算。<br>退職金との受取順序で手取りがどう変わるかを比べられます。',
+		tags:  [['掛金の節税'], ['一時金と年金'], ['退職金との順序']]
 	},
 	inheritance: {
 		title: '二次相続シミュレーター',
