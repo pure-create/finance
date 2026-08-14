@@ -10,7 +10,7 @@ const FIELDS = [
 	['category', 'employee', 'ct'], ['monthly', 23000, 'mo'], ['otherPlan', 0, 'op'],
 	['nowAge', 40, 'na'], ['balance', 0, 'bl'], ['yieldRate', 3, 'yr'],
 	['taxableIncome', 400, 'ti'],
-	['joinAge', 40, 'ja'], ['payAge', 65, 'pa'], ['payMethod', 'lump', 'pm'],
+	['joinAge', 40, 'ja'], ['payAge', 65, 'pa'],
 	['retireAmount', 2000, 'ra'], ['hireAge', 22, 'ha'], ['retireAge', 60, 'rt'],
 	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp']
 ];
@@ -123,7 +123,6 @@ function readConfig() {
 
 		idecoJoinAge: Math.round(num('joinAge')),
 		payAge: Math.round(num('payAge')),
-		payMethod: $('payMethod').value,
 		retireAmount: num('retireAmount') * 10000,
 		hireAge: Math.round(num('hireAge')),
 		retireAge: Math.round(num('retireAge')),
@@ -192,20 +191,27 @@ const markerPlugin = {
 function renderChart(sweep) {
 	if (typeof Chart === 'undefined') { $('chartCard').style.display = 'none'; return; }
 	const labels = sweep.map(s => s.age);
-	const data = sweep.map(s => Math.round(s.net / 10000));
-
-	const cOut = Theme.color('--idc-out');
+	const cOut = Theme.color('--idc-out');   // 一時金（結果の欄と同じ色）
+	const cIn = Theme.color('--idc-in');     // 年金
 	const cSub = Theme.color('--text-sub');
 	const cGrid = Theme.color('--grid');
 
 	const cfg = {
 		labels: labels,
-		datasets: [{
-			label: '手取り合計',
-			data: data,
-			borderColor: cOut, backgroundColor: cOut,
-			borderWidth: 3, pointRadius: 0, tension: .1
-		}]
+		datasets: [
+			{
+				label: '一時金',
+				data: sweep.map(s => Math.round(s.lump / 10000)),
+				borderColor: cOut, backgroundColor: cOut,
+				borderWidth: 3, pointRadius: 0, tension: .1
+			},
+			{
+				label: '年金',
+				data: sweep.map(s => Math.round(s.annuity / 10000)),
+				borderColor: cIn, backgroundColor: cIn,
+				borderWidth: 3, pointRadius: 0, tension: .1
+			}
+		]
 	};
 	if (chart) { chart.data = cfg; chart.update('none'); return; }
 	chart = new Chart($('chart'), {
@@ -230,11 +236,13 @@ function renderChart(sweep) {
 				}
 			},
 			plugins: {
-				legend: { display: false },
+				legend: {
+					labels: { font: { size: 12 }, boxWidth: 14, boxHeight: 3, color: cSub }
+				},
 				tooltip: {
 					callbacks: {
 						title: items => items[0].label + '歳で受け取る',
-						label: item => '手取りと節税額の合計 ' + fmt(item.parsed.y) + '万円'
+						label: item => item.dataset.label + '：' + fmt(item.parsed.y) + '万円'
 					},
 					// Chart.js の既定は明暗によらず黒地。ページの吹き出しと合わせる
 					backgroundColor: Theme.color('--tooltip-bg'),
@@ -318,8 +326,6 @@ function update() {
 	$('yieldVal').textContent = cfg.yieldRate.toFixed(1);
 	const shared = ['employee', 'corporate', 'publicSv'].indexOf(cfg.category) >= 0;
 	$('otherPlanField').style.display = shared ? '' : 'none';
-	const isAnnuity = cfg.payMethod === 'annuity';
-	$('annuityFields').style.display = '';
 
 	// 拠出限度額（今年と改正後）
 	const limitNow = contributionLimit(cfg.category, THIS_YEAR, cfg.otherPlanMonthly);
@@ -488,24 +494,26 @@ function update() {
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 
-	// 選んでいるほうを立て、選んでいないほうは沈める
-	$('lumpBox').classList.toggle('dim', isAnnuity);
-	$('annuityBox').classList.toggle('dim', !isAnnuity);
-
-	const chosen = isAnnuity ? A : L;
-	/* 大きく出す数字には退職金も含まれるので、何の合計なのかを名前に書く */
+	/* どちらの受け取り方が多いかを大きく出す。退職金も含まれるので、
+	   何の合計なのかを名前に書く。差が小さいときは「ほぼ同じ」と伝える
+	   （1万円未満の差で優劣を断じても意味がないため） */
 	const scope = hasRetire ? 'iDeCo＋退職金' : 'iDeCo';
-	$('grandLabel').textContent = isAnnuity
-		? '年金で受け取ったときの手取り（' + scope + '）'
-		: '一時金で受け取ったときの手取り（' + scope + '）';
-	$('totalLabel').textContent = '上の手取り ＋ 掛金の節税額';
-	$('grandVal').innerHTML = man(chosen.net) + '<small>万円</small>';
+	const better = A.net > L.net ? A : L;
+	const gapNet = Math.abs(A.net - L.net);
+	$('grandLabel').innerHTML = gapNet < 10000
+		? '一時金と年金の手取りはほぼ同じ<span class="gsub">' + scope + 'の合計</span>'
+		: '手取りが多いのは <b>' + (A.net > L.net ? '年金' : '一時金') + '</b>' +
+		  '<span class="gsub">もう一方より ' + man(gapNet) + '万円 多い（' + scope + '）</span>';
+	$('grandVal').innerHTML = man(better.net) + '<small>万円</small>';
 	/* 受け取る額と、拠出の途中で軽くなった税金の合計。
 	   掛金そのものは自分で出しているので「得」ではない（節税分だけが得）。
 	   足し合わせた額に「得」と名前を付けないよう、ラベルは事実だけを書く */
-	$('totalVal').innerHTML = man(chosen.net + acc.saved) + '<small>万円</small>';
+	$('totalLabel').innerHTML = '掛金の節税額 ' + man(acc.saved) + '万円 を含めた合計';
+	$('totalVal').innerHTML = man(better.net + acc.saved) + '<small>万円</small>';
 
-	// グラフ：受取年齢を60〜75歳で振る
+	/* グラフ：受取年齢を60〜75歳で振り、一時金と年金を2本並べる。
+	   受け取り方を選ばせて1本だけ描いていたが、下に両方の内訳が出ている以上
+	   選ばせる意味が薄く、2本にしたほうが「どの年齢でどちらが有利か」が直接見える */
 	const sweep = [];
 	for (let age = PAYOUT_AGE_MIN; age <= PAYOUT_AGE_MAX; age++) {
 		// その年齢まで積み立てたときの残高で計算する（長く置けば残高も増える）
@@ -516,15 +524,18 @@ function update() {
 			initialBalance: cfg.initialBalance
 		}, Tax);
 		const c = compare(payoutCfg(cfg, a.balance, age), Tax);
-		const picked = isAnnuity ? c.annuity : c.lump;
-		sweep.push({ age: age, net: picked.net + a.saved });
+		sweep.push({ age: age, lump: c.lump.net + a.saved, annuity: c.annuity.net + a.saved });
 	}
-	let best = -Infinity, bestAge = null;
-	for (const s of sweep) if (s.net > best) { best = s.net; bestAge = s.age; }
+	let best = -Infinity, bestAge = null, bestName = '';
+	for (const s of sweep) {
+		if (s.lump > best) { best = s.lump; bestAge = s.age; bestName = '一時金'; }
+		if (s.annuity > best) { best = s.annuity; bestAge = s.age; bestName = '年金'; }
+	}
 	state.bestAge = bestAge;
 	$('chartNote').textContent =
 		'受け取る年齢を遅らせると運用期間と拠出期間が延びる一方、退職金との間隔が変わって控除の調整も動きます。' +
-		'手取り（' + scope + '）と節税額を合わせた額では ' + bestAge + '歳 が最大（' + man(best) + '万円）です。';
+		'手取り（' + scope + '）と節税額を合わせた額では、' + bestAge + '歳に' + bestName +
+		'で受け取るのが最大（' + man(best) + '万円）です。';
 	renderChart(sweep);
 	if (chart) chart.draw();
 

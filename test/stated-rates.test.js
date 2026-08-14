@@ -366,7 +366,7 @@ test('iDeCo：選択肢の初期値がJS側の初期値と一致する', () => {
 	   「入力をリセット」した後と初回表示で結果が食い違う */
 	const html = read('ideco/index.html');
 	const js = read('ideco/js/ideco.js');
-	for (const id of ['category', 'payMethod']) {
+	for (const id of ['category']) {
 		const open = '<select id="' + id + '">';
 		const from = html.indexOf(open);
 		assert.ok(from >= 0, 'ideco/index.html に ' + open + ' が無い');

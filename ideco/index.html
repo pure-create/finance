@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814f">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814g">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260814b" media="print">
 </head>
 <body>
@@ -162,7 +162,7 @@
   <!-- 受け取り方 -->
   <div class="card">
     <h2 class="sec-title">受け取り方（出口）</h2>
-    <div class="grid3">
+    <div class="grid2">
       <div class="fld">
         <label for="joinAge">iDeCoに加入した年齢
           <span class="help" tabindex="0" aria-label="加入した年齢について" aria-describedby="joinTip">？<span class="tipbox" id="joinTip" role="tooltip">一時金で受け取るときの退職所得控除は、iDeCoの<strong>加入期間の年数</strong>で決まります（勤続年数と同じ扱い）。すでに加入しているなら、実際に始めた年齢を入れてください。上の「現在の年齢」より前でかまいません。<br><br>この年数は、退職金との勤続期間の重なりを出すのにも使います。</span></span>
@@ -172,13 +172,6 @@
       <div class="fld">
         <label for="payAge">iDeCoを受け取る年齢</label>
         <span class="num-in"><input type="number" id="payAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-      </div>
-      <div class="fld">
-        <label for="payMethod">受け取り方</label>
-        <select id="payMethod">
-          <option value="lump">一時金</option>
-          <option value="annuity">年金（分割）</option>
-        </select>
       </div>
     </div>
     <div class="grid3">
@@ -224,7 +217,7 @@
       </div>
     </div>
     <div class="grand" aria-live="polite">
-      <span class="glabel" id="grandLabel">選んだ受け取り方の手取り合計</span>
+      <span class="glabel" id="grandLabel">手取りが多いのは</span>
       <span class="gval" id="grandVal">0<small>万円</small></span>
     </div>
     <div class="grand net" aria-live="polite">
@@ -235,8 +228,8 @@
 
   <!-- グラフ -->
   <div class="card" id="chartCard">
-    <h2 class="sec-title">iDeCoを受け取る年齢と手取りの関係</h2>
-    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢（60〜75歳）ごとの、退職金と合わせた手取り合計を示す折れ線グラフ"></canvas></div>
+    <h2 class="sec-title">受け取る年齢と受け取り方による手取りの違い</h2>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢（60〜75歳）ごとの手取り合計を、一時金と年金の2本の折れ線で比べたグラフ"></canvas></div>
     <p class="note" id="chartNote"></p>
   </div>
 
@@ -268,6 +261,6 @@
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="../common/tax-core.js?v=20260814b"></script>
 <script src="./js/ideco-core.js?v=20260814f"></script>
-<script src="./js/ideco.js?v=20260814h"></script>
+<script src="./js/ideco.js?v=20260814i"></script>
 </body>
 </html>
