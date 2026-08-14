@@ -410,3 +410,17 @@ test('iDeCo：注記の受給開始年齢の表が定数と一致する', () => 
 	assert.strictEqual(Number(late[1]), ideco.LATE_JOIN_AGE);
 	assert.strictEqual(Number(late[2]), ideco.LATE_JOIN_WAIT);
 });
+
+test('iDeCo：注記の「110万円まで非課税」が公的年金等控除の表と一致する', () => {
+	/* 65歳以上は収入110万円までが非課税、という説明。
+	   tax-core の速算表の下端（65歳以上の最初の区分）と同じでなければならない */
+	const m = must(prose('ideco/index.html'),
+		/65歳以上は、公的年金等の収入が([\d,]+)万円までなら課税されません/, 'ideco/index.html');
+	const stated = yen(m[1]) * 10000;
+	const table = tax.PENSION_INCOME_BRACKETS.from65;
+	const threshold = table[table.length - 2].min;   // 最後は min:0 の受け皿
+	assert.strictEqual(stated, threshold, '注記の額と速算表の区分が違う');
+	// その額までは雑所得が出ないこと自体も確かめる
+	assert.strictEqual(tax.pensionMiscIncome(stated, 65), 0);
+	assert.ok(tax.pensionMiscIncome(stated + 10000, 65) > 0);
+});
