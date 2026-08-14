@@ -142,7 +142,9 @@ function payoutCfg(cfg, idecoAmount, payAge) {
 		hireAge: cfg.hireAge,
 		retireAge: cfg.retireAge,
 		annuityYears: cfg.annuityYears,
-		publicPension: cfg.publicPension
+		publicPension: cfg.publicPension,
+		// 年金受取では残りの資産が運用を続けるので、利回りが出口にも効く
+		yieldRate: cfg.yieldRate
 	};
 }
 
@@ -422,8 +424,14 @@ function update() {
 	// 年金の内訳
 	const A = cmp.annuity;
 	const d = A.detail;
-	let h2 = '<div class="rline dim"><span>1年あたりの受取額</span><span class="v">' + man(d.perYear) + '万円 × ' + d.years + '年</span></div>' +
-		'<div class="rline dim"><span>増える雑所得（年）</span><span class="v">' + man(d.rows.length ? d.rows[0].misc : 0) + '万円</span></div>' +
+	let h2 = '<div class="rline dim"><span>1年あたりの受取額</span><span class="v">' + man(d.perYear) + '万円 × ' + d.years + '年</span></div>';
+	/* 受け取り終わるまで残りの資産は運用が続くので、総額は受給開始時の残高より多い。
+	   一時金と比べるときにここが効くので、増える分を明示する */
+	if (d.growth > 0) {
+		h2 += '<div class="rline dim"><span>受取中の運用で増える分</span><span class="v">＋' + man(d.growth) + '万円</span></div>' +
+			'<div class="rline dim"><span>受け取る総額</span><span class="v">' + man(d.gross) + '万円</span></div>';
+	}
+	h2 += '<div class="rline dim"><span>増える雑所得（年）</span><span class="v">' + man(d.rows.length ? d.rows[0].misc : 0) + '万円</span></div>' +
 		'<div class="rline"><span>iDeCoの税額（' + d.years + '年の合計）</span><span class="v">' + man(d.tax) + '万円</span></div>';
 	if (cfg.retireAmount > 0) {
 		h2 += '<div class="rline"><span>退職金の税額</span><span class="v">' + man(A.tax - d.tax) + '万円</span></div>';

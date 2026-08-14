@@ -211,9 +211,24 @@ function lumpSumTax(cfg, tax) {
 
    公的年金等の収入として、老齢年金と合算して公的年金等控除を当てる。
    控除枠を分け合うので、老齢年金が多いほどiDeCo側の税負担は重くなる。 */
+
+/* 年金で受け取る場合の1年あたりの額。
+   一時金と違い、受け取り終わるまで残りの資産は口座に残って運用が続くので、
+   受け取る総額は受給開始時の残高より多くなる。
+   掛金と同じく期首（その年のはじめ）に受け取るものとして計算する。 */
+function annuityPayment(balance, years, yieldRate) {
+	const n = Math.max(1, Math.round(years));
+	const r = (yieldRate || 0) / 100;
+	if (!(balance > 0)) return 0;
+	if (!(r > 0)) return balance / n;
+	// 期首払いの年金現価率
+	const factor = (1 - Math.pow(1 + r, -n)) / r * (1 + r);
+	return balance / factor;
+}
+
 function annuityTax(cfg, tax) {
 	const years = Math.max(1, Math.round(cfg.annuityYears));
-	const perYear = cfg.idecoAmount / years;
+	const perYear = annuityPayment(cfg.idecoAmount, years, cfg.yieldRate);
 	const rows = [];
 	let total = 0;
 
@@ -237,9 +252,14 @@ function annuityTax(cfg, tax) {
 		});
 	}
 
+	/* 受け取る総額は「1年あたりの額 × 年数」。運用が続くぶん、
+	   受給開始時の残高（idecoAmount）より多くなる */
+	const gross = perYear * years;
 	return {
 		rows: rows, years: years, perYear: perYear,
-		tax: total, gross: cfg.idecoAmount, net: cfg.idecoAmount - total
+		balance: cfg.idecoAmount,
+		growth: gross - cfg.idecoAmount,
+		tax: total, gross: gross, net: gross - total
 	};
 }
 
@@ -257,13 +277,16 @@ function compare(cfg, tax) {
 		: { tax: 0, inhabitTax: 0 };
 	const retireTax = retireOnly.tax + retireOnly.inhabitTax;
 
+	/* 年金側の総額は、受け取り終わるまでの運用ぶんだけ一時金より多い。
+	   退職金は一時金のまま受け取る前提なので、そのまま足す */
+	const annuityGross = annuity.gross + (cfg.retireAmount || 0);
 	return {
 		lump: lump,
 		annuity: {
 			detail: annuity,
 			tax: annuity.tax + retireTax,
-			gross: cfg.idecoAmount + (cfg.retireAmount || 0),
-			net: cfg.idecoAmount + (cfg.retireAmount || 0) - annuity.tax - retireTax
+			gross: annuityGross,
+			net: annuityGross - annuity.tax - retireTax
 		}
 	};
 }
@@ -274,7 +297,8 @@ if (typeof module !== 'undefined' && module.exports) {
 		contributionLimit: contributionLimit, joinAgeLimit: joinAgeLimit,
 		taxSaving: taxSaving, accumulate: accumulate,
 		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction,
-		lumpSumTax: lumpSumTax, annuityTax: annuityTax, compare: compare,
+		lumpSumTax: lumpSumTax, annuityPayment: annuityPayment,
+		annuityTax: annuityTax, compare: compare,
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,
 		JOIN_AGE_LIMIT: JOIN_AGE_LIMIT,

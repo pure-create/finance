@@ -9,7 +9,7 @@ const assert = require('node:assert');
 const tax = require('../common/tax-core.js');
 const {
 	contributionLimit, joinAgeLimit, taxSaving, accumulate,
-	overlapYears, adjustedDeduction, lumpSumTax, annuityTax, compare,
+	overlapYears, adjustedDeduction, lumpSumTax, annuityPayment, annuityTax, compare,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST
 } = require('../ideco/js/ideco-core.js');
@@ -471,4 +471,66 @@ test('一時金：退職金が先でも20年以上空けば調整されない', 
 	const at19 = lumpSumTax(Object.assign({}, lumpBase, { idecoPayAge: 69, retireAge: 50 }), tax);
 	assert.strictEqual(at19.gap, 19);
 	assert.strictEqual(at19.adjusted, 'ideco', '19年内はiDeCo側が削られる');
+});
+
+/* ---------- 年金受取のあいだも運用は続く ---------- */
+
+test('年金の1年あたりの額：利回り0なら残高を年数で割るだけ', () => {
+	assert.strictEqual(annuityPayment(10000000, 10, 0), 1000000);
+	assert.strictEqual(annuityPayment(12000000, 20, 0), 600000);
+	assert.strictEqual(annuityPayment(0, 10, 3), 0, '残高なし');
+});
+
+test('年金の1年あたりの額：運用が続くぶん、残高÷年数より多い', () => {
+	/* 期首払いの年金現価率 = (1 − 1.03^−10) / 0.03 × 1.03 = 8.786108…
+	   1,000万円 ÷ 8.786108… ＝ 1,138,159円 */
+	const pmt = annuityPayment(10000000, 10, 3);
+	near(pmt, 1138159, 2, '1年あたりの受取額');
+	assert.ok(pmt > 10000000 / 10, '残高を割っただけより多い');
+	// 10年で受け取る総額は、受給開始時の残高より多くなる
+	near(pmt * 10, 11381590, 20, '受け取る総額');
+});
+
+test('年金：受け取る総額は受給開始時の残高を上回る', () => {
+	const a = annuityTax({
+		idecoAmount: 10000000, annuityYears: 10, idecoPayAge: 65,
+		publicPension: 1800000, yieldRate: 3
+	}, tax);
+	assert.strictEqual(a.balance, 10000000, '受給開始時の残高');
+	assert.ok(a.gross > a.balance, '運用が続くぶん総額のほうが多い');
+	near(a.growth, a.gross - a.balance, 1e-6);
+	near(a.gross, a.perYear * a.years, 1e-6, '総額は1年あたり×年数');
+});
+
+test('年金：利回りが高いほど受け取る総額が増える', () => {
+	const base = { idecoAmount: 10000000, annuityYears: 15, idecoPayAge: 65, publicPension: 0 };
+	const flat = annuityTax(Object.assign({}, base, { yieldRate: 0 }), tax);
+	const grow = annuityTax(Object.assign({}, base, { yieldRate: 4 }), tax);
+	assert.strictEqual(flat.gross, 10000000, '利回り0なら残高そのもの');
+	assert.ok(grow.gross > flat.gross);
+	assert.strictEqual(flat.growth, 0);
+	assert.ok(grow.growth > 0);
+});
+
+test('年金：長く分けるほど運用が続く期間も延びる', () => {
+	const base = { idecoAmount: 10000000, idecoPayAge: 65, publicPension: 0, yieldRate: 3 };
+	const short = annuityTax(Object.assign({}, base, { annuityYears: 5 }), tax);
+	const long = annuityTax(Object.assign({}, base, { annuityYears: 20 }), tax);
+	assert.ok(long.gross > short.gross, '20年のほうが受け取る総額は多い');
+	assert.ok(long.perYear < short.perYear, '1年あたりは少ない');
+});
+
+test('比較：利回りがあると年金の総額は一時金より多い', () => {
+	const cfg = {
+		idecoAmount: 10000000, idecoJoinAge: 40, idecoPayAge: 65,
+		retireAmount: 20000000, hireAge: 22, retireAge: 60,
+		annuityYears: 10, publicPension: 1800000, yieldRate: 3
+	};
+	const c = compare(cfg, tax);
+	assert.ok(c.annuity.gross > c.lump.gross,
+		'年金は受け取り終わるまで運用が続くぶん総額が多い（' +
+		c.lump.gross + ' → ' + c.annuity.gross + '）');
+	// 退職金の額は両方に同じだけ含まれる
+	near(c.annuity.gross - c.lump.gross, c.annuity.detail.growth, 1e-6);
+	near(c.annuity.net, c.annuity.gross - c.annuity.tax, 1e-6);
 });
