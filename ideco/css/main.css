@@ -173,9 +173,18 @@ body{padding:16px;min-height:100vh}
   color:var(--muted);font-size:11px;font-weight:700;cursor:help;flex-shrink:0;margin-left:2px;
 }
 .help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
-/* 吹き出しは site.css のものを、このページの配置（左寄せ・幅広）に合わせて上書きする */
+/* 吹き出しは site.css のものを、このページの配置（幅広）に合わせて上書きする。
+
+   位置の基準は「？」の印ではなく入力欄そのものにする。印は16px角しかないので、
+   それを基準にすると、広い画面では右へ、狭い画面では左へはみ出して切れてしまう。
+   入力欄の端にそろえれば、どちらの幅でも欄の中に収まる。 */
+.fld{position:relative}
+.fld .help{position:static}
 .tipbox{
-  top:calc(100% + 8px);left:-12px;right:auto;width:302px;max-width:74vw;
+  top:calc(100% + 8px);left:0;right:auto;width:302px;max-width:100%;
   line-height:1.7;padding:10px 12px;
   pointer-events:none;
 }
+/* 右端の列だけは右にそろえる（左のままだとカードからはみ出す） */
+.grid2 .fld:last-child .tipbox,
+.grid3 .fld:last-child .tipbox{left:auto;right:0}

@@ -347,19 +347,36 @@ function update() {
 	$('segSave').style.width = pct(acc.saved) + '%';
 	$('segGain').style.width = pct(acc.gain) + '%';
 
+	const hasInitial = cfg.initialBalance > 0;
 	const lgInitial = $('lgInitial');
-	lgInitial.hidden = !(cfg.initialBalance > 0);
-	lgInitial.textContent = '元の残高 ' + man(cfg.initialBalance) + '万円';
+	lgInitial.hidden = !hasInitial;
+	lgInitial.textContent = '今ある残高 ' + man(cfg.initialBalance) + '万円';
 	$('lgCost').textContent = '実質の負担 ' + man(acc.netCost) + '万円';
 	$('lgSave').textContent = '節税で戻る分 ' + man(acc.saved) + '万円';
 	$('lgGain').textContent = '運用益 ' + man(acc.gain) + '万円';
 
-	$('stackNote').innerHTML = acc.paid > 0
-		? '払う掛金は' + acc.rows.length + '年で <b>' + man(acc.paid) + '万円</b> ですが、' +
-		  'そのうち <b>' + man(acc.saved) + '万円</b> は税金が軽くなって戻るので、' +
-		  '実質の負担は <b>' + man(acc.netCost) + '万円</b> です。' +
-		  'これに運用益を足した <b>' + man(acc.balance) + '万円</b> を受け取ります。'
-		: '';
+	/* 「実質の負担」と「節税で戻る分」は、これから拠出する分だけの話。
+	   すでにある残高は中身を分けずにそのまま置くので、
+	   どこまでが「これから」なのかが読み取れるように書き分ける */
+	const note = $('stackNote');
+	if (acc.paid > 0 && hasInitial) {
+		note.innerHTML = 'これから払う掛金は' + acc.rows.length + '年で <b>' + man(acc.paid) +
+			'万円</b>、うち <b>' + man(acc.saved) + '万円</b> は税金が軽くなって戻るので、' +
+			'実質の負担は <b>' + man(acc.netCost) + '万円</b> です。' +
+			'今ある残高 <b>' + man(cfg.initialBalance) + '万円</b> と運用益を合わせて <b>' +
+			man(acc.balance) + '万円</b> を受け取ります。';
+	} else if (acc.paid > 0) {
+		note.innerHTML = '払う掛金は' + acc.rows.length + '年で <b>' + man(acc.paid) +
+			'万円</b> ですが、そのうち <b>' + man(acc.saved) + '万円</b> は税金が軽くなって戻るので、' +
+			'実質の負担は <b>' + man(acc.netCost) + '万円</b> です。' +
+			'これに運用益を足した <b>' + man(acc.balance) + '万円</b> を受け取ります。';
+	} else if (hasInitial) {
+		// 拠出が終わっている（受取年齢まで運用するだけ）場合
+		note.innerHTML = '今ある残高 <b>' + man(cfg.initialBalance) + '万円</b> を運用して、' +
+			'<b>' + man(acc.balance) + '万円</b> を受け取ります。';
+	} else {
+		note.innerHTML = '';
+	}
 
 	// 出口
 	const idecoAmount = acc.balance;

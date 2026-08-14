@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814c">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814d">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260814b" media="print">
 </head>
 <body>
@@ -108,7 +108,9 @@
         <span class="num-in"><input type="number" id="nowAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
       <div class="fld">
-        <label for="balance">現在のiDeCo残高</label>
+        <label for="balance">現在のiDeCo残高
+          <span class="help" tabindex="0" aria-label="現在のiDeCo残高について" aria-describedby="balanceTip">？<span class="tipbox" id="balanceTip" role="tooltip">運営管理機関から届く「お取引状況のお知らせ」などに載っている、<strong>今の資産の時価評価額</strong>（これまでの運用益を含んだ額）をそのまま入れてください。<br><br>これまでに払った掛金や、その間に軽くなった税金を入力する必要はありません。すでに済んだ分なので、この試算では扱いません。下の節税額と内訳は<strong>これから拠出する分だけ</strong>のものです。<br><br>まだ加入していなければ0のままにしてください。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
     </div>
@@ -162,7 +164,9 @@
     <h2 class="sec-title">受け取り方（出口）</h2>
     <div class="grid3">
       <div class="fld">
-        <label for="joinAge">iDeCoに加入した年齢</label>
+        <label for="joinAge">iDeCoに加入した年齢
+          <span class="help" tabindex="0" aria-label="加入した年齢について" aria-describedby="joinTip">？<span class="tipbox" id="joinTip" role="tooltip">一時金で受け取るときの退職所得控除は、iDeCoの<strong>加入期間の年数</strong>で決まります（勤続年数と同じ扱い）。すでに加入しているなら、実際に始めた年齢を入れてください。上の「現在の年齢」より前でかまいません。<br><br>この年数は、退職金との勤続期間の重なりを出すのにも使います。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="joinAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
       <div class="fld">
@@ -263,6 +267,6 @@
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="../common/tax-core.js?v=20260814b"></script>
 <script src="./js/ideco-core.js?v=20260814c"></script>
-<script src="./js/ideco.js?v=20260814c"></script>
+<script src="./js/ideco.js?v=20260814d"></script>
 </body>
 </html>
