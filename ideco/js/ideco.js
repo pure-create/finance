@@ -223,7 +223,7 @@ function renderChart(sweep) {
 					border: { color: cGrid }
 				},
 				y: {
-					title: { display: true, text: '手取り合計（万円）', font: { size: 11 }, color: cSub },
+					title: { display: true, text: '手取り＋節税額（万円）', font: { size: 11 }, color: cSub },
 					ticks: { font: { size: 11 }, color: cSub, callback: v => v.toLocaleString('ja-JP') },
 					grid: { color: cGrid },
 					border: { color: cGrid }
@@ -234,7 +234,7 @@ function renderChart(sweep) {
 				tooltip: {
 					callbacks: {
 						title: items => items[0].label + '歳で受け取る',
-						label: item => '手取り合計 ' + fmt(item.parsed.y) + '万円'
+						label: item => '手取りと節税額の合計 ' + fmt(item.parsed.y) + '万円'
 					},
 					// Chart.js の既定は明暗によらず黒地。ページの吹き出しと合わせる
 					backgroundColor: Theme.color('--tooltip-bg'),
@@ -402,41 +402,72 @@ function update() {
 	const cmp = compare(payoutCfg(cfg, idecoAmount, cfg.payAge), Tax);
 	describeRule(cmp.lump);
 
+	/* 受け取り方ごとの内訳。
+
+	   退職金の税額は受け取り方で変わる（一時金だと控除が調整されうるが、
+	   年金なら退職所得控除を使わないので調整が起きない）ので、両方の欄に
+	   退職金を出す必要がある。ただし合計だけを出すと、iDeCoの話をしている欄に
+	   退職金がまぎれて読み取れないので、それぞれの手取りを小計で分ける */
+	const rline = (label, value, cls) =>
+		'<div class="rline ' + (cls || '') + '"><span>' + label + '</span><span class="v">' + value + '</span></div>';
+	const yen = v => man(v) + '万円';
+
+	// 退職金の欄。手取りを返し、行はそのまま h に足す
+	function retireLines(amount, deduction, taxAmount, adjusted) {
+		return rline('退職金', yen(amount), 'dim') +
+			rline('退職所得控除' + (adjusted ? '（調整後）' : ''), '−' + yen(deduction), 'dim') +
+			rline('税額', '−' + yen(taxAmount), 'dim') +
+			rline('退職金の手取り', yen(amount - taxAmount), 'sub');
+	}
+
 	// 一時金の内訳
 	const L = cmp.lump;
-	let h = '<div class="rline dim"><span>iDeCoの受取額</span><span class="v">' + man(idecoAmount) + '万円</span></div>';
+	const hasRetire = L.retire.amount > 0;
+	let h = '';
 	if (L.sameYear) {
-		h += '<div class="rline dim"><span>退職金と合算</span><span class="v">＋' + man(L.retire.amount) + '万円</span></div>' +
-			'<div class="rline dim"><span>退職所得控除（通算）</span><span class="v">−' + man(L.combined.deduction) + '万円</span></div>' +
-			'<div class="rline"><span>所得税・住民税</span><span class="v">' + man(L.tax) + '万円</span></div>';
+		/* 同じ年に受け取ると1つの退職所得に合算されるので、
+		   iDeCo分と退職金分に税額を割り振れない。分けずに出す */
+		h = rline('iDeCoの受取額', yen(idecoAmount), 'dim') +
+			rline('退職金', '＋' + yen(L.retire.amount), 'dim') +
+			rline('退職所得控除（通算）', '−' + yen(L.combined.deduction), 'dim') +
+			rline('税額', '−' + yen(L.tax), 'dim') +
+			rline('手取り合計', yen(L.net), 'total') +
+			'<div class="split-note">同じ年に受け取るため、iDeCoと退職金は合算して1つの退職所得になります（税額はどちらの分か分けられません）</div>';
 	} else {
-		h += '<div class="rline dim"><span>退職所得控除' + (L.adjusted === 'ideco' ? '（調整後）' : '') + '</span><span class="v">−' + man(L.ideco.deduction) + '万円</span></div>' +
-			'<div class="rline"><span>iDeCoの税額</span><span class="v">' + man(L.ideco.tax + L.ideco.inhabitTax) + '万円</span></div>';
-		if (L.retire.amount > 0) {
-			h += '<div class="rline dim"><span>退職金の控除' + (L.adjusted === 'retire' ? '（調整後）' : '') + '</span><span class="v">−' + man(L.retire.deduction) + '万円</span></div>' +
-				'<div class="rline"><span>退職金の税額</span><span class="v">' + man(L.retire.tax + L.retire.inhabitTax) + '万円</span></div>';
+		const idecoTax = L.ideco.tax + L.ideco.inhabitTax;
+		h = rline('iDeCoの受取額', yen(idecoAmount), 'dim') +
+			rline('退職所得控除' + (L.adjusted === 'ideco' ? '（調整後）' : ''), '−' + yen(L.ideco.deduction), 'dim') +
+			rline('税額', '−' + yen(idecoTax), 'dim') +
+			rline('iDeCoの手取り', yen(idecoAmount - idecoTax), hasRetire ? 'sub' : 'total');
+		if (hasRetire) {
+			h += retireLines(L.retire.amount, L.retire.deduction,
+				L.retire.tax + L.retire.inhabitTax, L.adjusted === 'retire');
+			h += rline('合計', yen(L.net), 'total');
 		}
 	}
-	h += '<div class="rline total"><span>手取り合計</span><span class="v">' + man(L.net) + '万円</span></div>';
 	if (L.tax === 0) h += '<div class="zero-note">控除の範囲に収まるため非課税です</div>';
 	$('lumpDetail').innerHTML = h;
 
 	// 年金の内訳
 	const A = cmp.annuity;
 	const d = A.detail;
-	let h2 = '<div class="rline dim"><span>1年あたりの受取額</span><span class="v">' + man(d.perYear) + '万円 × ' + d.years + '年</span></div>';
+	let h2 = rline('1年あたりの受取額', man(d.perYear) + '万円 × ' + d.years + '年', 'dim');
 	/* 受け取り終わるまで残りの資産は運用が続くので、総額は受給開始時の残高より多い。
 	   一時金と比べるときにここが効くので、増える分を明示する */
 	if (d.growth > 0) {
-		h2 += '<div class="rline dim"><span>受取中の運用で増える分</span><span class="v">＋' + man(d.growth) + '万円</span></div>' +
-			'<div class="rline dim"><span>受け取る総額</span><span class="v">' + man(d.gross) + '万円</span></div>';
+		h2 += rline('受取中の運用で増える分', '＋' + yen(d.growth), 'dim') +
+			rline('受け取る総額', yen(d.gross), 'dim');
 	}
-	h2 += '<div class="rline dim"><span>増える雑所得（年）</span><span class="v">' + man(d.rows.length ? d.rows[0].misc : 0) + '万円</span></div>' +
-		'<div class="rline"><span>iDeCoの税額（' + d.years + '年の合計）</span><span class="v">' + man(d.tax) + '万円</span></div>';
-	if (cfg.retireAmount > 0) {
-		h2 += '<div class="rline"><span>退職金の税額</span><span class="v">' + man(A.tax - d.tax) + '万円</span></div>';
+	h2 += rline('増える雑所得（年）', yen(d.rows.length ? d.rows[0].misc : 0), 'dim') +
+		rline('税額（' + d.years + '年の合計）', '−' + yen(d.tax), 'dim') +
+		rline('iDeCoの手取り', yen(d.net), hasRetire ? 'sub' : 'total');
+	if (hasRetire) {
+		/* 年金で受け取る場合、iDeCoは退職所得控除を使わないので
+		   退職金側の控除は調整されない（満額のまま） */
+		h2 += retireLines(cfg.retireAmount, Tax.retireDeduction(L.retireYears),
+			A.tax - d.tax, false);
+		h2 += rline('合計', yen(A.net), 'total');
 	}
-	h2 += '<div class="rline total"><span>手取り合計</span><span class="v">' + man(A.net) + '万円</span></div>';
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 
@@ -445,9 +476,12 @@ function update() {
 	$('annuityBox').classList.toggle('dim', !isAnnuity);
 
 	const chosen = isAnnuity ? A : L;
+	/* 大きく出す数字には退職金も含まれるので、何の合計なのかを名前に書く */
+	const scope = hasRetire ? 'iDeCo＋退職金' : 'iDeCo';
 	$('grandLabel').textContent = isAnnuity
-		? '年金で受け取ったときの手取り合計'
-		: '一時金で受け取ったときの手取り合計';
+		? '年金で受け取ったときの手取り（' + scope + '）'
+		: '一時金で受け取ったときの手取り（' + scope + '）';
+	$('totalLabel').textContent = '上の手取り ＋ 掛金の節税額';
 	$('grandVal').innerHTML = man(chosen.net) + '<small>万円</small>';
 	/* 受け取る額と、拠出の途中で軽くなった税金の合計。
 	   掛金そのものは自分で出しているので「得」ではない（節税分だけが得）。
@@ -473,7 +507,7 @@ function update() {
 	state.bestAge = bestAge;
 	$('chartNote').textContent =
 		'受け取る年齢を遅らせると運用期間と拠出期間が延びる一方、退職金との間隔が変わって控除の調整も動きます。' +
-		'手取りと節税額を合わせた額では ' + bestAge + '歳 が最大（' + man(best) + '万円）です。';
+		'手取り（' + scope + '）と節税額を合わせた額では ' + bestAge + '歳 が最大（' + man(best) + '万円）です。';
 	renderChart(sweep);
 	if (chart) chart.draw();
 
