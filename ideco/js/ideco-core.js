@@ -138,6 +138,19 @@ function adjustedDeduction(ownYears, overlap, tax) {
 	return Math.max(0, full - tax.retireDeduction(overlap));
 }
 
+/* iDeCoが無かった場合の、退職金だけにかかる税額。
+   控除は勤続年数のぶんを満額使える（削る相手がいないため）。
+
+   同じ年に受け取ると合算されて1つの退職所得になり、税額を
+   iDeCo分と退職金分に割り振ることはできない。それでも
+   「iDeCoをやったことで税額がいくら変わったか」なら、この額との差で出せる。 */
+function retireOnlyTax(cfg, tax) {
+	if (!(cfg.retireAmount > 0)) return 0;
+	const years = Math.max(0, Math.floor(cfg.retireAge - cfg.hireAge));
+	const t = tax.calcTax(cfg.retireAmount, tax.retireDeduction(years));
+	return t.tax + t.inhabitTax;
+}
+
 /**
  * 一時金で受け取ったときの税額。iDeCoと退職金の受取順・間隔で、
  * どちらの控除が削られるかが変わる。
@@ -204,6 +217,12 @@ function lumpSumTax(cfg, tax) {
 		: r.ideco.tax + r.ideco.inhabitTax + r.retire.tax + r.retire.inhabitTax;
 	r.gross = cfg.idecoAmount + (cfg.retireAmount || 0);
 	r.net = r.gross - r.tax;
+
+	/* iDeCoをやらなかった場合との差。合算されて按分できない場合でも、
+	   これなら出せる。加入期間が勤続期間より長いと通算年数が延びて控除が増え、
+	   退職金の税額がむしろ下がることがあるので、マイナスにもなりうる */
+	r.taxWithoutIdeco = retireOnlyTax(cfg, tax);
+	r.taxByIdeco = r.tax - r.taxWithoutIdeco;
 	return r;
 }
 
@@ -270,12 +289,11 @@ function annuityTax(cfg, tax) {
 function compare(cfg, tax) {
 	const lump = lumpSumTax(cfg, tax);
 
-	// 年金受取: iDeCoは分割、退職金は一時金のまま（控除の調整は起きない）
+	/* 年金受取: iDeCoは分割、退職金は一時金のまま。
+	   iDeCoが退職所得控除を使わないので、退職金側の控除は調整されない
+	   ＝ iDeCoが無かった場合と同じ税額になる */
 	const annuity = annuityTax(cfg, tax);
-	const retireOnly = cfg.retireAmount > 0
-		? tax.calcTax(cfg.retireAmount, tax.retireDeduction(Math.max(0, Math.floor(cfg.retireAge - cfg.hireAge))))
-		: { tax: 0, inhabitTax: 0 };
-	const retireTax = retireOnly.tax + retireOnly.inhabitTax;
+	const retireTax = retireOnlyTax(cfg, tax);
 
 	/* 年金側の総額は、受け取り終わるまでの運用ぶんだけ一時金より多い。
 	   退職金は一時金のまま受け取る前提なので、そのまま足す */
@@ -286,7 +304,10 @@ function compare(cfg, tax) {
 			detail: annuity,
 			tax: annuity.tax + retireTax,
 			gross: annuityGross,
-			net: annuityGross - annuity.tax - retireTax
+			net: annuityGross - annuity.tax - retireTax,
+			// 年金なら退職金側は調整されないので、増えるのはiDeCo分の税額だけ
+			taxWithoutIdeco: retireTax,
+			taxByIdeco: annuity.tax
 		}
 	};
 }
@@ -297,7 +318,7 @@ if (typeof module !== 'undefined' && module.exports) {
 		contributionLimit: contributionLimit, joinAgeLimit: joinAgeLimit,
 		taxSaving: taxSaving, accumulate: accumulate,
 		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction,
-		lumpSumTax: lumpSumTax, annuityPayment: annuityPayment,
+		lumpSumTax: lumpSumTax, retireOnlyTax: retireOnlyTax, annuityPayment: annuityPayment,
 		annuityTax: annuityTax, compare: compare,
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,

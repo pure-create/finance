@@ -9,7 +9,7 @@ const assert = require('node:assert');
 const tax = require('../common/tax-core.js');
 const {
 	contributionLimit, joinAgeLimit, taxSaving, accumulate,
-	overlapYears, adjustedDeduction, lumpSumTax, annuityPayment, annuityTax, compare,
+	overlapYears, adjustedDeduction, lumpSumTax, retireOnlyTax, annuityPayment, annuityTax, compare,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST
 } = require('../ideco/js/ideco-core.js');
@@ -533,4 +533,81 @@ test('比較：利回りがあると年金の総額は一時金より多い', ()
 	// 退職金の額は両方に同じだけ含まれる
 	near(c.annuity.gross - c.lump.gross, c.annuity.detail.growth, 1e-6);
 	near(c.annuity.net, c.annuity.gross - c.annuity.tax, 1e-6);
+});
+
+/* ---------- iDeCoをやらなかった場合との差 ---------- */
+
+test('基準：iDeCoが無ければ退職金は満額の控除を使える', () => {
+	// 勤続38年 → 控除2,060万円。退職金2,000万円なら非課税
+	assert.strictEqual(retireOnlyTax({ retireAmount: 20000000, hireAge: 22, retireAge: 60 }, tax), 0);
+	// 退職金が控除を超えれば税額が出る
+	assert.ok(retireOnlyTax({ retireAmount: 30000000, hireAge: 22, retireAge: 60 }, tax) > 0);
+	// 退職金が無ければ0
+	assert.strictEqual(retireOnlyTax({ retireAmount: 0, hireAge: 22, retireAge: 60 }, tax), 0);
+});
+
+test('同じ年に受け取っても、iDeCoで増えた税額は出せる', () => {
+	/* 合算されると税額をiDeCo分と退職金分に割り振れないが、
+	   「iDeCoが無かった場合」との差なら出せる。
+	   60歳で両方：通算38年の控除2,060万円、合算3,000万円
+	     退職所得 (3,000万−2,060万)÷2 ＝ 470万円 → 993,262円
+	   iDeCoが無ければ退職金2,000万円は控除2,060万円以下で非課税 */
+	const r = lumpSumTax(Object.assign({}, lumpBase, { idecoPayAge: 60, retireAge: 60 }), tax);
+	assert.strictEqual(r.sameYear, true);
+	assert.strictEqual(r.taxWithoutIdeco, 0, 'iDeCoが無ければ非課税');
+	near(r.taxByIdeco, r.tax, 1, 'この場合は税額のすべてがiDeCoによる増加');
+	near(r.taxByIdeco, 993262, 3);
+});
+
+test('退職金側が削られた分も、iDeCoによる増加として出る', () => {
+	/* iDeCoを61歳・退職金を70歳（9年内なので退職金側の控除が削られる）。
+	   iDeCoが無ければ退職金は勤続48年の控除2,760万円で非課税 */
+	const r = lumpSumTax(Object.assign({}, lumpBase, { idecoPayAge: 61, retireAge: 70 }), tax);
+	assert.strictEqual(r.adjusted, 'retire');
+	assert.strictEqual(r.taxWithoutIdeco, 0);
+	near(r.taxByIdeco, r.tax, 1);
+	// 退職金側にも税額が出ており、それもiDeCoが原因
+	assert.ok(r.retire.tax + r.retire.inhabitTax > 0, '削られた結果、退職金にも課税されている');
+});
+
+test('加入期間が勤続期間より長いと、税額がむしろ減ることがある', () => {
+	/* 25歳からiDeCo、40〜60歳が勤続。同じ年（60歳）に受け取ると
+	   通算35年ぶんの控除（1,850万円）が使え、勤続20年だけの
+	   控除（800万円）より大きくなる。iDeCoを足したのに税額は下がる */
+	const cfg = {
+		idecoAmount: 1000000, idecoJoinAge: 25, idecoPayAge: 60,
+		retireAmount: 20000000, hireAge: 40, retireAge: 60
+	};
+	const r = lumpSumTax(cfg, tax);
+	assert.strictEqual(r.sameYear, true);
+	assert.ok(r.taxWithoutIdeco > 0, '勤続20年だけでは控除が足りず課税される');
+	assert.ok(r.taxByIdeco < 0, 'iDeCoによって税額が減っている（差はマイナス）');
+	assert.ok(r.tax < r.taxWithoutIdeco);
+});
+
+test('年金で受け取れば、退職金の税額はiDeCoが無い場合と同じ', () => {
+	const cfg = {
+		idecoAmount: 10000000, idecoJoinAge: 40, idecoPayAge: 65,
+		retireAmount: 30000000, hireAge: 22, retireAge: 60,
+		annuityYears: 10, publicPension: 1800000, yieldRate: 3
+	};
+	const c = compare(cfg, tax);
+	// 年金はiDeCoが退職所得控除を使わないので、退職金側は調整されない
+	assert.strictEqual(c.annuity.taxWithoutIdeco, retireOnlyTax(cfg, tax));
+	near(c.annuity.taxByIdeco, c.annuity.detail.tax, 1e-6, '増えるのはiDeCo分の税額だけ');
+	// 一時金だとiDeCo側の控除が削られるぶん、増え方が大きい
+	assert.ok(c.lump.taxByIdeco > c.annuity.taxByIdeco - 1e-6 || c.lump.tax !== c.annuity.tax);
+});
+
+test('どの受取年齢でも、税額の増加は「合計 − 基準」で一貫している', () => {
+	for (let payAge = PAYOUT_AGE_MIN; payAge <= PAYOUT_AGE_MAX; payAge++) {
+		const cfg = {
+			idecoAmount: 10000000, idecoJoinAge: 40, idecoPayAge: payAge,
+			retireAmount: 30000000, hireAge: 22, retireAge: 60,
+			annuityYears: 10, publicPension: 1800000, yieldRate: 3
+		};
+		const c = compare(cfg, tax);
+		near(c.lump.taxByIdeco, c.lump.tax - c.lump.taxWithoutIdeco, 1e-6, payAge + '歳の一時金');
+		near(c.annuity.taxByIdeco, c.annuity.tax - c.annuity.taxWithoutIdeco, 1e-6, payAge + '歳の年金');
+	}
 });

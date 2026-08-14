@@ -152,7 +152,8 @@ body{padding:16px;min-height:100vh}
 .rline.total{border-top:2px solid var(--border);margin-top:5px;padding-top:5px;font-weight:700}
 .rline.total .v{font-size:15px}
 /* 合算されて分けられない場合の断り */
-.split-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6}
+.split-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7}
+.split-note b{color:var(--text);font-variant-numeric:tabular-nums}
 .zero-note{font-size:11px;color:var(--idc-gain);font-weight:600;margin-top:5px}
 
 .grand{

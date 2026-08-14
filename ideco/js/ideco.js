@@ -412,6 +412,21 @@ function update() {
 		'<div class="rline ' + (cls || '') + '"><span>' + label + '</span><span class="v">' + value + '</span></div>';
 	const yen = v => man(v) + '万円';
 
+	/* 「iDeCoをやらなかった場合」との差。同じ年に受け取ると税額を按分できないが、
+	   この差なら出せる。退職金側の控除が削られた分も、原因はiDeCoなのでここに乗る。
+	   加入期間が勤続期間より長いと控除が増えて税額が下がることもあるので、
+	   増減の向きで文を変える */
+	function diffNote(r, lead) {
+		if (!(r.retire.amount > 0)) return '';
+		const base = 'iDeCoを受け取らなければ、退職金にかかる税額は <b>' + yen(r.taxWithoutIdeco) + '</b> でした。';
+		const diff = Math.abs(r.taxByIdeco);
+		if (diff < 5000) return '<div class="split-note">' + lead + base + '</div>';
+		const dir = r.taxByIdeco > 0
+			? 'iDeCoを受け取ることで <b>' + yen(diff) + '</b> 増えています。'
+			: '加入期間のぶん通算の勤続年数が延びて控除が増えるため、iDeCoを受け取ると逆に <b>' + yen(diff) + '</b> 減ります。';
+		return '<div class="split-note">' + lead + base + dir + '</div>';
+	}
+
 	// 退職金の欄。手取りを返し、行はそのまま h に足す
 	function retireLines(amount, deduction, taxAmount, adjusted) {
 		return rline('退職金', yen(amount), 'dim') +
@@ -432,7 +447,8 @@ function update() {
 			rline('退職所得控除（通算）', '−' + yen(L.combined.deduction), 'dim') +
 			rline('税額', '−' + yen(L.tax), 'dim') +
 			rline('手取り合計', yen(L.net), 'total') +
-			'<div class="split-note">同じ年に受け取るため、iDeCoと退職金は合算して1つの退職所得になります（税額はどちらの分か分けられません）</div>';
+			diffNote(L, '同じ年に受け取るため、iDeCoと退職金は合算して1つの退職所得になります。' +
+				'税額をどちらの分か割り振ることはできませんが、');
 	} else {
 		const idecoTax = L.ideco.tax + L.ideco.inhabitTax;
 		h = rline('iDeCoの受取額', yen(idecoAmount), 'dim') +
@@ -446,6 +462,7 @@ function update() {
 		}
 	}
 	if (L.tax === 0) h += '<div class="zero-note">控除の範囲に収まるため非課税です</div>';
+	else if (!L.sameYear && hasRetire) h += diffNote(L, '');
 	$('lumpDetail').innerHTML = h;
 
 	// 年金の内訳
