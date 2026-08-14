@@ -345,6 +345,14 @@ test('iDeCo：注記の重複期間のルールが定数と一致する', () => 
 	assert.strictEqual(Number(later[1]), ideco.OVERLAP_YEARS_RETIRE_FIRST, '退職金が先の場合');
 });
 
+test('iDeCo：注記の短期退職手当等の条件が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /加入期間が(\d+)年以下の場合は短期退職手当等にあたり、残りのうち([\d,]+)万円を超える部分/,
+		'ideco/index.html');
+	assert.strictEqual(Number(m[1]), tax.SHORT_TENURE_YEARS, '短期の判定になる勤続年数');
+	assert.strictEqual(yen(m[2]) * 10000, tax.SHORT_TENURE_HALF_LIMIT, '2分の1にできる上限');
+});
+
 test('iDeCo：受取年齢の入力欄の範囲が定数と一致する', () => {
 	const html = read('ideco/index.html');
 	const m = must(html, /id="payAge"[^>]*min="(\d+)"[^>]*max="(\d+)"/, 'ideco/index.html');
@@ -415,7 +423,7 @@ test('iDeCo：注記の「110万円まで非課税」が公的年金等控除の
 	/* 65歳以上は収入110万円までが非課税、という説明。
 	   tax-core の速算表の下端（65歳以上の最初の区分）と同じでなければならない */
 	const m = must(prose('ideco/index.html'),
-		/65歳以上は、公的年金等の収入が([\d,]+)万円までなら課税されません/, 'ideco/index.html');
+		/65歳以上なら合わせて([\d,]+)万円までは課税されない/, 'ideco/index.html');
 	const stated = yen(m[1]) * 10000;
 	const table = tax.PENSION_INCOME_BRACKETS.from65;
 	const threshold = table[table.length - 2].min;   // 最後は min:0 の受け皿

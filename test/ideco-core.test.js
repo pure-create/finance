@@ -128,13 +128,36 @@ test('積立：節税額も年ごとに積み上がる', () => {
 	near(a.saved, 83959 * 5, 10, '5年分の節税額');
 });
 
-test('積立：掛金は年初に入れ、その年の利回りが付く', () => {
+test('積立：掛金は年の真ん中に入れ、その年は半年分の利回りが付く', () => {
+	/* 掛金は毎月払うので、年初に一括で入れて1年分の利回りを付けると多く出すぎる。
+	   1年目の掛金は 1.03^4.5、2年目は 1.03^3.5、…と半年ぶん短く回る */
 	const a = accumulate(Object.assign({}, baseAcc, { yieldRate: 3 }), tax);
-	// 276,000×(1.03^5 + 1.03^4 + … + 1.03^1)
 	let expected = 0;
-	for (let i = 1; i <= 5; i++) expected += 276000 * Math.pow(1.03, i);
+	for (let i = 1; i <= 5; i++) expected += 276000 * Math.pow(1.03, i - 0.5);
 	near(a.balance, expected, 1e-6, '5年後の残高');
 	assert.ok(a.gain > 0, '運用益が出ている');
+});
+
+test('積立：もとからある残高には1年分の利回りが付く', () => {
+	// 拠出0・利回り10%・1年 → 100万円がそのまま110万円になる
+	const a = accumulate(Object.assign({}, baseAcc, {
+		payAge: 41, monthly: 0, yieldRate: 10, initialBalance: 1000000
+	}), tax);
+	near(a.balance, 1100000, 1e-6);
+});
+
+test('積立：毎月ずつ積み上げた場合とほぼ一致する', () => {
+	/* 年の真ん中に置くのは、毎月の積み上げの近似として妥当かの確認。
+	   利回りが高いほど差は開くが、8%でも0.5%は超えない */
+	for (const rate of [1, 3, 5, 8]) {
+		const a = accumulate(Object.assign({}, baseAcc, { payAge: 65, yieldRate: rate }), tax);
+		let monthly = 0;
+		const mr = Math.pow(1 + rate / 100, 1 / 12) - 1;
+		for (let m = 0; m < 25 * 12; m++) monthly = (monthly + 23000) * (1 + mr);
+		const diff = Math.abs(a.balance / monthly - 1);
+		assert.ok(diff < 0.005, '利回り' + rate + '%で差が ' + (diff * 100).toFixed(2) + '%');
+		assert.ok(a.balance < monthly, '毎月より少なめ（多く見せない側）に出るはず');
+	}
 });
 
 test('積立：限度額を超える掛金は限度額まで', () => {
@@ -196,6 +219,16 @@ test('調整後の控除：自分の年数の控除から重複年数の控除�
 	assert.strictEqual(adjustedDeduction(38, 20, tax), 12600000);
 	// 重複なしなら満額
 	assert.strictEqual(adjustedDeduction(38, 0, tax), tax.retireDeduction(38));
+});
+
+test('調整後の控除：重複が1年なら引くのは40万円', () => {
+	/* 引く側に80万円の最低保障を効かせない。効かせると、重複0年→1年で
+	   いきなり80万円減り、1年→2年では変わらないという段差ができてしまう */
+	assert.strictEqual(adjustedDeduction(6, 1, tax), 2400000 - 400000, '加入6年・重複1年');
+	assert.strictEqual(adjustedDeduction(6, 2, tax), 2400000 - 800000, '重複2年で80万円');
+	// 重複が1年増えるごとに40万円ずつ減っていく
+	assert.strictEqual(adjustedDeduction(25, 0, tax) - adjustedDeduction(25, 1, tax), 400000);
+	assert.strictEqual(adjustedDeduction(25, 1, tax) - adjustedDeduction(25, 2, tax), 400000);
 });
 
 test('調整後の控除：マイナスにはならない', () => {
@@ -306,6 +339,52 @@ test('一時金：退職金が無ければiDeCoだけを普通に計算する', 
 	assert.strictEqual(r.ideco.deduction, tax.retireDeduction(25));
 	assert.strictEqual(r.tax, 0);
 	assert.strictEqual(r.net, 10000000);
+});
+
+test('一時金：加入5年以下は短期退職手当等になる', () => {
+	/* 62歳加入・67歳受取（加入5年）・800万円
+	     控除 5年×40万 ＝ 200万円 → 残額600万円
+	     300万円までは半分の150万円、超えた300万円はそのまま ＝ 450万円
+	       所得税 (450万×20%−427,500)×1.021 ＝ 472,500×1.021 ＝ 482,422.5 → 482,422
+	       住民税 450,000
+	   半分にするだけなら退職所得300万円で、税額は 506,752円 にしかならない */
+	const short = lumpSumTax({
+		idecoAmount: 8000000, idecoJoinAge: 62, idecoPayAge: 67,
+		retireAmount: 0, hireAge: 22, retireAge: 60
+	}, tax);
+	assert.strictEqual(short.idecoYears, 5);
+	assert.strictEqual(short.ideco.deduction, 2000000);
+	near(short.ideco.tax, 482422, 2, 'iDeCoの所得税');
+	assert.strictEqual(short.ideco.inhabitTax, 450000, 'iDeCoの住民税');
+	assert.strictEqual(short.shortTenure, true, '画面で断るための印');
+	assert.strictEqual(short.shortTenureYears, 5);
+
+	// 加入6年なら制限が外れ、残額の半分だけが課税される
+	const six = lumpSumTax({
+		idecoAmount: 8000000, idecoJoinAge: 61, idecoPayAge: 67,
+		retireAmount: 0, hireAge: 22, retireAge: 60
+	}, tax);
+	assert.strictEqual(six.idecoYears, 6);
+	assert.ok(six.tax < short.tax, '控除は大きく、制限も外れるので税額は下がる');
+});
+
+test('一時金：加入5年以下でも残額が300万円までなら普通に半分', () => {
+	/* 62歳加入・67歳受取・500万円 → 控除200万円、残額300万円ちょうど
+	     退職所得 150万円
+	       所得税 150万×5%×1.021 ＝ 76,575 ／ 住民税 150,000 */
+	const r = lumpSumTax({
+		idecoAmount: 5000000, idecoJoinAge: 62, idecoPayAge: 67,
+		retireAmount: 0, hireAge: 22, retireAge: 60
+	}, tax);
+	near(r.ideco.tax, 76575, 2);
+	assert.strictEqual(r.ideco.inhabitTax, 150000);
+	assert.strictEqual(r.shortTenure, false, '制限が効いていないので断らない');
+});
+
+test('一時金：加入25年なら額が大きくても短期退職手当等にならない', () => {
+	const r = lumpSumTax(Object.assign({}, lumpBase, { retireAmount: 0, idecoAmount: 30000000 }), tax);
+	assert.strictEqual(r.idecoYears, 25);
+	assert.strictEqual(r.shortTenure, false);
 });
 
 /* ---------- 出口：年金（分割） ---------- */

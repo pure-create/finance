@@ -327,6 +327,23 @@ function update() {
 	const shared = ['employee', 'corporate', 'publicSv'].indexOf(cfg.category) >= 0;
 	$('otherPlanField').style.display = shared ? '' : 'none';
 
+	/* 加入した年齢は、これから拠出を始める「現在の年齢」より後には置けない。
+	   積立は現在の年齢から始まるので、後ろに置くと積立期間はそのままで
+	   退職所得控除の年数だけが短くなり、食い違ったまま計算されてしまう。
+	   受給開始年齢もこの値から決まるので、下の判定より前に直しておく */
+	const joinAgeEl = $('joinAge');
+	joinAgeEl.max = String(cfg.startAge);
+	const joinWarn = $('joinAgeWarn');
+	if (cfg.idecoJoinAge > cfg.startAge) {
+		joinWarn.className = 'note warn';
+		joinWarn.textContent = '加入した年齢は現在の年齢（' + cfg.startAge +
+			'歳）より後にはできません。' + cfg.startAge + '歳から加入するものとして計算しています。';
+		cfg.idecoJoinAge = cfg.startAge;
+	} else {
+		joinWarn.className = 'note';
+		joinWarn.textContent = '';
+	}
+
 	/* 受給を始められる年齢は、加入した年齢（＝通算加入者等期間）で決まる。
 	   入力欄の下限をその場で動かし、下回っていれば知らせたうえで、
 	   計算は受け取れる最も早い年齢に寄せる（選べない条件の数字を出さない） */
@@ -498,6 +515,15 @@ function update() {
 		}
 	}
 	h += idecoTaxRow(L.taxByIdeco);
+	/* 加入5年以下は短期退職手当等になり、控除を引いた残りのうち300万円を
+	   超える部分が半分にならない。税額だけでは急に増えた理由が読み取れない */
+	if (L.shortTenure) {
+		h += '<div class="split-note">' +
+			(L.sameYear ? '合算した勤続年数が' : '加入期間が') + L.shortTenureYears +
+			'年しかないため<b>短期退職手当等</b>にあたり、' +
+			'退職所得控除を引いた残りのうち' + man(Tax.SHORT_TENURE_HALF_LIMIT) +
+			'万円を超える部分は半分になりません。</div>';
+	}
 	if (L.tax === 0) h += '<div class="zero-note">控除の範囲に収まるため非課税です</div>';
 	if (hasRetire) {
 		h += diffNote(L, L.sameYear

@@ -62,29 +62,60 @@ function inhabitantTax(taxableIncome) {
 
 /* ---------- 退職所得 ---------- */
 
+/* 退職所得控除額の元になる金額（80万円の最低保障を当てる前）。
+   前に受けた退職手当等との重複期間ぶんを差し引くときは、こちらを使う。
+
+   最低保障は「計算した控除額が80万円に満たない場合」の規定で、
+   差し引く重複期間ぶん（所得税法施行令70条1項）には及ばない。
+   分けずに retireDeduction を使うと、重複が1年のときだけ
+   40万円ではなく80万円が引かれてしまう（2年でも80万円なので段差が二重になる） */
+function retireDeductionBase(years) {
+	if (years <= 20) {
+		return years * 400000;
+	}
+	return 8000000 + (years - 20) * 700000;
+}
+
 // 退職所得控除額（勤続年数から。20年までは1年40万円、超えた分は1年70万円。下限80万円）
 function retireDeduction(years) {
-	var koujo;
-	if (years <= 20) {
-		koujo = years * 400000;
-	} else {
-		koujo = 8000000 + (years - 20) * 700000;
+	return Math.max(800000, retireDeductionBase(years));
+}
+
+/* 短期退職手当等（令和4年分以後）。
+   役員等以外で勤続年数が5年以下の場合、退職所得控除を引いた残額のうち
+   300万円までは1/2にできるが、それを超える部分は1/2にしない。
+   iDeCoの一時金も加入期間を勤続年数として同じ判定を受けるので、
+   60歳以降に加入して5年で受け取る場合などが当てはまる。
+   （国税庁 No.1420「退職金を受け取ったとき」） */
+var SHORT_TENURE_YEARS = 5;
+var SHORT_TENURE_HALF_LIMIT = 3000000;
+
+/* 退職所得の金額（1,000円未満を切り捨てる前）。
+
+   years を渡したときだけ短期退職手当等の判定をする。渡さなければ必ず1/2にする
+   （退職手当ページは勤続5年以下で残額が300万円を超えることがないため渡していない）。
+   役員等としての勤続が5年以下の場合（特定役員退職手当等。1/2が一切ない）は扱わない */
+function retireIncome(price, koujo, years) {
+	var rest = price - koujo;
+	if (rest <= 0) {
+		return 0;
 	}
-	if (koujo < 800000) {
-		koujo = 800000;
+	if (typeof years === 'number' && years <= SHORT_TENURE_YEARS && rest > SHORT_TENURE_HALF_LIMIT) {
+		return SHORT_TENURE_HALF_LIMIT / 2 + (rest - SHORT_TENURE_HALF_LIMIT);
 	}
-	return koujo;
+	return rest / 2;
 }
 
 /* 退職手当の所得税・住民税。
    退職所得は「（収入−退職所得控除）÷2」で、他の所得と分離して課税する。
    控除額を引数で受けるので、前に受けた退職手当との重複期間で
-   調整した控除額（iDeCoの10年ルール）もそのまま渡せる */
-function calcTax(price, koujo) {
-	if (price <= koujo) {
+   調整した控除額（iDeCoの10年ルール）もそのまま渡せる。
+   years は短期退職手当等の判定用（上の retireIncome を参照） */
+function calcTax(price, koujo, years) {
+	var kazei = roundedTaxableIncome(retireIncome(price, koujo, years));
+	if (kazei <= 0) {
 		return { tax: 0, inhabitTax: 0 };
 	}
-	var kazei = roundedTaxableIncome((price - koujo) / 2);
 	return { tax: incomeTax(kazei), inhabitTax: inhabitantTax(kazei) };
 }
 
@@ -142,10 +173,14 @@ var Tax = {
 	roundedTaxableIncome: roundedTaxableIncome,
 	incomeTax: incomeTax,
 	inhabitantTax: inhabitantTax,
+	retireDeductionBase: retireDeductionBase,
 	retireDeduction: retireDeduction,
+	retireIncome: retireIncome,
 	calcTax: calcTax,
 	pensionMiscIncome: pensionMiscIncome,
-	pensionDeduction: pensionDeduction
+	pensionDeduction: pensionDeduction,
+	SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
+	SHORT_TENURE_HALF_LIMIT: SHORT_TENURE_HALF_LIMIT
 };
 if (typeof window !== 'undefined') window.Tax = Tax;
 
@@ -155,13 +190,17 @@ if (typeof module !== 'undefined' && module.exports) {
 		roundedTaxableIncome: roundedTaxableIncome,
 		incomeTax: incomeTax,
 		inhabitantTax: inhabitantTax,
+		retireDeductionBase: retireDeductionBase,
 		retireDeduction: retireDeduction,
+		retireIncome: retireIncome,
 		calcTax: calcTax,
 		pensionMiscIncome: pensionMiscIncome,
 		pensionDeduction: pensionDeduction,
 		INCOME_TAX_BRACKETS: INCOME_TAX_BRACKETS,
 		INHABITANT_TAX_RATE: INHABITANT_TAX_RATE,
 		RECONSTRUCTION_RATE: RECONSTRUCTION_RATE,
-		PENSION_INCOME_BRACKETS: PENSION_INCOME_BRACKETS
+		PENSION_INCOME_BRACKETS: PENSION_INCOME_BRACKETS,
+		SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
+		SHORT_TENURE_HALF_LIMIT: SHORT_TENURE_HALF_LIMIT
 	};
 }

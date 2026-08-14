@@ -8,9 +8,10 @@ const test = require('node:test');
 const assert = require('node:assert');
 const {
 	roundedTaxableIncome, incomeTax, inhabitantTax,
-	retireDeduction, calcTax,
+	retireDeductionBase, retireDeduction, retireIncome, calcTax,
 	pensionMiscIncome, pensionDeduction,
-	INHABITANT_TAX_RATE, RECONSTRUCTION_RATE
+	INHABITANT_TAX_RATE, RECONSTRUCTION_RATE,
+	SHORT_TENURE_YEARS, SHORT_TENURE_HALF_LIMIT
 } = require('../common/tax-core.js');
 
 /* 所得税は最後に復興特別所得税ぶんの1.021を掛けて切り捨てるため、
@@ -110,6 +111,18 @@ test('退職所得控除：下限は80万円', () => {
 	assert.strictEqual(retireDeduction(3), 1200000, '下限を上回ったら計算どおり');
 });
 
+test('退職所得控除の元の額：80万円の最低保障が付かない', () => {
+	/* 前に受けた退職手当等との重複期間ぶんを差し引くのに使う。
+	   最低保障を効かせると、重複1年のときだけ40万円ではなく80万円が
+	   引かれてしまう（2年も80万円なので、段差が0年→1年で二重になる） */
+	assert.strictEqual(retireDeductionBase(1), 400000, '1年は40万円');
+	assert.strictEqual(retireDeductionBase(2), 800000, '2年で80万円');
+	assert.strictEqual(retireDeductionBase(0), 0, '0年なら引くものがない');
+	// 80万円を超えるところでは最低保障の有無で差が出ない
+	assert.strictEqual(retireDeductionBase(20), retireDeduction(20));
+	assert.strictEqual(retireDeductionBase(38), retireDeduction(38));
+});
+
 test('退職所得の税額：控除額以下なら課税されない', () => {
 	assert.deepStrictEqual(calcTax(8000000, 8000000), { tax: 0, inhabitTax: 0 }, '控除額ちょうど');
 	assert.deepStrictEqual(calcTax(5000000, 8000000), { tax: 0, inhabitTax: 0 }, '控除額未満');
@@ -135,6 +148,38 @@ test('退職所得の税額：所得税の速算表と同じ表を使ってい�
 	const koujo = 8000000;
 	taxNear(calcTax(koujo + 3900000, koujo).tax, incomeTax(1950000), '5%の上限');
 	taxNear(calcTax(koujo + 80000000, koujo).tax, incomeTax(40000000), '40%の上限');
+});
+
+/* ---------- 短期退職手当等（勤続5年以下） ---------- */
+
+test('短期退職手当等：判定は勤続5年以下・残額300万円超', () => {
+	assert.strictEqual(SHORT_TENURE_YEARS, 5);
+	assert.strictEqual(SHORT_TENURE_HALF_LIMIT, 3000000);
+});
+
+test('短期退職手当等：300万円を超える部分は2分の1にならない', () => {
+	/* 勤続5年・控除200万円・支給800万円 → 残額600万円
+	     300万円までは半分の150万円、超えた300万円はそのまま
+	     → 退職所得 450万円（半分にするだけなら300万円） */
+	assert.strictEqual(retireIncome(8000000, 2000000, 5), 4500000);
+	assert.strictEqual(retireIncome(8000000, 2000000, 6), 3000000, '6年なら普通に半分');
+});
+
+test('短期退職手当等：残額が300万円までなら普通に半分', () => {
+	// 残額ちょうど300万円 → 150万円。境目で飛ばない
+	assert.strictEqual(retireIncome(5000000, 2000000, 5), 1500000);
+	assert.strictEqual(retireIncome(2900000, 0, 5), 1450000);
+	// 300万円を1,000円超えると、超過分だけがそのまま乗る
+	assert.strictEqual(retireIncome(3001000, 0, 5), 1500000 + 1000);
+});
+
+test('短期退職手当等：勤続年数を渡さなければ判定しない', () => {
+	/* 退職手当ページは勤続5年以下で残額が300万円を超えることがないため
+	   渡していない。渡さなければ従来どおり必ず半分にする */
+	assert.strictEqual(retireIncome(8000000, 2000000), 3000000);
+	assert.strictEqual(calcTax(8000000, 2000000).inhabitTax, 300000);
+	// 渡すと税額が上がる（450万円の10%）
+	assert.strictEqual(calcTax(8000000, 2000000, 5).inhabitTax, 450000);
 });
 
 /* ---------- 公的年金等 ---------- */

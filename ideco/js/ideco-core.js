@@ -106,9 +106,16 @@ function taxSaving(taxableIncome, annualContribution, tax) {
 
 /* ---------- 積立 ---------- */
 
+/* 掛金を入れる時点。iDeCoの掛金は毎月払うのが普通なので、
+   その年の掛金は年の真ん中にまとめて入るものとして扱う。
+   年初に一括で入れると、まだ払っていない月の掛金にまで1年分の利回りが付き、
+   残高が実際より多く出てしまう（利回り3%で年1.4%ほど）。
+   毎月の積み上げをそのまま回した場合との差は、利回り3%で0.1%、8%でも0.3%ほど */
+const CONTRIBUTION_TIMING = 0.5; // 年の何割が過ぎた時点で入れるか
+
 /**
  * 拠出と運用の積み上げ。年ごとの残高・拠出累計・節税累計を返す。
- * 掛金は年初にまとめて入れ、その年の利回りが付くものとして扱う。
+ * すでにある残高には1年分、その年の掛金には半年分の利回りが付く。
  */
 function accumulate(cfg, tax) {
 	const startYear = cfg.startYear;
@@ -131,7 +138,7 @@ function accumulate(cfg, tax) {
 
 		const s = canPay ? taxSaving(cfg.taxableIncome, annual, tax).total : 0;
 
-		balance = (balance + annual) * (1 + rate);
+		balance = balance * (1 + rate) + annual * Math.pow(1 + rate, 1 - CONTRIBUTION_TIMING);
 		paid += annual;
 		saved += s;
 		rows.push({ age: age, year: year, limit: limit, contribution: annual, saving: s, balance: balance });
@@ -166,11 +173,23 @@ function overlapYears(aStart, aEnd, bStart, bEnd) {
 }
 
 /* 重複期間を差し引いた退職所得控除。
-   「自分の年数の控除額 − 重複年数の控除額」。マイナスにはしない */
+   「自分の年数の控除額 − 重複年数の控除額」。マイナスにはしない。
+
+   差し引く側は80万円の最低保障が付かない retireDeductionBase を使う。
+   最低保障は自分の控除額に対する規定で、重複ぶんには及ばないため
+   （retireDeduction を使うと、重複1年でも80万円が引かれてしまう） */
 function adjustedDeduction(ownYears, overlap, tax) {
 	const full = tax.retireDeduction(ownYears);
 	if (!(overlap > 0)) return full;
-	return Math.max(0, full - tax.retireDeduction(overlap));
+	return Math.max(0, full - tax.retireDeductionBase(overlap));
+}
+
+/* 短期退職手当等の制限が実際に効いたかどうか。
+   税額だけ見ても「なぜ半分にならないのか」が読み取れないので、
+   画面で断るために返す（控除を引いた残りが300万円以下なら効いていない） */
+function isShortTenure(amount, deduction, years, tax) {
+	return years <= tax.SHORT_TENURE_YEARS &&
+		amount - deduction > tax.SHORT_TENURE_HALF_LIMIT;
 }
 
 /* iDeCoが無かった場合の、退職金だけにかかる税額。
@@ -182,13 +201,16 @@ function adjustedDeduction(ownYears, overlap, tax) {
 function retireOnlyTax(cfg, tax) {
 	if (!(cfg.retireAmount > 0)) return 0;
 	const years = Math.max(0, Math.floor(cfg.retireAge - cfg.hireAge));
-	const t = tax.calcTax(cfg.retireAmount, tax.retireDeduction(years));
+	const t = tax.calcTax(cfg.retireAmount, tax.retireDeduction(years), years);
 	return t.tax + t.inhabitTax;
 }
 
 /**
  * 一時金で受け取ったときの税額。iDeCoと退職金の受取順・間隔で、
  * どちらの控除が削られるかが変わる。
+ *
+ * calcTax にはどの場合も勤続年数（iDeCoは加入年数）を渡す。5年以下だと
+ * 短期退職手当等になり、控除後の残額のうち300万円を超える部分が1/2にならない。
  *
  * cfg: { idecoAmount, idecoJoinAge, idecoPayAge,
  *        retireAmount, hireAge, retireAge }
@@ -204,7 +226,7 @@ function lumpSumTax(cfg, tax) {
 	// 退職金が無ければ、iDeCoだけを普通に計算する
 	if (!(cfg.retireAmount > 0)) {
 		const koujo = tax.retireDeduction(idecoYears);
-		const t = tax.calcTax(cfg.idecoAmount, koujo);
+		const t = tax.calcTax(cfg.idecoAmount, koujo, idecoYears);
 		r.ideco = { amount: cfg.idecoAmount, deduction: koujo, tax: t.tax, inhabitTax: t.inhabitTax };
 		r.retire = { amount: 0, deduction: 0, tax: 0, inhabitTax: 0 };
 	} else if (gap === 0) {
@@ -212,10 +234,11 @@ function lumpSumTax(cfg, tax) {
 		   控除は、重なりを除いた通算の勤続年数で1回分だけ使える */
 		r.sameYear = true;
 		r.overlap = overlap;
-		const totalYears = idecoYears + retireYears - overlap;
-		const koujo = tax.retireDeduction(Math.max(0, totalYears));
+		const totalYears = Math.max(0, idecoYears + retireYears - overlap);
+		const koujo = tax.retireDeduction(totalYears);
 		const amount = cfg.idecoAmount + cfg.retireAmount;
-		const t = tax.calcTax(amount, koujo);
+		// 合算して1つの退職所得になるので、短期の判定も通算年数で見る
+		const t = tax.calcTax(amount, koujo, totalYears);
 		r.combined = { amount: amount, deduction: koujo, tax: t.tax, inhabitTax: t.inhabitTax };
 		r.ideco = { amount: cfg.idecoAmount, deduction: koujo, tax: 0, inhabitTax: 0 };
 		r.retire = { amount: cfg.retireAmount, deduction: 0, tax: 0, inhabitTax: 0 };
@@ -226,8 +249,8 @@ function lumpSumTax(cfg, tax) {
 		r.adjusted = within ? 'ideco' : null;
 		const retireKoujo = tax.retireDeduction(retireYears);
 		const idecoKoujo = adjustedDeduction(idecoYears, r.overlap, tax);
-		const rt = tax.calcTax(cfg.retireAmount, retireKoujo);
-		const it = tax.calcTax(cfg.idecoAmount, idecoKoujo);
+		const rt = tax.calcTax(cfg.retireAmount, retireKoujo, retireYears);
+		const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears);
 		r.retire = { amount: cfg.retireAmount, deduction: retireKoujo, tax: rt.tax, inhabitTax: rt.inhabitTax };
 		r.ideco = { amount: cfg.idecoAmount, deduction: idecoKoujo, tax: it.tax, inhabitTax: it.inhabitTax };
 	} else {
@@ -237,11 +260,18 @@ function lumpSumTax(cfg, tax) {
 		r.adjusted = within ? 'retire' : null;
 		const idecoKoujo = tax.retireDeduction(idecoYears);
 		const retireKoujo = adjustedDeduction(retireYears, r.overlap, tax);
-		const it = tax.calcTax(cfg.idecoAmount, idecoKoujo);
-		const rt = tax.calcTax(cfg.retireAmount, retireKoujo);
+		const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears);
+		const rt = tax.calcTax(cfg.retireAmount, retireKoujo, retireYears);
 		r.ideco = { amount: cfg.idecoAmount, deduction: idecoKoujo, tax: it.tax, inhabitTax: it.inhabitTax };
 		r.retire = { amount: cfg.retireAmount, deduction: retireKoujo, tax: rt.tax, inhabitTax: rt.inhabitTax };
 	}
+
+	/* 短期退職手当等の制限が効いたか（画面で断るのに使う）。
+	   同じ年に受け取るときは1つの退職所得なので、通算年数と合算額で見る */
+	r.shortTenureYears = r.sameYear ? Math.max(0, idecoYears + retireYears - overlap) : idecoYears;
+	r.shortTenure = r.sameYear
+		? isShortTenure(r.combined.amount, r.combined.deduction, r.shortTenureYears, tax)
+		: isShortTenure(cfg.idecoAmount, r.ideco.deduction, r.shortTenureYears, tax);
 
 	// 画面が「あと何年ずらせば調整が外れるか」を出すのに使う
 	r.gap = gap;
@@ -269,7 +299,9 @@ function lumpSumTax(cfg, tax) {
 /* 年金で受け取る場合の1年あたりの額。
    一時金と違い、受け取り終わるまで残りの資産は口座に残って運用が続くので、
    受け取る総額は受給開始時の残高より多くなる。
-   掛金と同じく期首（その年のはじめ）に受け取るものとして計算する。 */
+   受け取りは期首（その年のはじめ）とする。掛金は期央で入れているが、
+   こちらを期首にしておくと運用が続く期間を短めに見るので、
+   年金受取を有利に見せすぎない側に倒れる。 */
 function annuityPayment(balance, years, yieldRate) {
 	const n = Math.max(1, Math.round(years));
 	const r = (yieldRate || 0) / 100;
@@ -352,7 +384,7 @@ if (typeof module !== 'undefined' && module.exports) {
 	module.exports = {
 		contributionLimit: contributionLimit, joinAgeLimit: joinAgeLimit,
 		taxSaving: taxSaving, accumulate: accumulate,
-		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction,
+		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction, isShortTenure: isShortTenure,
 		lumpSumTax: lumpSumTax, retireOnlyTax: retireOnlyTax, annuityPayment: annuityPayment,
 		annuityTax: annuityTax, compare: compare,
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
