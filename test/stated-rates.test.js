@@ -385,3 +385,28 @@ test('iDeCo：選択肢の初期値がJS側の初期値と一致する', () => {
 			id + ' の初期表示（' + actual + '）とJSの初期値（' + def + '）が食い違っている');
 	}
 });
+
+test('iDeCo：注記の受給開始年齢の表が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	// 10年以上で60歳から
+	const base = must(text, /(\d+)歳になるまでの通算加入者等期間が(\d+)年以上必要/, 'ideco/index.html');
+	assert.strictEqual(Number(base[1]), ideco.LATE_JOIN_AGE, '期間を数える年齢');
+	assert.strictEqual(Number(base[2]), ideco.PAYOUT_START_BY_PERIOD[0].minYears, '60歳から受け取る条件');
+	assert.strictEqual(ideco.PAYOUT_START_BY_PERIOD[0].age, ideco.PAYOUT_AGE_MIN);
+
+	// 繰り下がる区分（8年以上で61歳…のように並ぶ）
+	const rows = [...text.matchAll(/(\d+)年以上で(\d+)歳/g)].map(m => ({
+		minYears: Number(m[1]), age: Number(m[2])
+	}));
+	const expected = ideco.PAYOUT_START_BY_PERIOD.slice(1);
+	assert.strictEqual(rows.length, expected.length, '注記の区分の数が表と違う');
+	rows.forEach((row, i) => {
+		assert.strictEqual(row.minYears, expected[i].minYears, i + '番目の年数');
+		assert.strictEqual(row.age, expected[i].age, i + '番目の年齢');
+	});
+
+	// 60歳以降に加入した場合の特例
+	const late = must(text, /(\d+)歳以降に初めて加入した場合は、加入から(\d+)年経過後/, 'ideco/index.html');
+	assert.strictEqual(Number(late[1]), ideco.LATE_JOIN_AGE);
+	assert.strictEqual(Number(late[2]), ideco.LATE_JOIN_WAIT);
+});

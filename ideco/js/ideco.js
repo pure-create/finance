@@ -156,7 +156,7 @@ let chart = null;
    横軸は年齢の一覧（60〜75）を並べたカテゴリ軸なので、getPixelForValue に
    年齢をそのまま渡すと「何番目か」として解釈され、線が図の外に出てしまう。
    目盛の番号で位置を取る（相続のグラフは 0〜100 で番号と値が偶然一致していた） */
-const tickX = (c, age) => c.scales.x.getPixelForTick(age - PAYOUT_AGE_MIN);
+const tickX = (c, age) => c.scales.x.getPixelForTick(age - state.chartFrom);
 
 const markerPlugin = {
 	id: 'marker',
@@ -257,7 +257,7 @@ function renderChart(sweep) {
 }
 
 /* ---------- 画面更新 ---------- */
-const state = { payAge: 65, bestAge: null };
+const state = { payAge: 65, bestAge: null, chartFrom: PAYOUT_AGE_MIN };
 
 function describeRule(lump) {
 	/* 今の受取順で、どちらの控除がどれだけ削られるかを言葉で出す。
@@ -326,6 +326,28 @@ function update() {
 	$('yieldVal').textContent = cfg.yieldRate.toFixed(1);
 	const shared = ['employee', 'corporate', 'publicSv'].indexOf(cfg.category) >= 0;
 	$('otherPlanField').style.display = shared ? '' : 'none';
+
+	/* 受給を始められる年齢は、加入した年齢（＝通算加入者等期間）で決まる。
+	   入力欄の下限をその場で動かし、下回っていれば知らせたうえで、
+	   計算は受け取れる最も早い年齢に寄せる（選べない条件の数字を出さない） */
+	const earliest = earliestPayoutAge(cfg.idecoJoinAge);
+	const payAgeEl = $('payAge');
+	payAgeEl.min = String(earliest);
+	const payWarn = $('payAgeWarn');
+	if (cfg.payAge < earliest) {
+		const years = Math.max(0, LATE_JOIN_AGE - cfg.idecoJoinAge);
+		payWarn.className = 'note warn';
+		payWarn.textContent = cfg.idecoJoinAge >= LATE_JOIN_AGE
+			? LATE_JOIN_AGE + '歳以降に加入した場合、受け取れるのは加入から' + LATE_JOIN_WAIT +
+			  '年後の' + earliest + '歳からです。' + earliest + '歳で受け取るものとして計算しています。'
+			: cfg.idecoJoinAge + '歳加入だと' + LATE_JOIN_AGE + '歳時点の通算加入者等期間が' + years +
+			  '年で、受け取れるのは' + earliest + '歳からです。' + earliest + '歳で受け取るものとして計算しています。';
+		cfg.payAge = earliest;
+	} else {
+		payWarn.className = 'note';
+		payWarn.textContent = '';
+	}
+	state.payAge = cfg.payAge;
 
 	// 拠出限度額（今年と改正後）
 	const limitNow = contributionLimit(cfg.category, THIS_YEAR, cfg.otherPlanMonthly);
@@ -515,7 +537,7 @@ function update() {
 	   受け取り方を選ばせて1本だけ描いていたが、下に両方の内訳が出ている以上
 	   選ばせる意味が薄く、2本にしたほうが「どの年齢でどちらが有利か」が直接見える */
 	const sweep = [];
-	for (let age = PAYOUT_AGE_MIN; age <= PAYOUT_AGE_MAX; age++) {
+	for (let age = earliest; age <= PAYOUT_AGE_MAX; age++) {
 		// その年齢まで積み立てたときの残高で計算する（長く置けば残高も増える）
 		const a = accumulate({
 			startAge: cfg.startAge, payAge: age, startYear: cfg.startYear,
@@ -532,6 +554,7 @@ function update() {
 		if (s.annuity > best) { best = s.annuity; bestAge = s.age; bestName = '年金'; }
 	}
 	state.bestAge = bestAge;
+	state.chartFrom = sweep[0].age;
 	$('chartNote').textContent =
 		'受け取る年齢を遅らせると運用期間と拠出期間が延びる一方、退職金との間隔が変わって控除の調整も動きます。' +
 		'手取り（' + scope + '）と節税額を合わせた額では、' + bestAge + '歳に' + bestName +

@@ -33,6 +33,41 @@ const JOIN_AGE_LIMIT = { current: 65, reformed: 70 };
 const PAYOUT_AGE_MIN = 60;
 const PAYOUT_AGE_MAX = 75;
 
+/* 60歳から受け取るには、60歳になるまでの通算加入者等期間が10年以上要る。
+   足りないと受給を始められる年齢が繰り下がる。
+   （iDeCo公式「iDeCoの加入資格・掛金・受取方法等」より） */
+const PAYOUT_START_BY_PERIOD = [
+	{ minYears: 10, age: 60 },
+	{ minYears:  8, age: 61 },
+	{ minYears:  6, age: 62 },
+	{ minYears:  4, age: 63 },
+	{ minYears:  2, age: 64 },
+	{ minYears:  1, age: 65 }
+];
+
+/* 60歳以降に初めて加入した場合は、通算加入者等期間を持たなくても
+   加入から5年経過した日から受け取れる */
+const LATE_JOIN_AGE = 60;
+const LATE_JOIN_WAIT = 5;
+
+/**
+ * 加入した年齢から、受給を始められる最も早い年齢を求める。
+ * 通算加入者等期間は「60歳になった時点」で数えるので、
+ * 60歳より前に加入していれば 60 − 加入年齢 がその期間になる。
+ */
+function earliestPayoutAge(joinAge) {
+	if (joinAge >= LATE_JOIN_AGE) {
+		// 60歳以降に初めて加入した場合の特例。受給開始の上限は超えない
+		return Math.min(PAYOUT_AGE_MAX, joinAge + LATE_JOIN_WAIT);
+	}
+	const years = LATE_JOIN_AGE - joinAge;
+	for (let i = 0; i < PAYOUT_START_BY_PERIOD.length; i++) {
+		if (years >= PAYOUT_START_BY_PERIOD[i].minYears) return PAYOUT_START_BY_PERIOD[i].age;
+	}
+	// 1年に満たない（59歳より後に加入）場合も、表の最後と同じ扱いにする
+	return PAYOUT_START_BY_PERIOD[PAYOUT_START_BY_PERIOD.length - 1].age;
+}
+
 /**
  * その年に拠出できる月額の上限。
  * otherPlanMonthly は企業型DCの事業主掛金＋他制度掛金相当額（月額）。
@@ -324,6 +359,9 @@ if (typeof module !== 'undefined' && module.exports) {
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,
 		JOIN_AGE_LIMIT: JOIN_AGE_LIMIT,
 		PAYOUT_AGE_MIN: PAYOUT_AGE_MIN, PAYOUT_AGE_MAX: PAYOUT_AGE_MAX,
+		earliestPayoutAge: earliestPayoutAge,
+		PAYOUT_START_BY_PERIOD: PAYOUT_START_BY_PERIOD,
+		LATE_JOIN_AGE: LATE_JOIN_AGE, LATE_JOIN_WAIT: LATE_JOIN_WAIT,
 		OVERLAP_YEARS_IDECO_FIRST: OVERLAP_YEARS_IDECO_FIRST,
 		OVERLAP_YEARS_RETIRE_FIRST: OVERLAP_YEARS_RETIRE_FIRST
 	};

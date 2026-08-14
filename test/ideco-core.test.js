@@ -11,6 +11,7 @@ const {
 	contributionLimit, joinAgeLimit, taxSaving, accumulate,
 	overlapYears, adjustedDeduction, lumpSumTax, retireOnlyTax, annuityPayment, annuityTax, compare,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
+	earliestPayoutAge, PAYOUT_START_BY_PERIOD, LATE_JOIN_AGE, LATE_JOIN_WAIT,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST
 } = require('../ideco/js/ideco-core.js');
 
@@ -609,5 +610,71 @@ test('どの受取年齢でも、税額の増加は「合計 − 基準」で一
 		const c = compare(cfg, tax);
 		near(c.lump.taxByIdeco, c.lump.tax - c.lump.taxWithoutIdeco, 1e-6, payAge + '歳の一時金');
 		near(c.annuity.taxByIdeco, c.annuity.tax - c.annuity.taxWithoutIdeco, 1e-6, payAge + '歳の年金');
+	}
+});
+
+/* ---------- 受給を始められる年齢 ---------- */
+
+test('受給開始年齢：通算加入者等期間が10年以上なら60歳から', () => {
+	// 60歳になるまでの期間で決まるので、50歳までに加入していれば10年ある
+	assert.strictEqual(earliestPayoutAge(50), 60);
+	assert.strictEqual(earliestPayoutAge(40), 60);
+	assert.strictEqual(earliestPayoutAge(22), 60);
+});
+
+test('受給開始年齢：期間が足りないと繰り下がる', () => {
+	/* 表のとおり。区分は「8年以上10年未満→61歳」のように幅を持つので、
+	   区分の上端と下端の両方を見る（加入年齢 ＝ 60 − 期間） */
+	assert.strictEqual(earliestPayoutAge(51), 61, '9年');
+	assert.strictEqual(earliestPayoutAge(52), 61, '8年');
+	assert.strictEqual(earliestPayoutAge(53), 62, '7年');
+	assert.strictEqual(earliestPayoutAge(54), 62, '6年');
+	assert.strictEqual(earliestPayoutAge(55), 63, '5年');
+	assert.strictEqual(earliestPayoutAge(56), 63, '4年');
+	assert.strictEqual(earliestPayoutAge(57), 64, '3年');
+	assert.strictEqual(earliestPayoutAge(58), 64, '2年');
+	assert.strictEqual(earliestPayoutAge(59), 65, '1年');
+});
+
+test('受給開始年齢：10年ちょうどの境目', () => {
+	assert.strictEqual(earliestPayoutAge(50), 60, '50歳加入はちょうど10年');
+	assert.strictEqual(earliestPayoutAge(51), 61, '1年足りないだけで1歳繰り下がる');
+});
+
+test('受給開始年齢：60歳以降に初めて加入したら5年後から', () => {
+	assert.strictEqual(LATE_JOIN_AGE, 60);
+	assert.strictEqual(LATE_JOIN_WAIT, 5);
+	assert.strictEqual(earliestPayoutAge(60), 65);
+	assert.strictEqual(earliestPayoutAge(64), 69);
+	assert.strictEqual(earliestPayoutAge(69), 74);
+	// 受給開始の上限（75歳）は超えない
+	assert.strictEqual(earliestPayoutAge(71), PAYOUT_AGE_MAX);
+	assert.strictEqual(earliestPayoutAge(75), PAYOUT_AGE_MAX);
+});
+
+test('受給開始年齢：どの加入年齢でも受給できる範囲に収まる', () => {
+	for (let joinAge = 18; joinAge <= 75; joinAge++) {
+		const age = earliestPayoutAge(joinAge);
+		assert.ok(age >= PAYOUT_AGE_MIN && age <= PAYOUT_AGE_MAX,
+			joinAge + '歳加入で受給開始が範囲外: ' + age);
+	}
+});
+
+test('受給開始年齢：遅く加入するほど遅くなる（逆転しない）', () => {
+	let prev = 0;
+	for (let joinAge = 18; joinAge <= 75; joinAge++) {
+		const age = earliestPayoutAge(joinAge);
+		assert.ok(age >= prev, joinAge + '歳加入で受給開始が早くなっている');
+		prev = age;
+	}
+});
+
+test('受給開始年齢の表は、年数の降順に並んでいる', () => {
+	// 上から順に見て最初に当てはまるものを使うので、並び順が崩れると誤判定する
+	for (let i = 1; i < PAYOUT_START_BY_PERIOD.length; i++) {
+		assert.ok(PAYOUT_START_BY_PERIOD[i].minYears < PAYOUT_START_BY_PERIOD[i - 1].minYears,
+			'年数が降順でない');
+		assert.ok(PAYOUT_START_BY_PERIOD[i].age > PAYOUT_START_BY_PERIOD[i - 1].age,
+			'年齢が昇順でない');
 	}
 });
