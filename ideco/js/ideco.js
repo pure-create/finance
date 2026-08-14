@@ -447,12 +447,22 @@ function update() {
 	function diffNote(r, lead) {
 		if (!(r.retire.amount > 0)) return '';
 		const base = 'iDeCoを受け取らなければ、退職金にかかる税額は <b>' + yen(r.taxWithoutIdeco) + '</b> でした。';
-		const diff = Math.abs(r.taxByIdeco);
-		if (diff < 5000) return '<div class="split-note">' + lead + base + '</div>';
-		const dir = r.taxByIdeco > 0
-			? 'iDeCoを受け取ることで <b>' + yen(diff) + '</b> 増えています。'
-			: '加入期間のぶん通算の勤続年数が延びて控除が増えるため、iDeCoを受け取ると逆に <b>' + yen(diff) + '</b> 減ります。';
-		return '<div class="split-note">' + lead + base + dir + '</div>';
+		// 減る場合は直感に反するので、理由を添える（金額は上の行に出ている）
+		const why = r.taxByIdeco < -5000
+			? '加入期間のぶん通算の勤続年数が延び、退職所得控除がむしろ大きくなるためです。'
+			: '';
+		return '<div class="split-note">' + lead + base + why + '</div>';
+	}
+
+	/* 各欄の最後に置く、受け取り方を比べるための行。
+	   退職金があると、退職金側の控除が削られた分もiDeCoが原因なので
+	   「増えた税金」で見る。退職金が無ければiDeCoの税額そのもの。
+	   加入期間が勤続期間より長いと減ることもあるので、向きで文と色を変える */
+	function idecoTaxRow(amount) {
+		const down = amount < -5000;
+		const label = !hasRetire ? 'iDeCoの税金'
+			: (down ? 'iDeCoで減った税金' : 'iDeCoで増えた税金');
+		return rline(label, yen(Math.abs(amount)), 'headline' + (down ? ' down' : ''));
 	}
 
 	// 退職金の欄。手取りを返し、行はそのまま h に足す
@@ -474,9 +484,7 @@ function update() {
 			rline('退職金', '＋' + yen(L.retire.amount), 'dim') +
 			rline('退職所得控除（通算）', '−' + yen(L.combined.deduction), 'dim') +
 			rline('税額', '−' + yen(L.tax), 'dim') +
-			rline('手取り合計', yen(L.net), 'total') +
-			diffNote(L, '同じ年に受け取るため、iDeCoと退職金は合算して1つの退職所得になります。' +
-				'税額をどちらの分か割り振ることはできませんが、');
+			rline('手取り合計', yen(L.net), 'total');
 	} else {
 		const idecoTax = L.ideco.tax + L.ideco.inhabitTax;
 		h = rline('iDeCoの受取額', yen(idecoAmount), 'dim') +
@@ -489,8 +497,14 @@ function update() {
 			h += rline('合計', yen(L.net), 'total');
 		}
 	}
+	h += idecoTaxRow(L.taxByIdeco);
 	if (L.tax === 0) h += '<div class="zero-note">控除の範囲に収まるため非課税です</div>';
-	else if (!L.sameYear && hasRetire) h += diffNote(L, '');
+	if (hasRetire) {
+		h += diffNote(L, L.sameYear
+			? '同じ年に受け取るため、iDeCoと退職金は合算して1つの退職所得になります。'
+			  + '税額をどちらの分か割り振ることはできませんが、'
+			: '');
+	}
 	$('lumpDetail').innerHTML = h;
 
 	// 年金の内訳
@@ -513,6 +527,7 @@ function update() {
 			A.tax - d.tax, false);
 		h2 += rline('合計', yen(A.net), 'total');
 	}
+	h2 += idecoTaxRow(A.taxByIdeco);
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 
@@ -523,27 +538,43 @@ function update() {
 	const lumpAdd = L.taxByIdeco, annuityAdd = A.taxByIdeco;
 	const lighter = Math.min(lumpAdd, annuityAdd);
 	const gapTax = Math.abs(annuityAdd - lumpAdd);
+	const lighterName = lumpAdd < annuityAdd ? '一時金' : '年金';
+	/* 加入期間が勤続期間より長いと控除が増えて、税金がむしろ減ることがある。
+	   そのときは符号付きで出さず、「減る」と言葉で伝える */
+	const taxDown = lighter < -5000;
+	const sub = '<span class="gsub">もう一方より ' + man(gapTax) +
+		'万円 少ない（iDeCoを受け取らない場合との差）</span>';
 	$('grandLabel').innerHTML = gapTax < 10000
-		? '一時金と年金で増える税金はほぼ同じ<span class="gsub">iDeCoを受け取らない場合との差</span>'
-		: '増える税金が少ないのは <b>' + (lumpAdd < annuityAdd ? '一時金' : '年金') + '</b>' +
-		  '<span class="gsub">もう一方より ' + man(gapTax) + '万円 少ない（iDeCoを受け取らない場合との差）</span>';
-	$('grandVal').innerHTML = man(lighter) + '<small>万円</small>';
+		? '一時金と年金で税金の変わり方はほぼ同じ<span class="gsub">iDeCoを受け取らない場合との差</span>'
+		: (taxDown ? '税金が減るのは <b>' + lighterName + '</b>' + sub
+		           : '増える税金が少ないのは <b>' + lighterName + '</b>' + sub);
+	$('grandVal').innerHTML = man(Math.abs(lighter)) + '<small>万円</small>';
 
 	/* 入口で軽くなった税金から、出口で増える税金を引いた正味。
-	   運用期間に左右されない、iDeCoの税制上の損得そのもの */
-	$('totalLabel').innerHTML = '掛金の節税額 ' + man(acc.saved) + '万円 − 増える税金 ' + man(lighter) + '万円';
+	   運用期間に左右されない、iDeCoの税制上の損得そのもの。
+	   出口で減る場合は引き算ではなく足し算になるので、記号も変える */
+	$('totalLabel').innerHTML = '掛金の節税額 ' + man(acc.saved) + '万円 ' +
+		(taxDown ? '＋ 減る税金 ' : '− 増える税金 ') + man(Math.abs(lighter)) + '万円';
 	$('totalVal').innerHTML = man(acc.saved - lighter) + '<small>万円</small>';
 
 	/* 手取りを大きく出さない理由を書いておく。数字自体は結果の欄に出ている */
 	const scope = hasRetire ? 'iDeCo＋退職金' : 'iDeCo';
 	const netGap = A.net - L.net;
 	$('netNote').className = 'note';
-	$('netNote').innerHTML = Math.abs(netGap) < 10000
-		? '手取り（' + scope + '）は一時金・年金ともほぼ同じ ' + man(L.net) + '万円 です。'
-		: '手取り（' + scope + '）だけを見ると ' +
-		  (netGap > 0 ? '年金のほうが ' + man(netGap) : '一時金のほうが ' + man(-netGap)) +
-		  '万円 多くなりますが、これは年金が受け取り終わるまで運用を続ける前提によるところが大きく、' +
-		  '受け取り方そのものの違いではありません。判断には上の税額の差をご覧ください。';
+	if (Math.abs(netGap) < 10000) {
+		$('netNote').innerHTML = '手取り（' + scope + '）は一時金・年金ともほぼ同じ ' + man(L.net) + '万円 です。';
+	} else if (netGap > 0) {
+		/* 年金のほうが多いのが普通。受け取り終わるまで運用が続くためで、
+		   受け取り方そのものの違いではないと断っておく */
+		$('netNote').innerHTML = '手取り（' + scope + '）だけを見ると年金のほうが ' + man(netGap) +
+			'万円 多くなりますが、これは年金が受け取り終わるまで運用を続ける前提によるところが大きく、' +
+			'受け取り方そのものの違いではありません。判断には上の税額の差をご覧ください。';
+	} else {
+		// 税額の差が運用のぶんを上回ると、手取りでも一時金が勝つ
+		$('netNote').innerHTML = '手取り（' + scope + '）でも一時金のほうが ' + man(-netGap) +
+			'万円 多くなります。年金は受け取り終わるまで運用が続くぶん有利になりますが、' +
+			'この条件では税額の差がそれを上回っています。';
+	}
 
 	/* グラフ：受取年齢を60〜75歳で振り、一時金と年金を2本並べる。
 	   受け取り方を選ばせて1本だけ描いていたが、下に両方の内訳が出ている以上

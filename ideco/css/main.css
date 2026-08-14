@@ -151,6 +151,14 @@ body{padding:16px;min-height:100vh}
 .rline.sub + .rline.dim{margin-top:9px}
 .rline.total{border-top:2px solid var(--border);margin-top:5px;padding-top:5px;font-weight:700}
 .rline.total .v{font-size:15px}
+/* iDeCoによって増えた税金。受け取り方を比べるときの主役なので、
+   手取りの合計より強く見せる。減る場合もあるので、その向きは色で分ける */
+.rline.headline{border-top:2px solid var(--border);margin-top:8px;padding-top:7px;font-weight:700}
+.rline.headline .v{font-size:17px}
+.res-box.lump .rline.headline{color:var(--idc-out)}
+.res-box.annuity .rline.headline{color:var(--idc-in)}
+.rline.headline.down,.res-box.lump .rline.headline.down,.res-box.annuity .rline.headline.down{color:var(--idc-gain)}
+
 /* 合算されて分けられない場合の断り */
 .split-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7}
 .split-note b{color:var(--text);font-variant-numeric:tabular-nums}
