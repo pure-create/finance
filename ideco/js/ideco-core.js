@@ -101,12 +101,17 @@ function accumulate(cfg, tax) {
 		saved += s;
 		rows.push({ age: age, year: year, limit: limit, contribution: annual, saving: s, balance: balance });
 	}
+	const initial = cfg.initialBalance || 0;
 	return {
 		rows: rows,
 		balance: balance,
 		paid: paid,
 		saved: saved,
-		gain: balance - paid - (cfg.initialBalance || 0)
+		gain: balance - paid - initial,
+		/* 実際に自分の懐から出ていく額。掛金の一部は所得控除で税金が軽くなって
+		   戻ってくるので、その分は負担ではない。
+		   「掛金」と「節税額」を並べて足すと二重に数えることになる */
+		netCost: Math.max(0, paid - saved)
 	};
 }
 

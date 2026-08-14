@@ -11,10 +11,13 @@
   --idc-warn:#b45309;
   --idc-band:rgba(5,150,105,.10);   /* グラフの「手取り最大」の帯（JSから参照） */
 
-  /* 積み上げバーの塗り。太い面なので明度を上げず、白文字が載る濃さに保つ */
-  --seg-paid:#1d4ed8;
+  /* 受け取る残高の内訳を表す帯の塗り。太い面なので明度を上げず、
+     白文字が載る濃さに保つ。実質の負担と節税で戻る分は
+     「どちらも掛金」なので、同系色の濃淡で並べる */
+  --seg-initial:#64748b;
+  --seg-cost:#1d4ed8;
+  --seg-save:#60a5fa;
   --seg-gain:#059669;
-  --seg-save:#c2410c;
   --grand-from:#1e3a8a;
   --grand-to:#1d4ed8;
   --grand-net-from:#065f46;
@@ -31,9 +34,10 @@
   --idc-gain-soft:#10291f;
   --idc-warn:#fbbf24;
   --idc-band:rgba(52,211,153,.14);
-  --seg-paid:#1f47a8;
+  --seg-initial:#475569;
+  --seg-cost:#1f47a8;
+  --seg-save:#3b6fc7;
   --seg-gain:#04795a;
-  --seg-save:#9a3412;
   --grand-from:#16305f;
   --grand-to:#1f47a8;
   --grand-net-from:#064e3b;
@@ -92,7 +96,7 @@ body{padding:16px;min-height:100vh}
 .saving-line b{font-size:18px;color:var(--idc-in);font-variant-numeric:tabular-nums}
 .saving-line .sub{display:block;font-size:11.5px;color:var(--muted)}
 
-/* 積み上げバー：払った掛金／運用益／節税額 */
+/* 受け取る残高の内訳を表す帯：元の残高／実質の負担／節税で戻る分／運用益 */
 .stack{margin-top:6px}
 .stack-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;background:var(--surface-2)}
 .stack-bar .seg{
@@ -101,15 +105,22 @@ body{padding:16px;min-height:100vh}
   transition:width .18s ease;
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
 }
-.seg-paid{background:var(--seg-paid)}
-.seg-gain{background:var(--seg-gain)}
+.seg-initial{background:var(--seg-initial)}
+.seg-cost{background:var(--seg-cost)}
 .seg-save{background:var(--seg-save)}
+.seg-gain{background:var(--seg-gain)}
 .stack-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:11.5px;color:var(--text-sub)}
 .lg{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.lg[hidden]{display:none}
 .lg::before{content:"";width:10px;height:10px;border-radius:3px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.lg-paid::before{background:var(--seg-paid)}
-.lg-gain::before{background:var(--seg-gain)}
+.lg-initial::before{background:var(--seg-initial)}
+.lg-cost::before{background:var(--seg-cost)}
 .lg-save::before{background:var(--seg-save)}
+.lg-gain::before{background:var(--seg-gain)}
+/* 「掛金のうち何割が戻るか」を言葉でも添える。帯の割り方だけでは
+   節税分が掛金の内訳だと読み取りにくいため */
+.stack-note{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:8px}
+.stack-note b{color:var(--text);font-variant-numeric:tabular-nums}
 
 /* ---- 受け取り方 ---- */
 /* 今の受取順と、控除がどう調整されるかの説明。結果の直前に置く */

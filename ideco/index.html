@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814b">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814c">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260814b" media="print">
 </head>
 <body>
@@ -136,17 +136,24 @@
         <p class="saving-line" id="savingLine"></p>
       </div>
     </div>
+    <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
+         払った掛金のうち税金が軽くなって戻ってくる分なので、
+         掛金を「実質の負担」と「節税で戻る分」に割って見せる。
+         3つ（＋元の残高）を足すと、そのまま受け取る残高になる -->
     <div class="stack" id="stackBox">
       <div class="stack-bar" aria-hidden="true">
-        <div class="seg seg-paid" id="segPaid"></div>
-        <div class="seg seg-gain" id="segGain"></div>
+        <div class="seg seg-initial" id="segInitial"></div>
+        <div class="seg seg-cost" id="segCost"></div>
         <div class="seg seg-save" id="segSave"></div>
+        <div class="seg seg-gain" id="segGain"></div>
       </div>
       <div class="stack-legend">
-        <span class="lg lg-paid" id="lgPaid">払った掛金</span>
+        <span class="lg lg-initial" id="lgInitial" hidden>元の残高</span>
+        <span class="lg lg-cost" id="lgCost">実質の負担</span>
+        <span class="lg lg-save" id="lgSave">節税で戻る分</span>
         <span class="lg lg-gain" id="lgGain">運用益</span>
-        <span class="lg lg-save" id="lgSave">節税額</span>
       </div>
+      <p class="stack-note" id="stackNote"></p>
     </div>
   </div>
 
@@ -217,7 +224,7 @@
       <span class="gval" id="grandVal">0<small>万円</small></span>
     </div>
     <div class="grand net" aria-live="polite">
-      <span class="glabel">掛金の節税額を含めた通算の得</span>
+      <span class="glabel">手取り合計 ＋ 掛金の節税額</span>
       <span class="gval" id="totalVal">0<small>万円</small></span>
     </div>
   </div>
@@ -255,7 +262,7 @@
 <script src="../common/share.js?v=20260808a"></script>
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="../common/tax-core.js?v=20260814b"></script>
-<script src="./js/ideco-core.js?v=20260814b"></script>
-<script src="./js/ideco.js?v=20260814b"></script>
+<script src="./js/ideco-core.js?v=20260814c"></script>
+<script src="./js/ideco.js?v=20260814c"></script>
 </body>
 </html>

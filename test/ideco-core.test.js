@@ -428,3 +428,30 @@ test('一時金：結果に受取年齢を残す（画面の案内文で使う�
 	assert.strictEqual(r.retireAge - (OVERLAP_YEARS_IDECO_FIRST + 1), 60,
 		'70歳退職なら60歳まで早めれば調整が外れる');
 });
+
+test('積立：実質の負担は「掛金 − 節税額」', () => {
+	/* 節税額は掛金とは別に増える額ではなく、払った掛金のうち
+	   税金が軽くなって戻ってくる分。並べて足すと二重に数えることになる */
+	const a = accumulate(baseAcc, tax);
+	assert.strictEqual(a.netCost, a.paid - a.saved);
+	assert.ok(a.netCost < a.paid, '節税があるぶん、負担は掛金より小さい');
+	assert.ok(a.netCost > 0, '所得税＋住民税でも最大55%なので、負担が消えることはない');
+});
+
+test('積立：残高の内訳を足すと残高そのものになる', () => {
+	/* 画面の帯（元の残高／実質の負担／節税で戻る分／運用益）が
+	   受け取る残高をちょうど分け合っていること */
+	for (const over of [{}, { initialBalance: 3000000 }, { yieldRate: 5 }, { taxableIncome: 0 }]) {
+		const a = accumulate(Object.assign({}, baseAcc, { yieldRate: 3 }, over), tax);
+		const initial = over.initialBalance || 0;
+		near(initial + a.netCost + a.saved + a.gain, a.balance, 1e-6,
+			JSON.stringify(over) + ' で内訳の合計が残高と合わない');
+	}
+});
+
+test('積立：節税がなければ実質の負担は掛金そのもの', () => {
+	// 課税所得0なら軽くなる税金も無い
+	const a = accumulate(Object.assign({}, baseAcc, { taxableIncome: 0 }), tax);
+	assert.strictEqual(a.saved, 0);
+	assert.strictEqual(a.netCost, a.paid);
+});

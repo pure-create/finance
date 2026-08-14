@@ -336,16 +336,30 @@ function update() {
 		'毎年 <b>' + man(perYearSaving) + '万円</b> の節税' +
 		'<span class="sub">' + acc.rows.length + '年の拠出で累計 ' + man(acc.saved) + '万円</span>';
 
-	// 積み上げバー（払った掛金／運用益／節税額）
-	const paid = acc.paid + cfg.initialBalance;
-	const total = paid + acc.gain + acc.saved;
+	/* 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
+	   払った掛金のうち税金が軽くなって戻ってくる分なので、
+	   掛金を「実質の負担」と「節税で戻る分」に割って並べる。
+	   4つを足すと、そのまま受け取る残高（＝出口の受取額）になる */
+	const total = acc.balance;
 	const pct = v => total > 0 ? (v / total * 100) : 0;
-	$('segPaid').style.width = pct(paid) + '%';
-	$('segGain').style.width = pct(acc.gain) + '%';
+	$('segInitial').style.width = pct(cfg.initialBalance) + '%';
+	$('segCost').style.width = pct(acc.netCost) + '%';
 	$('segSave').style.width = pct(acc.saved) + '%';
-	$('lgPaid').textContent = '払った掛金 ' + man(paid) + '万円';
+	$('segGain').style.width = pct(acc.gain) + '%';
+
+	const lgInitial = $('lgInitial');
+	lgInitial.hidden = !(cfg.initialBalance > 0);
+	lgInitial.textContent = '元の残高 ' + man(cfg.initialBalance) + '万円';
+	$('lgCost').textContent = '実質の負担 ' + man(acc.netCost) + '万円';
+	$('lgSave').textContent = '節税で戻る分 ' + man(acc.saved) + '万円';
 	$('lgGain').textContent = '運用益 ' + man(acc.gain) + '万円';
-	$('lgSave').textContent = '節税額 ' + man(acc.saved) + '万円';
+
+	$('stackNote').innerHTML = acc.paid > 0
+		? '払う掛金は' + acc.rows.length + '年で <b>' + man(acc.paid) + '万円</b> ですが、' +
+		  'そのうち <b>' + man(acc.saved) + '万円</b> は税金が軽くなって戻るので、' +
+		  '実質の負担は <b>' + man(acc.netCost) + '万円</b> です。' +
+		  'これに運用益を足した <b>' + man(acc.balance) + '万円</b> を受け取ります。'
+		: '';
 
 	// 出口
 	const idecoAmount = acc.balance;
@@ -393,6 +407,9 @@ function update() {
 		? '年金で受け取ったときの手取り合計'
 		: '一時金で受け取ったときの手取り合計';
 	$('grandVal').innerHTML = man(chosen.net) + '<small>万円</small>';
+	/* 受け取る額と、拠出の途中で軽くなった税金の合計。
+	   掛金そのものは自分で出しているので「得」ではない（節税分だけが得）。
+	   足し合わせた額に「得」と名前を付けないよう、ラベルは事実だけを書く */
 	$('totalVal').innerHTML = man(chosen.net + acc.saved) + '<small>万円</small>';
 
 	// グラフ：受取年齢を60〜75歳で振る
@@ -414,7 +431,7 @@ function update() {
 	state.bestAge = bestAge;
 	$('chartNote').textContent =
 		'受け取る年齢を遅らせると運用期間と拠出期間が延びる一方、退職金との間隔が変わって控除の調整も動きます。' +
-		'節税額を含めた通算では ' + bestAge + '歳 が最大（' + man(best) + '万円）です。';
+		'手取りと節税額を合わせた額では ' + bestAge + '歳 が最大（' + man(best) + '万円）です。';
 	renderChart(sweep);
 	if (chart) chart.draw();
 
