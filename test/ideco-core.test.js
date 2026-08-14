@@ -12,7 +12,8 @@ const {
 	overlapYears, adjustedDeduction, lumpSumTax, retireOnlyTax, annuityPayment, annuityTax, compare,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	earliestPayoutAge, PAYOUT_START_BY_PERIOD, LATE_JOIN_AGE, LATE_JOIN_WAIT,
-	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST
+	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST,
+	NATIONAL_PENSION_END_AGE, LATE_JOIN_CATEGORY_LIMIT, PUBLIC_PENSION_START_AGE
 } = require('../ideco/js/ideco-core.js');
 
 // 所得税は1.021を掛けて切り捨てるので、二進小数の丸めで1円ずれることがある
@@ -28,34 +29,80 @@ test('改正は2027年拠出分から効く', () => {
 });
 
 test('拠出限度額：2026年までは現行の額', () => {
-	assert.strictEqual(contributionLimit('self', 2026, 0), 68000, '第1号');
-	assert.strictEqual(contributionLimit('employee', 2026, 0), 23000, '企業年金なし');
-	assert.strictEqual(contributionLimit('corporate', 2026, 0), 20000, '企業年金あり');
-	assert.strictEqual(contributionLimit('publicSv', 2026, 0), 20000, '公務員');
-	assert.strictEqual(contributionLimit('spouse', 2026, 0), 23000, '第3号');
+	assert.strictEqual(contributionLimit('self', 2026, 0, 40), 68000, '第1号');
+	assert.strictEqual(contributionLimit('employee', 2026, 0, 40), 23000, '企業年金なし');
+	assert.strictEqual(contributionLimit('corporate', 2026, 0, 40), 20000, '企業年金あり');
+	assert.strictEqual(contributionLimit('publicSv', 2026, 0, 40), 20000, '公務員');
+	assert.strictEqual(contributionLimit('spouse', 2026, 0, 40), 23000, '第3号');
 });
 
 test('拠出限度額：2027年からは改正後の額', () => {
-	assert.strictEqual(contributionLimit('self', 2027, 0), 75000, '第1号');
-	assert.strictEqual(contributionLimit('employee', 2027, 0), 62000, '企業年金なし');
-	assert.strictEqual(contributionLimit('corporate', 2027, 0), 62000, '企業年金あり');
-	assert.strictEqual(contributionLimit('publicSv', 2027, 0), 62000, '公務員');
-	assert.strictEqual(contributionLimit('spouse', 2027, 0), 23000, '第3号は変わらない');
+	assert.strictEqual(contributionLimit('self', 2027, 0, 40), 75000, '第1号');
+	assert.strictEqual(contributionLimit('employee', 2027, 0, 40), 62000, '企業年金なし');
+	assert.strictEqual(contributionLimit('corporate', 2027, 0, 40), 62000, '企業年金あり');
+	assert.strictEqual(contributionLimit('publicSv', 2027, 0, 40), 62000, '公務員');
+	assert.strictEqual(contributionLimit('spouse', 2027, 0, 40), 23000, '第3号は変わらない');
 });
 
 test('拠出限度額：改正後の第2号は他制度の掛金を差し引いた残り', () => {
-	assert.strictEqual(contributionLimit('employee', 2027, 20000), 42000, '62,000−20,000');
-	assert.strictEqual(contributionLimit('corporate', 2027, 62000), 0, '使い切っていれば0');
-	assert.strictEqual(contributionLimit('corporate', 2027, 80000), 0, '超えてもマイナスにしない');
+	assert.strictEqual(contributionLimit('employee', 2027, 20000, 40), 42000, '62,000−20,000');
+	assert.strictEqual(contributionLimit('corporate', 2027, 62000, 40), 0, '使い切っていれば0');
+	assert.strictEqual(contributionLimit('corporate', 2027, 80000, 40), 0, '超えてもマイナスにしない');
 	// 改正前は他制度の額を引く仕組みではない
-	assert.strictEqual(contributionLimit('employee', 2026, 20000), 23000, '改正前は差し引かない');
+	assert.strictEqual(contributionLimit('employee', 2026, 20000, 40), 23000, '改正前は差し引かない');
 	// 第1号・第3号は他制度と枠を分け合わない
-	assert.strictEqual(contributionLimit('self', 2027, 30000), 75000, '第1号は差し引かない');
-	assert.strictEqual(contributionLimit('spouse', 2027, 30000), 23000, '第3号は差し引かない');
+	assert.strictEqual(contributionLimit('self', 2027, 30000, 40), 75000, '第1号は差し引かない');
+	assert.strictEqual(contributionLimit('spouse', 2027, 30000, 40), 23000, '第3号は差し引かない');
 });
 
 test('拠出限度額：知らない区分は0', () => {
-	assert.strictEqual(contributionLimit('unknown', 2027, 0), 0);
+	assert.strictEqual(contributionLimit('unknown', 2027, 0, 40), 0);
+});
+
+test('拠出限度額：第1号・第3号は60歳で国民年金の被保険者でなくなる', () => {
+	/* 第1号・第3号は20歳以上60歳未満。現行制度では60歳以降は拠出できない。
+	   改正後は「60歳以上70歳未満で国民年金の被保険者でない人」＝第5号加入者として、
+	   第2号と同じ月6.2万円の枠になる（第3号の2.3万円が続くのではない） */
+	assert.strictEqual(NATIONAL_PENSION_END_AGE, 60);
+	assert.strictEqual(LATE_JOIN_CATEGORY_LIMIT, 62000);
+
+	assert.strictEqual(contributionLimit('self', 2026, 0, 59), 68000, '59歳は第1号のまま');
+	assert.strictEqual(contributionLimit('self', 2026, 0, 60), 0, '60歳からは拠出できない');
+	assert.strictEqual(contributionLimit('spouse', 2026, 0, 59), 23000, '59歳は第3号のまま');
+	assert.strictEqual(contributionLimit('spouse', 2026, 0, 60), 0, '60歳からは拠出できない');
+
+	assert.strictEqual(contributionLimit('self', 2027, 0, 60), 62000, '改正後は第5号として6.2万円');
+	assert.strictEqual(contributionLimit('spouse', 2027, 0, 60), 62000, '第3号だった人も6.2万円');
+	assert.strictEqual(contributionLimit('self', 2027, 0, 59), 75000, '59歳まではこれまでどおり');
+});
+
+test('拠出限度額：第2号は厚生年金の被保険者なので60歳で変わらない', () => {
+	for (const cat of ['employee', 'corporate', 'publicSv']) {
+		assert.strictEqual(contributionLimit(cat, 2026, 0, 62), contributionLimit(cat, 2026, 0, 40), cat + '（現行）');
+		assert.strictEqual(contributionLimit(cat, 2027, 0, 62), contributionLimit(cat, 2027, 0, 40), cat + '（改正後）');
+	}
+});
+
+test('積立：第3号は60歳で拠出が止まり、改正後は第5号として続く', () => {
+	// 2026年に59歳。60歳になる2027年は改正後なので、第5号として拠出できる
+	const a = accumulate(Object.assign({}, baseAcc, {
+		startAge: 59, payAge: 63, startYear: 2026, category: 'spouse', monthly: 30000
+	}), tax);
+	assert.strictEqual(a.rows[0].limit, 23000, '59歳（2026年）は第3号の2.3万円');
+	assert.strictEqual(a.rows[0].contribution, 23000 * 12, '上限までしか出せない');
+	assert.strictEqual(a.rows[1].limit, 62000, '60歳（2027年）からは第5号の6.2万円');
+	assert.strictEqual(a.rows[1].contribution, 30000 * 12, '希望額が枠に収まる');
+});
+
+test('積立：現行制度のうちは、第1号・第3号は60歳で拠出が止まる', () => {
+	// 2026年に60歳。改正前なので、この年は拠出できない
+	const a = accumulate(Object.assign({}, baseAcc, {
+		startAge: 60, payAge: 62, startYear: 2026, category: 'self'
+	}), tax);
+	assert.strictEqual(a.rows[0].limit, 0, '60歳（2026年）は拠出できない');
+	assert.strictEqual(a.rows[0].contribution, 0);
+	assert.strictEqual(a.rows[0].saving, 0, '拠出していないので節税もない');
+	assert.strictEqual(a.rows[1].limit, 62000, '61歳（2027年）からは第5号');
 });
 
 test('加入できる年齢の上限は改正で65歳未満から70歳未満へ', () => {
@@ -417,6 +464,33 @@ test('年金：65歳未満は控除が小さい', () => {
 	const under = annuityTax({ idecoAmount: 6000000, annuityYears: 5, idecoPayAge: 60, publicPension: 0 }, tax);
 	const over = annuityTax({ idecoAmount: 6000000, annuityYears: 5, idecoPayAge: 65, publicPension: 0 }, tax);
 	assert.ok(under.tax > over.tax, '65歳未満のほうが控除が小さく、税額は大きいはず');
+});
+
+test('年金：老齢年金は65歳から。それまでは控除をiDeCoが単独で使える', () => {
+	/* iDeCoは60歳から受け取れるが、老齢年金は原則65歳から。
+	   全期間に老齢年金があるものとして計算すると、60〜64歳を重く見積もる。
+	     60〜64歳: 老齢年金なし。iDeCo 100万円だけ → 65歳未満の控除60万円を引いて40万円
+	     65歳以降: 老齢年金180万円と合算。280万円−110万円 ＝ 170万円、
+	               老齢年金だけなら70万円なので、増えた雑所得は100万円 */
+	assert.strictEqual(PUBLIC_PENSION_START_AGE, 65);
+	const a = annuityTax({
+		idecoAmount: 10000000, annuityYears: 10, idecoPayAge: 60,
+		publicPension: 1800000, yieldRate: 0
+	}, tax);
+	assert.strictEqual(a.perYear, 1000000);
+	assert.strictEqual(a.rows[0].age, 60);
+	assert.strictEqual(a.rows[0].misc, 400000, '60歳は老齢年金がまだ無い');
+	assert.strictEqual(a.rows[4].age, 64);
+	assert.strictEqual(a.rows[4].misc, 400000, '64歳まで同じ');
+	assert.strictEqual(a.rows[5].age, 65);
+	assert.strictEqual(a.rows[5].misc, 1000000, '65歳から老齢年金と分け合う');
+
+	// 全期間に老齢年金があるものとして計算すると、税額が多く出る
+	const from65 = annuityTax({
+		idecoAmount: 10000000, annuityYears: 10, idecoPayAge: 65,
+		publicPension: 1800000, yieldRate: 0
+	}, tax);
+	assert.ok(a.tax < from65.tax, '60歳開始のほうが、はじめの5年ぶん軽いはず');
 });
 
 test('年金：受け取る年数を延ばすと1年あたりの額が減る', () => {

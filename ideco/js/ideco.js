@@ -366,26 +366,39 @@ function update() {
 	}
 	state.payAge = cfg.payAge;
 
-	// 拠出限度額（今年と改正後）
-	const limitNow = contributionLimit(cfg.category, THIS_YEAR, cfg.otherPlanMonthly);
-	const limitNext = contributionLimit(cfg.category, LIMIT_REFORM_YEAR, cfg.otherPlanMonthly);
-	let limitHtml = '今年の上限 <b>' + fmt(limitNow) + '円/月</b>';
+	/* 拠出限度額（今年と改正後）。第1号・第3号は60歳で国民年金の被保険者で
+	   なくなり枠が変わるので、その年に何歳かも渡す */
+	const ageIn = year => cfg.startAge + (year - THIS_YEAR);
+	const limitNow = contributionLimit(cfg.category, THIS_YEAR, cfg.otherPlanMonthly, ageIn(THIS_YEAR));
+	const limitNext = contributionLimit(cfg.category, LIMIT_REFORM_YEAR, cfg.otherPlanMonthly, ageIn(LIMIT_REFORM_YEAR));
+	let limitHtml = limitNow > 0 ? '今年の上限 <b>' + fmt(limitNow) + '円/月</b>' : '今年は拠出できません';
 	if (limitNext !== limitNow) {
 		limitHtml += '　→　2027年から <b class="reformed">' + fmt(limitNext) + '円/月</b>';
 	}
 	$('limitNote').innerHTML = limitHtml;
 
-	const warn = $('limitWarn');
-	if (cfg.monthly > limitNow && cfg.monthly <= limitNext) {
-		warn.className = 'note warn';
-		warn.textContent = '今の掛金は今年の上限（' + fmt(limitNow) + '円）を超えています。2027年からは出せる額ですが、それまでは上限までで計算します。';
-	} else if (cfg.monthly > limitNext) {
-		warn.className = 'note warn';
-		warn.textContent = '今の掛金は改正後の上限（' + fmt(limitNext) + '円）も超えています。上限までで計算します。';
-	} else {
-		warn.className = 'note';
-		warn.textContent = '';
+	/* 断りは重なることがある（60歳以降の枠の話と、掛金が上限を超えている話）。
+	   集めてから並べる */
+	const warns = [];
+	const endsAt60 = CONTRIBUTION_LIMITS[cfg.category].endsAt60;
+	if (endsAt60 && limitNow === 0) {
+		warns.push('第1号・第3号被保険者は60歳未満までなので、今年は拠出できません。' +
+			LIMIT_REFORM_YEAR + '年からは60歳以上70歳未満でも「第5号加入者」として月' +
+			fmt(LATE_JOIN_CATEGORY_LIMIT) + '円まで拠出できます。');
+	} else if (endsAt60 && cfg.startAge < NATIONAL_PENSION_END_AGE && cfg.payAge > NATIONAL_PENSION_END_AGE) {
+		warns.push('第1号・第3号被保険者は60歳未満までです。60歳以降は「第5号加入者」として月' +
+			fmt(LATE_JOIN_CATEGORY_LIMIT) + '円までの枠で計算します。');
 	}
+	// 拠出できない年（上限0）は、その理由を上で断っているので重ねて言わない
+	if (limitNow > 0 && cfg.monthly > limitNow && cfg.monthly <= limitNext) {
+		warns.push('今の掛金は今年の上限（' + fmt(limitNow) + '円）を超えています。' +
+			LIMIT_REFORM_YEAR + '年からは出せる額ですが、それまでは上限までで計算します。');
+	} else if (cfg.monthly > limitNext && limitNext > 0) {
+		warns.push('今の掛金は改正後の上限（' + fmt(limitNext) + '円）も超えています。上限までで計算します。');
+	}
+	const warn = $('limitWarn');
+	warn.className = warns.length ? 'note warn' : 'note';
+	warn.textContent = warns.join('');
 
 	// 積立（入口）
 	const acc = accumulate({
@@ -543,7 +556,13 @@ function update() {
 		h2 += rline('受取中の運用で増える分', '＋' + yen(d.growth), 'dim') +
 			rline('受け取る総額', yen(d.gross), 'dim');
 	}
-	h2 += rline('増える雑所得（年）', yen(d.rows.length ? d.rows[0].misc : 0), 'dim') +
+	/* 老齢年金が出はじめる65歳の前後で、増える雑所得は変わる。
+	   1年目だけ出すと、その先が同じ額だと読まれてしまう */
+	const miscFrom = d.rows.length ? d.rows[0].misc : 0;
+	const miscTo = d.rows.length ? d.rows[d.rows.length - 1].misc : 0;
+	const miscChanges = man(miscFrom) !== man(miscTo);
+	h2 += rline('増える雑所得（年）',
+			miscChanges ? yen(miscFrom) + ' → ' + yen(miscTo) : yen(miscFrom), 'dim') +
 		rline('税額（' + d.years + '年の合計）', '−' + yen(d.tax), 'dim') +
 		rline('iDeCoの手取り', yen(d.net), hasRetire ? 'sub' : 'total');
 	if (hasRetire) {
@@ -554,6 +573,10 @@ function update() {
 		h2 += rline('合計', yen(A.net), 'total');
 	}
 	h2 += idecoTaxRow(A.taxByIdeco);
+	if (miscChanges) {
+		h2 += '<div class="split-note">老齢年金が出はじめる' + PUBLIC_PENSION_START_AGE +
+			'歳から公的年金等控除を分け合うので、そこで雑所得の増え方が変わります。</div>';
+	}
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 

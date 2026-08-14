@@ -16,14 +16,28 @@
 const LIMIT_REFORM_YEAR = 2027; // この年から改正後の限度額を使う
 
 /* 区分ごとの月額限度額。第2号は改正後、企業型DCの事業主掛金と
-   確定給付企業年金の他制度掛金相当額を差し引いた残りが使える枠になる */
+   確定給付企業年金の他制度掛金相当額を差し引いた残りが使える枠になる。
+
+   endsAt60 は「60歳で国民年金の被保険者でなくなる区分」。第1号と第3号は
+   20歳以上60歳未満なので、現行制度では60歳以降はiDeCoに拠出できない。
+   第2号は厚生年金の被保険者なので、働き続けていれば60歳以降もそのまま拠出できる。
+   （iDeCo公式「iDeCoの加入資格・掛金・受取方法等」より） */
 const CONTRIBUTION_LIMITS = {
-	self:      { label: '第1号（自営業者など）',        current: 68000, reformed: 75000, sharedWithDb: false },
-	employee:  { label: '第2号（会社員・企業年金なし）', current: 23000, reformed: 62000, sharedWithDb: true },
-	corporate: { label: '第2号（会社員・企業年金あり）', current: 20000, reformed: 62000, sharedWithDb: true },
-	publicSv:  { label: '第2号（公務員）',              current: 20000, reformed: 62000, sharedWithDb: true },
-	spouse:    { label: '第3号（専業主婦・主夫）',       current: 23000, reformed: 23000, sharedWithDb: false }
+	self:      { label: '第1号（自営業者など）',        current: 68000, reformed: 75000, sharedWithDb: false, endsAt60: true },
+	employee:  { label: '第2号（会社員・企業年金なし）', current: 23000, reformed: 62000, sharedWithDb: true,  endsAt60: false },
+	corporate: { label: '第2号（会社員・企業年金あり）', current: 20000, reformed: 62000, sharedWithDb: true,  endsAt60: false },
+	publicSv:  { label: '第2号（公務員）',              current: 20000, reformed: 62000, sharedWithDb: true,  endsAt60: false },
+	spouse:    { label: '第3号（専業主婦・主夫）',       current: 23000, reformed: 23000, sharedWithDb: false, endsAt60: true }
 };
+
+/* 国民年金の被保険者でなくなる年齢（第1号・第3号）。
+   60歳以上65歳未満の任意加入被保険者はこの先も拠出できるが、
+   保険料の納付済期間が480月に満たない人だけの制度なので扱わない */
+const NATIONAL_PENSION_END_AGE = 60;
+
+/* 改正後は「60歳以上70歳未満で国民年金の被保険者でない人」も
+   第5号加入者として拠出できるようになる。枠は第2号と同じ月6.2万円 */
+const LATE_JOIN_CATEGORY_LIMIT = 62000;
 
 /* 加入できる年齢の上限。改正で65歳未満から70歳未満に広がる
    （老齢基礎年金・iDeCoの老齢給付金を受け取っていない人） */
@@ -69,14 +83,22 @@ function earliestPayoutAge(joinAge) {
 }
 
 /**
- * その年に拠出できる月額の上限。
+ * その年に拠出できる月額の上限。0なら拠出できない。
  * otherPlanMonthly は企業型DCの事業主掛金＋他制度掛金相当額（月額）。
  * 改正後の第2号はこれを差し引いた残りが枠になる。
+ * age はその年の年齢。第1号・第3号は60歳で枠が変わる。
  */
-function contributionLimit(category, year, otherPlanMonthly) {
+function contributionLimit(category, year, otherPlanMonthly, age) {
 	const c = CONTRIBUTION_LIMITS[category];
 	if (!c) return 0;
 	const reformed = year >= LIMIT_REFORM_YEAR;
+
+	/* 60歳で国民年金の被保険者でなくなる区分。現行では拠出できず、
+	   改正後は第5号加入者として第2号と同じ枠になる（第3号の2.3万円ではない） */
+	if (c.endsAt60 && age >= NATIONAL_PENSION_END_AGE) {
+		return reformed ? LATE_JOIN_CATEGORY_LIMIT : 0;
+	}
+
 	const base = reformed ? c.reformed : c.current;
 	if (reformed && c.sharedWithDb) {
 		return Math.max(0, base - Math.max(0, otherPlanMonthly || 0));
@@ -130,7 +152,7 @@ function accumulate(cfg, tax) {
 	for (let i = 0; i < years; i++) {
 		const age = cfg.startAge + i;
 		const year = startYear + i;
-		const limit = contributionLimit(cfg.category, year, cfg.otherPlanMonthly);
+		const limit = contributionLimit(cfg.category, year, cfg.otherPlanMonthly, age);
 		// 加入できる年齢を過ぎたら拠出は止まるが、運用は続く
 		const canPay = age < joinAgeLimit(year);
 		const monthly = canPay ? Math.min(cfg.monthly, limit) : 0;
@@ -296,6 +318,12 @@ function lumpSumTax(cfg, tax) {
    公的年金等の収入として、老齢年金と合算して公的年金等控除を当てる。
    控除枠を分け合うので、老齢年金が多いほどiDeCo側の税負担は重くなる。 */
 
+/* 老齢年金が出はじめる年齢。iDeCoは60歳から受け取れるが老齢年金は原則65歳からで、
+   その間は公的年金等控除をiDeCoが単独で使える。全期間に老齢年金があるものとして
+   計算すると、60〜64歳の税額を多く見積もってしまう。
+   繰上げ受給（減額）・繰下げ受給（増額）は扱わない */
+const PUBLIC_PENSION_START_AGE = 65;
+
 /* 年金で受け取る場合の1年あたりの額。
    一時金と違い、受け取り終わるまで残りの資産は口座に残って運用が続くので、
    受け取る総額は受給開始時の残高より多くなる。
@@ -320,7 +348,8 @@ function annuityTax(cfg, tax) {
 
 	for (let i = 0; i < years; i++) {
 		const age = cfg.idecoPayAge + i;
-		const publicPension = cfg.publicPension || 0;
+		// 65歳になるまでは老齢年金がまだ出ていない
+		const publicPension = age >= PUBLIC_PENSION_START_AGE ? (cfg.publicPension || 0) : 0;
 		// iDeCoを足す前と後で、公的年金等に係る雑所得がどれだけ増えるかを見る
 		const baseMisc = tax.pensionMiscIncome(publicPension, age);
 		const withMisc = tax.pensionMiscIncome(publicPension + perYear, age);
@@ -390,6 +419,9 @@ if (typeof module !== 'undefined' && module.exports) {
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,
 		JOIN_AGE_LIMIT: JOIN_AGE_LIMIT,
+		NATIONAL_PENSION_END_AGE: NATIONAL_PENSION_END_AGE,
+		LATE_JOIN_CATEGORY_LIMIT: LATE_JOIN_CATEGORY_LIMIT,
+		PUBLIC_PENSION_START_AGE: PUBLIC_PENSION_START_AGE,
 		PAYOUT_AGE_MIN: PAYOUT_AGE_MIN, PAYOUT_AGE_MAX: PAYOUT_AGE_MAX,
 		earliestPayoutAge: earliestPayoutAge,
 		PAYOUT_START_BY_PERIOD: PAYOUT_START_BY_PERIOD,

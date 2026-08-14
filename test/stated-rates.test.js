@@ -345,6 +345,21 @@ test('iDeCo：注記の重複期間のルールが定数と一致する', () => 
 	assert.strictEqual(Number(later[1]), ideco.OVERLAP_YEARS_RETIRE_FIRST, '退職金が先の場合');
 });
 
+test('iDeCo：注記の第1号・第3号の年齢と第5号の枠が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /第1号・第3号被保険者は20歳以上(\d+)歳未満なので/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.NATIONAL_PENSION_END_AGE, '国民年金の被保険者でなくなる年齢');
+	const g = must(text, /「第5号加入者」として拠出でき、枠は第2号と同じ月([\d,]+)円/, 'ideco/index.html');
+	assert.strictEqual(yen(g[1]), ideco.LATE_JOIN_CATEGORY_LIMIT, '第5号加入者の枠');
+	// 第5号は第2号と同じ額。片方だけ直したときに気づけるようにする
+	assert.strictEqual(ideco.LATE_JOIN_CATEGORY_LIMIT, ideco.CONTRIBUTION_LIMITS.employee.reformed);
+});
+
+test('iDeCo：注記の老齢年金の受給開始年齢が定数と一致する', () => {
+	const m = must(prose('ideco/index.html'), /老齢年金は(\d+)歳から出るものとして計算する/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.PUBLIC_PENSION_START_AGE, '老齢年金が出はじめる年齢');
+});
+
 test('iDeCo：注記の短期退職手当等の条件が定数と一致する', () => {
 	const text = prose('ideco/index.html');
 	const m = must(text, /加入期間が(\d+)年以下の場合は短期退職手当等にあたり、残りのうち([\d,]+)万円を超える部分/,
