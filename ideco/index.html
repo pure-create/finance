@@ -217,20 +217,24 @@
         <div id="annuityDetail"></div>
       </div>
     </div>
+    <!-- 比べるのは手取りではなく税額。手取りは年金のほうが多くなるが、
+         それは受け取り終わるまで運用が続くという前提の差でほぼ決まってしまい、
+         受け取り方の判断には使えない（下の netNote で断っている） -->
     <div class="grand" aria-live="polite">
-      <span class="glabel" id="grandLabel">手取りが多いのは</span>
+      <span class="glabel" id="grandLabel">増える税金が少ないのは</span>
       <span class="gval" id="grandVal">0<small>万円</small></span>
     </div>
     <div class="grand net" aria-live="polite">
-      <span class="glabel" id="totalLabel">上の手取り ＋ 掛金の節税額</span>
+      <span class="glabel" id="totalLabel">掛金の節税額との差引</span>
       <span class="gval" id="totalVal">0<small>万円</small></span>
     </div>
+    <p class="note" id="netNote"></p>
   </div>
 
   <!-- グラフ -->
   <div class="card" id="chartCard">
-    <h2 class="sec-title">受け取る年齢と受け取り方による手取りの違い</h2>
-    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢（60〜75歳）ごとの手取り合計を、一時金と年金の2本の折れ線で比べたグラフ"></canvas></div>
+    <h2 class="sec-title">受け取る年齢と受け取り方による税金の違い</h2>
+    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢ごとに、iDeCoによって増える税金を一時金と年金の2本の折れ線で比べたグラフ"></canvas></div>
     <p class="note" id="chartNote"></p>
   </div>
 
@@ -263,6 +267,6 @@
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="../common/tax-core.js?v=20260814b"></script>
 <script src="./js/ideco-core.js?v=20260814g"></script>
-<script src="./js/ideco.js?v=20260814j"></script>
+<script src="./js/ideco.js?v=20260814k"></script>
 </body>
 </html>

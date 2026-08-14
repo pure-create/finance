@@ -175,7 +175,7 @@ const markerPlugin = {
 			ctx.font = '700 12px sans-serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'top';
 			const cx = Math.min(Math.max(x, c.chartArea.left + 44), c.chartArea.right - 44);
-			ctx.fillText('手取り最大 ' + state.bestAge + '歳', cx, top + 4);
+			ctx.fillText('税金が最も少ない ' + state.bestAge + '歳', cx, top + 4);
 			ctx.restore();
 		}
 		const xNow = tickX(c, state.payAge);
@@ -229,7 +229,7 @@ function renderChart(sweep) {
 					border: { color: cGrid }
 				},
 				y: {
-					title: { display: true, text: '手取り＋節税額（万円）', font: { size: 11 }, color: cSub },
+					title: { display: true, text: 'iDeCoによって増える税金（万円）', font: { size: 11 }, color: cSub },
 					ticks: { font: { size: 11 }, color: cSub, callback: v => v.toLocaleString('ja-JP') },
 					grid: { color: cGrid },
 					border: { color: cGrid }
@@ -516,22 +516,34 @@ function update() {
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 
-	/* どちらの受け取り方が多いかを大きく出す。退職金も含まれるので、
-	   何の合計なのかを名前に書く。差が小さいときは「ほぼ同じ」と伝える
-	   （1万円未満の差で優劣を断じても意味がないため） */
+	/* 比べるのは「iDeCoによって増える税金」。
+	   手取りで比べると、年金は受け取り終わるまで運用が続くぶん必ず多くなり、
+	   受け取り方の違いではなく運用期間の差を見ていることになってしまう。
+	   税額なら、退職所得控除の調整や公的年金等控除の効き方をそのまま比べられる */
+	const lumpAdd = L.taxByIdeco, annuityAdd = A.taxByIdeco;
+	const lighter = Math.min(lumpAdd, annuityAdd);
+	const gapTax = Math.abs(annuityAdd - lumpAdd);
+	$('grandLabel').innerHTML = gapTax < 10000
+		? '一時金と年金で増える税金はほぼ同じ<span class="gsub">iDeCoを受け取らない場合との差</span>'
+		: '増える税金が少ないのは <b>' + (lumpAdd < annuityAdd ? '一時金' : '年金') + '</b>' +
+		  '<span class="gsub">もう一方より ' + man(gapTax) + '万円 少ない（iDeCoを受け取らない場合との差）</span>';
+	$('grandVal').innerHTML = man(lighter) + '<small>万円</small>';
+
+	/* 入口で軽くなった税金から、出口で増える税金を引いた正味。
+	   運用期間に左右されない、iDeCoの税制上の損得そのもの */
+	$('totalLabel').innerHTML = '掛金の節税額 ' + man(acc.saved) + '万円 − 増える税金 ' + man(lighter) + '万円';
+	$('totalVal').innerHTML = man(acc.saved - lighter) + '<small>万円</small>';
+
+	/* 手取りを大きく出さない理由を書いておく。数字自体は結果の欄に出ている */
 	const scope = hasRetire ? 'iDeCo＋退職金' : 'iDeCo';
-	const better = A.net > L.net ? A : L;
-	const gapNet = Math.abs(A.net - L.net);
-	$('grandLabel').innerHTML = gapNet < 10000
-		? '一時金と年金の手取りはほぼ同じ<span class="gsub">' + scope + 'の合計</span>'
-		: '手取りが多いのは <b>' + (A.net > L.net ? '年金' : '一時金') + '</b>' +
-		  '<span class="gsub">もう一方より ' + man(gapNet) + '万円 多い（' + scope + '）</span>';
-	$('grandVal').innerHTML = man(better.net) + '<small>万円</small>';
-	/* 受け取る額と、拠出の途中で軽くなった税金の合計。
-	   掛金そのものは自分で出しているので「得」ではない（節税分だけが得）。
-	   足し合わせた額に「得」と名前を付けないよう、ラベルは事実だけを書く */
-	$('totalLabel').innerHTML = '掛金の節税額 ' + man(acc.saved) + '万円 を含めた合計';
-	$('totalVal').innerHTML = man(better.net + acc.saved) + '<small>万円</small>';
+	const netGap = A.net - L.net;
+	$('netNote').className = 'note';
+	$('netNote').innerHTML = Math.abs(netGap) < 10000
+		? '手取り（' + scope + '）は一時金・年金ともほぼ同じ ' + man(L.net) + '万円 です。'
+		: '手取り（' + scope + '）だけを見ると ' +
+		  (netGap > 0 ? '年金のほうが ' + man(netGap) : '一時金のほうが ' + man(-netGap)) +
+		  '万円 多くなりますが、これは年金が受け取り終わるまで運用を続ける前提によるところが大きく、' +
+		  '受け取り方そのものの違いではありません。判断には上の税額の差をご覧ください。';
 
 	/* グラフ：受取年齢を60〜75歳で振り、一時金と年金を2本並べる。
 	   受け取り方を選ばせて1本だけ描いていたが、下に両方の内訳が出ている以上
@@ -546,19 +558,21 @@ function update() {
 			initialBalance: cfg.initialBalance
 		}, Tax);
 		const c = compare(payoutCfg(cfg, a.balance, age), Tax);
-		sweep.push({ age: age, lump: c.lump.net + a.saved, annuity: c.annuity.net + a.saved });
+		sweep.push({ age: age, lump: c.lump.taxByIdeco, annuity: c.annuity.taxByIdeco });
 	}
-	let best = -Infinity, bestAge = null, bestName = '';
+	// 税金は少ないほうがよいので、最小の組み合わせを探す
+	let best = Infinity, bestAge = null, bestName = '';
 	for (const s of sweep) {
-		if (s.lump > best) { best = s.lump; bestAge = s.age; bestName = '一時金'; }
-		if (s.annuity > best) { best = s.annuity; bestAge = s.age; bestName = '年金'; }
+		if (s.lump < best) { best = s.lump; bestAge = s.age; bestName = '一時金'; }
+		if (s.annuity < best) { best = s.annuity; bestAge = s.age; bestName = '年金'; }
 	}
 	state.bestAge = bestAge;
 	state.chartFrom = sweep[0].age;
 	$('chartNote').textContent =
-		'受け取る年齢を遅らせると運用期間と拠出期間が延びる一方、退職金との間隔が変わって控除の調整も動きます。' +
-		'手取り（' + scope + '）と節税額を合わせた額では、' + bestAge + '歳に' + bestName +
-		'で受け取るのが最大（' + man(best) + '万円）です。';
+		'受け取る年齢を遅らせると残高が増えて税金も増える一方、加入年数が延びて退職所得控除も大きくなり、' +
+		'退職金との間隔が変わって控除の調整も動きます。' +
+		'iDeCoによって増える税金が最も少ないのは、' + bestAge + '歳に' + bestName +
+		'で受け取る場合（' + man(best) + '万円）です。';
 	renderChart(sweep);
 	if (chart) chart.draw();
 
