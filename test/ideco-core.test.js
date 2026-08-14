@@ -455,3 +455,20 @@ test('積立：節税がなければ実質の負担は掛金そのもの', () =>
 	assert.strictEqual(a.saved, 0);
 	assert.strictEqual(a.netCost, a.paid);
 });
+
+test('一時金：退職金が先でも20年以上空けば調整されない', () => {
+	/* 50歳で退職金 → 70歳でiDeCo（間隔20年 > 19年）。
+	   画面の説明は「どちらが先か」で文が変わるので、
+	   調整なしが両方の向きで起きることを固定しておく */
+	const r = lumpSumTax(Object.assign({}, lumpBase, { idecoPayAge: 70, retireAge: 50 }), tax);
+	assert.strictEqual(r.gap, 20, '退職金が先（gapは正）');
+	assert.strictEqual(r.adjusted, null, '調整なし');
+	assert.strictEqual(r.overlap, 0);
+	assert.strictEqual(r.ideco.deduction, tax.retireDeduction(r.idecoYears), 'iDeCoは満額の控除');
+	assert.strictEqual(r.retire.deduction, tax.retireDeduction(r.retireYears), '退職金も満額の控除');
+
+	// 19年ちょうどだとまだ調整される
+	const at19 = lumpSumTax(Object.assign({}, lumpBase, { idecoPayAge: 69, retireAge: 50 }), tax);
+	assert.strictEqual(at19.gap, 19);
+	assert.strictEqual(at19.adjusted, 'ideco', '19年内はiDeCo側が削られる');
+});

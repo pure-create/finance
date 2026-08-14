@@ -51,7 +51,7 @@ function teinenAge(fiscalYear){
    所得税の速算表は common/tax-core.js にある。iDeCoの掛金による節税額でも
    同じ速算表を使うため、片方にベタ書きしないよう共通側へ移した。
 
-   ノードから読み込んだときは、このファイルが持つぶんだけを公開する（テスト用） */
+   ノードから読み込んだときは、このファイルが持つ分だけを公開する（テスト用） */
 if (typeof module !== 'undefined' && module.exports) {
 	module.exports = {
 		own_rate: own_rate, compulsory_rate: compulsory_rate,

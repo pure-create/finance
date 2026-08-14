@@ -117,7 +117,7 @@ function accumulate(cfg, tax) {
 
 /* ---------- 出口：重複期間と退職所得控除の調整 ----------
 
-   前に退職手当等を受けていると、勤続期間の重なりぶんだけ退職所得控除が減る
+   前に退職手当等を受けていると、勤続期間の重なり分だけ退職所得控除が減る
    （国税庁 No.2732）。対象になる期間は受け取る順で違う。 */
 const OVERLAP_YEARS_IDECO_FIRST = 9;   // iDeCoが先→退職金が後（令和8年1月1日以後。従来は4年）
 const OVERLAP_YEARS_RETIRE_FIRST = 19; // 退職金が先→iDeCoが後（据え置き）
@@ -161,7 +161,7 @@ function lumpSumTax(cfg, tax) {
 		r.retire = { amount: 0, deduction: 0, tax: 0, inhabitTax: 0 };
 	} else if (gap === 0) {
 		/* 同じ年に両方受け取ると、合算して1つの退職所得になる。
-		   控除は、重なりを除いた通算の勤続年数で1回ぶんだけ使える */
+		   控除は、重なりを除いた通算の勤続年数で1回分だけ使える */
 		r.sameYear = true;
 		r.overlap = overlap;
 		const totalYears = idecoYears + retireYears - overlap;
@@ -246,7 +246,7 @@ function annuityTax(cfg, tax) {
 /* ---------- まとめ ----------
 
    受取方法ごとの手取りを並べて返す。退職金の税額は一時金の計算に含まれるので、
-   年金受取のときも退職金ぶんは一時金として別に足す。 */
+   年金受取のときも退職金分は一時金として別に足す。 */
 function compare(cfg, tax) {
 	const lump = lumpSumTax(cfg, tax);
 

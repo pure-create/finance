@@ -255,21 +255,30 @@ function describeRule(lump) {
 	const box = $('ruleNote');
 	if (!(lump.retire.amount > 0) && !lump.sameYear) {
 		box.className = 'note rule-note safe';
-		box.textContent = '退職金が無いので、iDeCoの加入年数（' + lump.idecoYears + '年）ぶんの退職所得控除をそのまま使えます。';
+		box.textContent = '退職金が無いので、iDeCoの加入年数（' + lump.idecoYears + '年）分の退職所得控除をそのまま使えます。';
 		return;
 	}
 	if (lump.sameYear) {
 		box.className = 'note rule-note';
-		box.innerHTML = '同じ年に両方を受け取るため、<b>合算して1回ぶんの退職所得控除</b>になります' +
+		box.innerHTML = '同じ年に両方を受け取るため、<b>合算して1回分の退職所得控除</b>になります' +
 			'（重なる' + lump.overlap + '年を除いた通算' +
 			(lump.idecoYears + lump.retireYears - lump.overlap) + '年で計算）。';
 		return;
 	}
 	if (lump.adjusted === 'ideco') {
+		/* 調整を外すにはiDeCoを「遅らせる」必要がある（退職金より20年以上後にする）。
+		   ただし受給は75歳までなので、退職金が55歳より後ならどう遅らせても届かない。
+		   何のためにずらすのかを先に書く（ずらす動機が分からないと意味が通らない） */
+		const needAge = lump.retireAge + OVERLAP_YEARS_RETIRE_FIRST + 1;
+		const escape = needAge <= PAYOUT_AGE_MAX
+			? '削られた控除を満額に戻すには、iDeCoの受け取りを<b>' + needAge + '歳まで遅らせる</b>必要があります。'
+			: '削られた控除を満額に戻すには、iDeCoの受け取りを' + needAge +
+			  '歳まで遅らせる必要がありますが、受給は' + PAYOUT_AGE_MAX +
+			  '歳までなので、この退職年齢では避けられません。年金で受け取れば退職所得控除を使わないので、この調整も起きません。';
 		box.className = 'note rule-note';
 		box.innerHTML = '退職金を先に受け取り、' + Math.abs(lump.gap) + '年後にiDeCoを受け取ります。' +
 			'退職金が先の場合は<b>前年以前19年内</b>が対象なので、重なる' + lump.overlap +
-			'年ぶん、<b>iDeCo側の控除が削られます</b>。19年より後にずらす必要がありますが、受給は75歳までです。';
+			'年分、<b>iDeCo側の控除が削られます</b>。' + escape;
 		return;
 	}
 	if (lump.adjusted === 'retire') {
@@ -283,12 +292,20 @@ function describeRule(lump) {
 		box.className = 'note rule-note';
 		box.innerHTML = 'iDeCoを先に受け取り、' + Math.abs(lump.gap) + '年後に退職金を受け取ります。' +
 			'iDeCoが先の場合は<b>前年以前9年内</b>が対象なので、重なる' + lump.overlap +
-			'年ぶん、<b>退職金側の控除が削られます</b>。' + escape;
+			'年分、<b>退職金側の控除が削られます</b>。' + escape;
 		return;
 	}
+	/* 調整が起きない場合。どちらが先かで、必要な間隔（10年／20年）も
+	   文の主語も変わるので、gap の向きで書き分ける */
+	const apart = Math.abs(lump.gap);
 	box.className = 'note rule-note safe';
-	box.innerHTML = 'iDeCoを先に受け取り、' + Math.abs(lump.gap) +
-		'年後に退職金を受け取ります。10年以上空いているため<b>控除の調整はありません</b>。どちらも満額の退職所得控除を使えます。';
+	box.innerHTML = lump.gap > 0
+		? '退職金を先に受け取り、' + apart + '年後にiDeCoを受け取ります。' +
+		  '退職金が先の場合に対象となる' + OVERLAP_YEARS_RETIRE_FIRST + '年より後なので、' +
+		  '<b>控除の調整はありません</b>。どちらも満額の退職所得控除を使えます。'
+		: 'iDeCoを先に受け取り、' + apart + '年後に退職金を受け取ります。' +
+		  'iDeCoが先の場合に対象となる' + OVERLAP_YEARS_IDECO_FIRST + '年より後なので、' +
+		  '<b>控除の調整はありません</b>。どちらも満額の退職所得控除を使えます。';
 }
 
 function update() {
