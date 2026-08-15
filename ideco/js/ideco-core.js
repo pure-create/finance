@@ -318,11 +318,37 @@ function lumpSumTax(cfg, tax) {
    公的年金等の収入として、老齢年金と合算して公的年金等控除を当てる。
    控除枠を分け合うので、老齢年金が多いほどiDeCo側の税負担は重くなる。 */
 
-/* 老齢年金が出はじめる年齢。iDeCoは60歳から受け取れるが老齢年金は原則65歳からで、
-   その間は公的年金等控除をiDeCoが単独で使える。全期間に老齢年金があるものとして
-   計算すると、60〜64歳の税額を多く見積もってしまう。
-   繰上げ受給（減額）・繰下げ受給（増額）は扱わない */
-const PUBLIC_PENSION_START_AGE = 65;
+/* 老齢年金の受給開始年齢。原則は65歳だが、60歳から75歳の間で選べる。
+   iDeCoを年金で受け取りはじめてから老齢年金が出るまでの間は、
+   公的年金等控除をiDeCoが単独で使える。 */
+const PUBLIC_PENSION_START_AGE = 65;   // 原則（増減なしの基準）
+const PUBLIC_PENSION_MIN_AGE = 60;     // 繰上げの下限
+const PUBLIC_PENSION_MAX_AGE = 75;     // 繰下げの上限
+
+/* 受給開始年齢による増減。繰上げは1か月あたり0.4%減（60歳まで＝最大24%減）、
+   繰下げは1か月あたり0.7%増（75歳まで＝最大84%増）。
+
+   減額率0.4%は昭和37年4月2日以後生まれのもので、それ以前は0.5%（最大30%減）。
+   これから受け取る人はほぼ前者なので、そちらで計算する。
+
+   年金シミュレーター（pension/js/pension-core.js の pRate）と同じ率。
+   食い違うと2つのツールで別の答えが出るので、
+   test/ideco-core.test.js で全年齢を突き合わせている */
+const PENSION_EARLY_RATE = 0.004;   // 繰上げ：1か月あたりの減額
+const PENSION_LATE_RATE = 0.007;    // 繰下げ：1か月あたりの増額
+
+/* 65歳受給開始を1としたときの倍率。入力する見込額（ねんきん定期便の額）は
+   65歳時点のものなので、選んだ年齢に応じてここで増減させる */
+function publicPensionRate(startAge) {
+	if (startAge < PUBLIC_PENSION_START_AGE) {
+		return 1 - PENSION_EARLY_RATE * (PUBLIC_PENSION_START_AGE - startAge) * 12;
+	}
+	if (startAge > PUBLIC_PENSION_START_AGE) {
+		const capped = Math.min(startAge, PUBLIC_PENSION_MAX_AGE);
+		return 1 + PENSION_LATE_RATE * (capped - PUBLIC_PENSION_START_AGE) * 12;
+	}
+	return 1;
+}
 
 /* 年金で受け取る場合の1年あたりの額。
    一時金と違い、受け取り終わるまで残りの資産は口座に残って運用が続くので、
@@ -346,10 +372,15 @@ function annuityTax(cfg, tax) {
 	const rows = [];
 	let total = 0;
 
+	/* 老齢年金。受給開始年齢の指定がなければ原則の65歳。
+	   入力される見込額は65歳時点の額なので、繰上げ・繰下げの分を掛ける */
+	const pensionAge = cfg.publicPensionStartAge || PUBLIC_PENSION_START_AGE;
+	const pensionYearly = (cfg.publicPension || 0) * publicPensionRate(pensionAge);
+
 	for (let i = 0; i < years; i++) {
 		const age = cfg.idecoPayAge + i;
-		// 65歳になるまでは老齢年金がまだ出ていない
-		const publicPension = age >= PUBLIC_PENSION_START_AGE ? (cfg.publicPension || 0) : 0;
+		// 受給開始年齢になるまで、老齢年金はまだ出ていない
+		const publicPension = age >= pensionAge ? pensionYearly : 0;
 		// iDeCoを足す前と後で、公的年金等に係る雑所得がどれだけ増えるかを見る
 		const baseMisc = tax.pensionMiscIncome(publicPension, age);
 		const withMisc = tax.pensionMiscIncome(publicPension + perYear, age);
@@ -374,7 +405,9 @@ function annuityTax(cfg, tax) {
 		rows: rows, years: years, perYear: perYear,
 		balance: cfg.idecoAmount,
 		growth: gross - cfg.idecoAmount,
-		tax: total, gross: gross, net: gross - total
+		tax: total, gross: gross, net: gross - total,
+		// 画面が「いつから、いくらの老齢年金と分け合うのか」を出すのに使う
+		pensionAge: pensionAge, pensionYearly: pensionYearly
 	};
 }
 
@@ -422,6 +455,11 @@ if (typeof module !== 'undefined' && module.exports) {
 		NATIONAL_PENSION_END_AGE: NATIONAL_PENSION_END_AGE,
 		LATE_JOIN_CATEGORY_LIMIT: LATE_JOIN_CATEGORY_LIMIT,
 		PUBLIC_PENSION_START_AGE: PUBLIC_PENSION_START_AGE,
+		PUBLIC_PENSION_MIN_AGE: PUBLIC_PENSION_MIN_AGE,
+		PUBLIC_PENSION_MAX_AGE: PUBLIC_PENSION_MAX_AGE,
+		PENSION_EARLY_RATE: PENSION_EARLY_RATE,
+		PENSION_LATE_RATE: PENSION_LATE_RATE,
+		publicPensionRate: publicPensionRate,
 		PAYOUT_AGE_MIN: PAYOUT_AGE_MIN, PAYOUT_AGE_MAX: PAYOUT_AGE_MAX,
 		earliestPayoutAge: earliestPayoutAge,
 		PAYOUT_START_BY_PERIOD: PAYOUT_START_BY_PERIOD,

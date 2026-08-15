@@ -12,7 +12,7 @@ const FIELDS = [
 	['taxableIncome', 400, 'ti'],
 	['joinAge', 40, 'ja'], ['payAge', 65, 'pa'],
 	['retireAmount', 2000, 'ra'], ['hireAge', 22, 'ha'], ['retireAge', 60, 'rt'],
-	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp']
+	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp'], ['publicPensionAge', 65, 'ps']
 ];
 const DEFAULTS = {};
 for (let i = 0; i < FIELDS.length; i++) DEFAULTS[FIELDS[i][0]] = FIELDS[i][1];
@@ -127,7 +127,8 @@ function readConfig() {
 		hireAge: Math.round(num('hireAge')),
 		retireAge: Math.round(num('retireAge')),
 		annuityYears: Math.round(num('annuityYears')),
-		publicPension: num('publicPension') * 10000
+		publicPension: num('publicPension') * 10000,
+		publicPensionStartAge: Math.round(num('publicPensionAge'))
 	};
 }
 
@@ -142,6 +143,7 @@ function payoutCfg(cfg, idecoAmount, payAge) {
 		retireAge: cfg.retireAge,
 		annuityYears: cfg.annuityYears,
 		publicPension: cfg.publicPension,
+		publicPensionStartAge: cfg.publicPensionStartAge,
 		// 年金受取では残りの資産が運用を続けるので、利回りが出口にも効く
 		yieldRate: cfg.yieldRate
 	};
@@ -400,6 +402,19 @@ function update() {
 	warn.className = warns.length ? 'note warn' : 'note';
 	warn.textContent = warns.join('');
 
+	/* 老齢年金の受給開始年齢。入力する見込額は65歳時点の額なので、
+	   繰上げ・繰下げで実際にいくらになるかを添える（65歳なら増減はない） */
+	const pensionNote = $('pensionAgeNote');
+	const pRate = publicPensionRate(cfg.publicPensionStartAge);
+	if (cfg.publicPension > 0 && pRate !== 1) {
+		const pct = Math.round(Math.abs(pRate - 1) * 1000) / 10;
+		pensionNote.innerHTML = cfg.publicPensionStartAge + '歳からなら <b>' +
+			man(cfg.publicPension * pRate) + '万円/年</b>（' +
+			(pRate > 1 ? pct + '%増' : pct + '%減') + '）';
+	} else {
+		pensionNote.innerHTML = '';
+	}
+
 	// 積立（入口）
 	const acc = accumulate({
 		startAge: cfg.startAge, payAge: cfg.payAge, startYear: cfg.startYear,
@@ -578,7 +593,7 @@ function update() {
 	}
 	h2 += idecoTaxRow(A.taxByIdeco);
 	if (miscChanges) {
-		h2 += '<div class="split-note">老齢年金が出はじめる' + PUBLIC_PENSION_START_AGE +
+		h2 += '<div class="split-note">老齢年金が出はじめる' + d.pensionAge +
 			'歳から公的年金等控除を分け合うので、そこで雑所得の増え方が変わります。</div>';
 	}
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';

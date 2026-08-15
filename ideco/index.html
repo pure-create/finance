@@ -165,18 +165,29 @@
         <span class="num-in"><input type="number" id="retireAge" value="60" min="15" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
     </div>
-    <div class="grid2">
+    <div class="grid3">
       <div class="fld">
         <label for="taxableIncome">課税所得
           <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
         </label>
         <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
+    </div>
+    <!-- 老齢年金は見込額と受給開始年齢が一組。見込額は65歳時点の額として受け取り、
+         繰上げ・繰下げの増減は年齢から計算する -->
+    <div class="grid2">
       <div class="fld">
         <label for="publicPension">老齢年金の見込額
-          <span class="help" tabindex="0" aria-label="老齢年金の見込額について" aria-describedby="ppTip">？<span class="tipbox" id="ppTip" role="tooltip">ねんきん定期便に載っている年額の見込みです。iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span></span>
+          <span class="help" tabindex="0" aria-label="老齢年金の見込額について" aria-describedby="ppTip">？<span class="tipbox" id="ppTip" role="tooltip">ねんきん定期便に載っている年額の見込みです。<strong>65歳から受け取る場合の額</strong>を入れてください。右で受給開始年齢を変えると、繰上げ・繰下げによる増減はこちらで計算します。<br><br>iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span></span>
         </label>
         <span class="num-in"><input type="number" id="publicPension" value="180" min="0" step="10" inputmode="numeric"><span class="unit">万円/年</span></span>
+      </div>
+      <div class="fld">
+        <label for="publicPensionAge">老齢年金の受給開始年齢
+          <span class="help" tabindex="0" aria-label="受給開始年齢について" aria-describedby="ppAgeTip">？<span class="tipbox" id="ppAgeTip" role="tooltip">原則は65歳ですが、60歳から75歳の間で選べます。早めると1か月あたり0.4%減り（60歳で24%減）、遅らせると1か月あたり0.7%増えます（75歳で84%増）。<br><br>iDeCoを年金で受け取る場合、老齢年金が出るまでは公的年金等控除をiDeCoが単独で使えるので、ここを遅らせるとiDeCo側の税金は軽くなります。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="publicPensionAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
+        <p class="limit-note" id="pensionAgeNote"></p>
       </div>
     </div>
   </div>
@@ -250,7 +261,8 @@
       ・ 60歳から受け取るには、60歳になるまでの通算加入者等期間が10年以上必要です。足りない場合は受け取れる年齢が繰り下がり、8年以上で61歳、6年以上で62歳、4年以上で63歳、2年以上で64歳、1年以上で65歳からになります。60歳以降に初めて加入した場合は、加入から5年経過後に受け取れます。<br>
       ・ 一時金で受け取ると<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>退職所得</a>になり、控除を引いた残りの半分だけが課税されます。ただし加入期間が5年以下の場合は短期退職手当等にあたり、残りのうち300万円を超える部分は半分になりません（60歳以降に加入して5年で受け取る場合などが当てはまります）。<br>
       ・ 一時金の退職所得控除は加入年数に応じて決まります。ただし退職金を前後に受け取っていると、勤続期間と加入期間の重なり分だけ控除が削られます（<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2732.htm' target='_blank' rel='noopener noreferrer'>国税庁 No.2732</a>）。対象になるのは、iDeCoを先に受け取った場合は前年以前9年内（令和8年1月1日以後の支給。従来は4年内）、退職金を先に受け取った場合は前年以前19年内です。<br>
-      ・ 年金で受け取ると雑所得になり、老齢年金と合わせて<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1600.htm' target='_blank' rel='noopener noreferrer'>公的年金等控除</a>を分け合います。老齢年金は65歳から出るものとして計算するので（繰上げ・繰下げは扱いません）、60歳から年金で受け取りはじめた場合、65歳になるまでは控除をiDeCoが単独で使えます。65歳以上なら合わせて110万円までは課税されないので、老齢年金が少なくiDeCoを長く分割すれば非課税に収まることもありますが、老齢年金が枠を使い切っていると受取額はそのまま雑所得になります。税額は「iDeCoによって増えた雑所得」に税率を当てた簡易計算で、給与など他の所得があると実際の税率は変わります。<br>
+      ・ 年金で受け取ると雑所得になり、老齢年金と合わせて<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1600.htm' target='_blank' rel='noopener noreferrer'>公的年金等控除</a>を分け合います。iDeCoを年金で受け取りはじめてから老齢年金が出るまでの間は、この控除をiDeCoが単独で使えます。65歳以上なら合わせて110万円までは課税されないので、老齢年金が少なくiDeCoを長く分割すれば非課税に収まることもありますが、老齢年金が枠を使い切っていると受取額はそのまま雑所得になります。税額は「iDeCoによって増えた雑所得」に税率を当てた簡易計算で、給与など他の所得があると実際の税率は変わります。<br>
+      ・ 老齢年金の受給開始は原則65歳ですが、60歳から75歳の間で選べます。早めると1か月あたり0.4%減り（60歳で24%減）、遅らせると1か月あたり0.7%増えます（75歳で84%増）。入力する見込額は65歳から受け取る場合の額として、選んだ受給開始年齢に応じて増減させています。減額率は昭和37年4月2日以後生まれのもので、それ以前の生まれは0.5%（60歳で30%減）です。<br>
       ・ 年金受取で雑所得が増えると、国民健康保険料や介護保険料も上がりますが、自治体による差が大きいため考慮していません。<br>
       ・ 一時金と年金のどちらが税金が少ないかは、<strong>受け取る年が退職金と同じかどうか</strong>で大きく変わります。<strong>別の年</strong>に受け取るなら、iDeCoは自前の退職所得控除を使って単独で課税されるため、退職金がいくら大きくても一時金の税額は変わらず、多くの場合は一時金のほうが少なくなります。<strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されるため、退職金が大きいほど一時金が不利になります。たとえば勤続43年・iDeCo 1,000万円・老齢年金180万円を20年に分ける条件では、退職金が3,000万円を超えるあたりから年金のほうが少なくなります。<br>
       ・ 年金の受取総額が受給開始時の残高より多いのは、受け取り終わるまで残りの資産が運用を続けるためです（1年あたりの額が一定になるよう、期首払いの年金として計算しています）。一方の一時金は受け取った後の運用を見込んでいないので、両者の比較は「iDeCoから出てくるまで」の話になります。<br>
@@ -272,7 +284,7 @@
 <script src="../common/share.js?v=20260808a"></script>
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="../common/tax-core.js?v=20260815a"></script>
-<script src="./js/ideco-core.js?v=20260815b"></script>
-<script src="./js/ideco.js?v=20260815c"></script>
+<script src="./js/ideco-core.js?v=20260815c"></script>
+<script src="./js/ideco.js?v=20260815d"></script>
 </body>
 </html>

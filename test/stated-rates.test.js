@@ -355,9 +355,40 @@ test('iDeCo：注記の第1号・第3号の年齢と第5号の枠が定数と一
 	assert.strictEqual(ideco.LATE_JOIN_CATEGORY_LIMIT, ideco.CONTRIBUTION_LIMITS.employee.reformed);
 });
 
-test('iDeCo：注記の老齢年金の受給開始年齢が定数と一致する', () => {
-	const m = must(prose('ideco/index.html'), /老齢年金は(\d+)歳から出るものとして計算する/, 'ideco/index.html');
-	assert.strictEqual(Number(m[1]), ideco.PUBLIC_PENSION_START_AGE, '老齢年金が出はじめる年齢');
+test('iDeCo：注記の老齢年金の受給開始年齢と増減率が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /老齢年金の受給開始は原則(\d+)歳ですが、(\d+)歳から(\d+)歳の間で選べます/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.PUBLIC_PENSION_START_AGE, '原則の受給開始年齢');
+	assert.strictEqual(Number(m[2]), ideco.PUBLIC_PENSION_MIN_AGE, '繰上げの下限');
+	assert.strictEqual(Number(m[3]), ideco.PUBLIC_PENSION_MAX_AGE, '繰下げの上限');
+
+	// 1か月あたりの率と、下限・上限で何%になるか
+	const r = must(text, /早めると1か月あたり([\d.]+)%減り（(\d+)歳で(\d+)%減）、遅らせると1か月あたり([\d.]+)%増えます（(\d+)歳で(\d+)%増）/,
+		'ideco/index.html');
+	ratioEquals(r[1], ideco.PENSION_EARLY_RATE, '繰上げの1か月あたりの減額率');
+	ratioEquals(r[4], ideco.PENSION_LATE_RATE, '繰下げの1か月あたりの増額率');
+	assert.ok(Math.abs(ideco.publicPensionRate(Number(r[2])) - (1 - Number(r[3]) / 100)) < 1e-12,
+		r[2] + '歳まで早めたときの減額');
+	assert.ok(Math.abs(ideco.publicPensionRate(Number(r[5])) - (1 + Number(r[6]) / 100)) < 1e-12,
+		r[5] + '歳まで遅らせたときの増額');
+});
+
+test('iDeCo：受給開始年齢の入力欄の範囲が定数と一致する', () => {
+	const m = must(read('ideco/index.html'),
+		/id="publicPensionAge"[^>]*min="(\d+)"[^>]*max="(\d+)"/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]), ideco.PUBLIC_PENSION_MIN_AGE, '繰上げの下限');
+	assert.strictEqual(Number(m[2]), ideco.PUBLIC_PENSION_MAX_AGE, '繰下げの上限');
+});
+
+test('iDeCo：繰上げ・繰下げの率が年金シミュレーターと一致する', () => {
+	/* 同じ制度の率を2つのツールで別々に持っているので、食い違わないか見る。
+	   どちらかを改正で直したとき、もう片方を直し忘れるとここで落ちる */
+	for (let age = ideco.PUBLIC_PENSION_MIN_AGE; age <= ideco.PUBLIC_PENSION_MAX_AGE; age++) {
+		assert.ok(Math.abs(ideco.publicPensionRate(age) - pension.pRate(age)) < 1e-12,
+			age + '歳受給開始の増減率が2つのツールで違う');
+	}
+	// 上限を超えたときの頭打ちも同じ
+	assert.ok(Math.abs(ideco.publicPensionRate(80) - pension.pRate(80)) < 1e-12, '繰下げの頭打ち');
 });
 
 test('iDeCo：注記の短期退職手当等の条件が定数と一致する', () => {

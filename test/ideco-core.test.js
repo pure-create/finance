@@ -13,7 +13,8 @@ const {
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	earliestPayoutAge, PAYOUT_START_BY_PERIOD, LATE_JOIN_AGE, LATE_JOIN_WAIT,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST,
-	NATIONAL_PENSION_END_AGE, LATE_JOIN_CATEGORY_LIMIT, PUBLIC_PENSION_START_AGE
+	NATIONAL_PENSION_END_AGE, LATE_JOIN_CATEGORY_LIMIT, PUBLIC_PENSION_START_AGE,
+	PUBLIC_PENSION_MIN_AGE, PUBLIC_PENSION_MAX_AGE, publicPensionRate
 } = require('../ideco/js/ideco-core.js');
 
 // 所得税は1.021を掛けて切り捨てるので、二進小数の丸めで1円ずれることがある
@@ -491,6 +492,60 @@ test('年金：老齢年金は65歳から。それまでは控除をiDeCoが単�
 		publicPension: 1800000, yieldRate: 0
 	}, tax);
 	assert.ok(a.tax < from65.tax, '60歳開始のほうが、はじめの5年ぶん軽いはず');
+});
+
+test('老齢年金：繰上げは1か月0.4%減、繰下げは1か月0.7%増', () => {
+	assert.strictEqual(PUBLIC_PENSION_MIN_AGE, 60);
+	assert.strictEqual(PUBLIC_PENSION_MAX_AGE, 75);
+	assert.strictEqual(publicPensionRate(65), 1, '65歳が基準');
+	// 60歳まで早めると 0.4%×60か月 ＝ 24%減
+	near(publicPensionRate(60), 0.76, 1e-12, '60歳受給開始');
+	near(publicPensionRate(64), 1 - 0.048, 1e-12, '1年早めると4.8%減');
+	// 75歳まで遅らせると 0.7%×120か月 ＝ 84%増
+	near(publicPensionRate(75), 1.84, 1e-12, '75歳受給開始');
+	near(publicPensionRate(70), 1.42, 1e-12, '70歳受給開始');
+	// 上限を超えても増えない
+	assert.strictEqual(publicPensionRate(80), publicPensionRate(75), '繰下げの頭打ち');
+});
+
+test('年金：受給開始年齢を選ぶと、老齢年金の額も出はじめる年も動く', () => {
+	/* 入力する見込額は65歳時点の額。70歳まで繰り下げれば1.42倍になるが、
+	   65〜69歳の5年間は老齢年金が無く、その間はiDeCoが控除を単独で使える */
+	const base = {
+		idecoAmount: 10000000, annuityYears: 10, idecoPayAge: 65,
+		publicPension: 1800000, yieldRate: 0
+	};
+	const late = annuityTax(Object.assign({}, base, { publicPensionStartAge: 70 }), tax);
+	assert.strictEqual(late.pensionAge, 70);
+	near(late.pensionYearly, 1800000 * 1.42, 1, '繰下げで1.42倍');
+	assert.strictEqual(late.rows[0].age, 65);
+	assert.ok(late.rows[0].misc < late.rows[5].misc,
+		'65〜69歳は老齢年金が無く、70歳から分け合うので雑所得の増え方が変わる');
+
+	// 指定が無ければ原則の65歳。明示しても同じ
+	const dflt = annuityTax(base, tax);
+	const at65 = annuityTax(Object.assign({}, base, { publicPensionStartAge: 65 }), tax);
+	assert.strictEqual(dflt.pensionAge, PUBLIC_PENSION_START_AGE);
+	assert.strictEqual(dflt.tax, at65.tax);
+
+	// 繰上げると額は減るが、その年から控除を分け合う
+	const early = annuityTax(Object.assign({}, base, {
+		idecoPayAge: 60, publicPensionStartAge: 60
+	}), tax);
+	near(early.pensionYearly, 1800000 * 0.76, 1, '繰上げで0.76倍');
+	assert.strictEqual(early.rows[0].age, 60);
+	assert.ok(early.rows[0].misc > 0, '60歳から老齢年金があるので、初年から分け合う');
+});
+
+test('年金：老齢年金を繰り下げるほど、iDeCo側の税額は軽くなる', () => {
+	/* 老齢年金が出るまでは公的年金等控除をiDeCoが単独で使えるので、
+	   受給開始を遅らせるほどiDeCoにかかる税金は減る */
+	const at = start => annuityTax({
+		idecoAmount: 12000000, annuityYears: 10, idecoPayAge: 65,
+		publicPension: 1800000, yieldRate: 0, publicPensionStartAge: start
+	}, tax).tax;
+	assert.ok(at(65) > at(70), '70歳まで繰り下げると軽くなる');
+	assert.ok(at(70) > at(75), '75歳まで繰り下げるとさらに軽くなる');
 });
 
 test('年金：受け取る年数を延ばすと1年あたりの額が減る', () => {
