@@ -705,5 +705,32 @@ Theme.onChange(() => {
 	update();
 });
 
+/* 印刷の前にツールチップを消す。
+
+   ツールチップは canvas に描き込まれるので、出したまま印刷すると紙にも載る。
+   ふだんは beforeprint でテーマがライトに固定され、上の Theme.onChange が
+   グラフを作り直すので消えるが、theme.js は二重に動かないよう
+   「前の印刷が終わっていなければ何もしない」という作りになっている。
+   afterprint が来ないまま次の印刷に入ると再描画が飛ばされ、残ってしまう。
+   刷り直しは利かないので、ここでも消しておく。
+
+   消し方は作り直し。setActiveElements で選択を外して update() しても消えず、
+   Chart.js が持っている選択の状態（getActiveElements）も、canvas に残っている
+   絵とは一致しないので当てにできない。毎回そのまま作り直す */
+function clearChartTooltip() {
+	if (!chart) return;
+	chart.destroy();
+	chart = null;
+	update();
+}
+window.addEventListener('beforeprint', clearChartTooltip);
+/* beforeprint を出さないブラウザ向け。印刷用のスタイルに切り替わった時点で拾う */
+if (window.matchMedia) {
+	const printQuery = window.matchMedia('print');
+	if (printQuery.addEventListener) {
+		printQuery.addEventListener('change', e => { if (e.matches) clearChartTooltip(); });
+	}
+}
+
 restoreState();
 update();
