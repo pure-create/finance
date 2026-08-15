@@ -408,10 +408,14 @@ function update() {
 		initialBalance: cfg.initialBalance
 	}, Tax);
 
+	/* 節税額。判断に効くのは毎年の額より累計なので、累計を主役に出す。
+	   拠出できる年が無い（受取年齢まで年数がない）ときや課税所得が無いときは
+	   どちらも0になるので、額を並べず一言で済ませる */
 	const perYearSaving = acc.rows.length ? acc.rows[0].saving : 0;
-	$('savingLine').innerHTML =
-		'毎年 <b>' + man(perYearSaving) + '万円</b> の節税' +
-		'<span class="sub">' + acc.rows.length + '年の拠出で累計 ' + man(acc.saved) + '万円</span>';
+	$('savingLine').innerHTML = acc.saved > 0
+		? '毎年 <b>' + man(perYearSaving) + '万円</b> の節税（' + acc.rows.length +
+		  '年の拠出で累計 <b class="total">' + man(acc.saved) + '万円</b>）'
+		: 'この条件では、掛金による節税はありません。';
 
 	/* 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
 	   払った掛金のうち税金が軽くなって戻ってくる分なので、

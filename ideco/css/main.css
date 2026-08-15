@@ -96,8 +96,10 @@ body{padding:16px;min-height:100vh}
 /* 節税額。入口カードの先頭に置くので、上の余白は見出しの分だけでよい
    （課税所得の入力欄と横に並べていたときは、高さを合わせるため空けていた） */
 .saving-line{font-size:13px;color:var(--text);line-height:1.9}
-.saving-line b{font-size:18px;color:var(--idc-in);font-variant-numeric:tabular-nums}
-.saving-line .sub{display:block;font-size:11.5px;color:var(--muted)}
+.saving-line b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
+/* 累計が判断の主役。毎年の額より大きく、色を付けて先に目に入るようにする
+   （毎年の額から色を外しているのは、両方を強めると主従が付かないため） */
+.saving-line b.total{font-size:23px;color:var(--idc-in)}
 
 /* 受け取る残高の内訳を表す帯：元の残高／実質の負担／節税で戻る分／運用益 */
 .stack{margin-top:6px}
