@@ -92,7 +92,9 @@ body{padding:16px;min-height:100vh}
 .sval{font-size:15px;font-weight:700;color:var(--text);min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---- 節税額 ---- */
-.saving-line{font-size:13px;color:var(--text);line-height:1.9;margin-top:22px}
+/* 節税額。入口カードの先頭に置くので、上の余白は見出しの分だけでよい
+   （課税所得の入力欄と横に並べていたときは、高さを合わせるため空けていた） */
+.saving-line{font-size:13px;color:var(--text);line-height:1.9}
 .saving-line b{font-size:18px;color:var(--idc-in);font-variant-numeric:tabular-nums}
 .saving-line .sub{display:block;font-size:11.5px;color:var(--muted)}
 

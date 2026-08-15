@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260814h">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260815a">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260815a" media="print">
 </head>
 <body>
@@ -74,7 +74,10 @@
     </div>
   </div>
 
-  <!-- 加入区分と掛金 -->
+  <!-- 入力は上に2枚続けて置き、その下に結果を2枚並べる。
+       「入口」「出口」は結果の見出しだけに付ける（入力カードに付けると、
+       結果を出す欄なのか条件を入れる欄なのかが読み取れなくなる）。
+       この1枚が入口の、次の1枚が出口の条件にあたる -->
   <div class="card">
     <h2 class="sec-title">加入区分と掛金</h2>
     <div class="grid2">
@@ -114,6 +117,15 @@
         <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
     </div>
+    <!-- 課税所得は節税額（入口）にだけ効く。掛金と並べて置く -->
+    <div class="grid3">
+      <div class="fld">
+        <label for="taxableIncome">課税所得
+          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
+      </div>
+    </div>
     <div class="ctrl">
       <label for="yieldRate">想定利回り</label>
       <div class="srow">
@@ -124,44 +136,9 @@
     <p class="note" id="limitWarn"></p>
   </div>
 
-  <!-- 節税額 -->
+  <!-- 出口の条件。結果は下の「受け取るときの税金（出口）」に出す -->
   <div class="card">
-    <h2 class="sec-title">掛金による節税（入口）</h2>
-    <div class="grid2">
-      <div class="fld">
-        <label for="taxableIncome">課税所得
-          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
-      </div>
-      <div class="fld">
-        <p class="saving-line" id="savingLine"></p>
-      </div>
-    </div>
-    <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
-         払った掛金のうち税金が軽くなって戻ってくる分なので、
-         掛金を「実質の負担」と「節税で戻る分」に割って見せる。
-         3つ（＋元の残高）を足すと、そのまま受け取る残高になる -->
-    <div class="stack" id="stackBox">
-      <div class="stack-bar" aria-hidden="true">
-        <div class="seg seg-initial" id="segInitial"></div>
-        <div class="seg seg-cost" id="segCost"></div>
-        <div class="seg seg-save" id="segSave"></div>
-        <div class="seg seg-gain" id="segGain"></div>
-      </div>
-      <div class="stack-legend">
-        <span class="lg lg-initial" id="lgInitial" hidden>元の残高</span>
-        <span class="lg lg-cost" id="lgCost">実質の負担</span>
-        <span class="lg lg-save" id="lgSave">節税で戻る分</span>
-        <span class="lg lg-gain" id="lgGain">運用益</span>
-      </div>
-      <p class="stack-note" id="stackNote"></p>
-    </div>
-  </div>
-
-  <!-- 受け取り方 -->
-  <div class="card">
-    <h2 class="sec-title">受け取り方（出口）</h2>
+    <h2 class="sec-title">受け取り方</h2>
     <div class="grid2">
       <div class="fld">
         <label for="joinAge">iDeCoに加入した年齢
@@ -190,7 +167,7 @@
         <span class="num-in"><input type="number" id="retireAge" value="60" min="15" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
     </div>
-    <div class="grid2" id="annuityFields">
+    <div class="grid2">
       <div class="fld">
         <label for="annuityYears">年金で受け取る年数</label>
         <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
@@ -202,18 +179,44 @@
         <span class="num-in"><input type="number" id="publicPension" value="180" min="0" step="10" inputmode="numeric"><span class="unit">万円/年</span></span>
       </div>
     </div>
-    <p class="note rule-note" id="ruleNote"></p>
   </div>
 
-  <!-- 結果 -->
+  <!-- 入口：掛金の節税と、受け取る残高の内訳 -->
   <div class="card">
-    <h2 class="sec-title">受け取るときの税金</h2>
+    <h2 class="sec-title">掛金による節税（入口）</h2>
+    <p class="saving-line" id="savingLine"></p>
+    <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
+         払った掛金のうち税金が軽くなって戻ってくる分なので、
+         掛金を「実質の負担」と「節税で戻る分」に割って見せる。
+         3つ（＋元の残高）を足すと、そのまま受け取る残高になる -->
+    <div class="stack">
+      <div class="stack-bar" aria-hidden="true">
+        <div class="seg seg-initial" id="segInitial"></div>
+        <div class="seg seg-cost" id="segCost"></div>
+        <div class="seg seg-save" id="segSave"></div>
+        <div class="seg seg-gain" id="segGain"></div>
+      </div>
+      <div class="stack-legend">
+        <span class="lg lg-initial" id="lgInitial" hidden>元の残高</span>
+        <span class="lg lg-cost" id="lgCost">実質の負担</span>
+        <span class="lg lg-save" id="lgSave">節税で戻る分</span>
+        <span class="lg lg-gain" id="lgGain">運用益</span>
+      </div>
+      <p class="stack-note" id="stackNote"></p>
+    </div>
+  </div>
+
+  <!-- 出口：受け取り方ごとの税額 -->
+  <div class="card">
+    <h2 class="sec-title">受け取るときの税金（出口）</h2>
+    <!-- 今の受取順で、どちらの控除がどれだけ削られるか。下の数字の前提になる -->
+    <p class="note rule-note" id="ruleNote"></p>
     <div class="results">
-      <div class="res-box lump" id="lumpBox">
+      <div class="res-box lump">
         <h3><span class="badge">一時金</span>まとめて受け取る</h3>
         <div id="lumpDetail"></div>
       </div>
-      <div class="res-box annuity" id="annuityBox">
+      <div class="res-box annuity">
         <h3><span class="badge">年金</span>分割で受け取る</h3>
         <div id="annuityDetail"></div>
       </div>
