@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260813a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260808b">
 <link rel="stylesheet" href="../common/site.css?v=20260813l">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260815a">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260815b">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260815a" media="print">
 </head>
 <body>
@@ -74,12 +74,13 @@
     </div>
   </div>
 
-  <!-- 入力は上に2枚続けて置き、その下に結果を2枚並べる。
-       「入口」「出口」は結果の見出しだけに付ける（入力カードに付けると、
-       結果を出す欄なのか条件を入れる欄なのかが読み取れなくなる）。
-       この1枚が入口の、次の1枚が出口の条件にあたる -->
+  <!-- 入力は上に2枚続けて置く。分け方は「iDeCoの話かどうか」。
+       iDeCoの枠・掛金・いつ受け取るかを1枚目に、勤め先や所得や老齢年金といった
+       iDeCo以外の事情を2枚目にまとめる。
+       「入口」「出口」は結果カードの見出しにだけ付ける（入力カードに付けると、
+       結果を出す欄なのか条件を入れる欄なのかが読み取れなくなる） -->
   <div class="card">
-    <h2 class="sec-title">加入区分と掛金</h2>
+    <h2 class="sec-title">iDeCoの条件</h2>
     <div class="grid2">
       <div class="fld">
         <label for="category">加入区分</label>
@@ -117,15 +118,6 @@
         <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
     </div>
-    <!-- 課税所得は節税額（入口）にだけ効く。掛金と並べて置く -->
-    <div class="grid3">
-      <div class="fld">
-        <label for="taxableIncome">課税所得
-          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
-      </div>
-    </div>
     <div class="ctrl">
       <label for="yieldRate">想定利回り</label>
       <div class="srow">
@@ -133,13 +125,8 @@
         <span class="sval"><span id="yieldVal">3.0</span>%</span>
       </div>
     </div>
-    <p class="note" id="limitWarn"></p>
-  </div>
-
-  <!-- 出口の条件。結果は下の「受け取るときの税金（出口）」に出す -->
-  <div class="card">
-    <h2 class="sec-title">受け取り方</h2>
-    <div class="grid2">
+    <!-- iDeCoの「いつ」。加入した年齢は受取開始年齢と退職所得控除の年数を決める -->
+    <div class="grid3">
       <div class="fld">
         <label for="joinAge">iDeCoに加入した年齢
           <span class="help" tabindex="0" aria-label="加入した年齢について" aria-describedby="joinTip">？<span class="tipbox" id="joinTip" role="tooltip">一時金で受け取るときの退職所得控除は、iDeCoの<strong>加入期間の年数</strong>で決まります（勤続年数と同じ扱い）。すでに加入しているなら、実際に始めた年齢を入れてください。上の「現在の年齢」より前でかまいません。<br><br>この年数は、退職金との勤続期間の重なりを出すのにも使います。</span></span>
@@ -152,7 +139,18 @@
         <span class="num-in"><input type="number" id="payAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
         <p class="note" id="payAgeWarn"></p>
       </div>
+      <div class="fld">
+        <label for="annuityYears">年金で受け取る年数</label>
+        <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
+      </div>
     </div>
+    <p class="note" id="limitWarn"></p>
+  </div>
+
+  <!-- iDeCo以外の事情。どれも税額に効く（課税所得は掛金の節税額、
+       退職金は退職所得控除の重なり、老齢年金は公的年金等控除の分け合い） -->
+  <div class="card">
+    <h2 class="sec-title">退職金・所得・老齢年金</h2>
     <div class="grid3">
       <div class="fld">
         <label for="retireAmount">退職金（額面）</label>
@@ -169,8 +167,10 @@
     </div>
     <div class="grid2">
       <div class="fld">
-        <label for="annuityYears">年金で受け取る年数</label>
-        <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
+        <label for="taxableIncome">課税所得
+          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
       <div class="fld">
         <label for="publicPension">老齢年金の見込額

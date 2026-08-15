@@ -84,8 +84,9 @@ body{padding:16px;min-height:100vh}
 .note.warn{color:var(--idc-warn);font-weight:600}
 .note:empty{display:none}
 
-/* 利回りのスライダー。年金ツールと同じ形にそろえる */
-.ctrl{margin-top:4px}
+/* 利回りのスライダー。年金ツールと同じ形にそろえる。
+   下にも入力欄が続くので、上下の余白は入力欄の行（.grid2 / .grid3）にそろえる */
+.ctrl{margin:4px 0 12px}
 .ctrl label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:6px}
 .srow{display:flex;align-items:center;gap:10px;height:34px}
 .srow input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
