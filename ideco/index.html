@@ -140,7 +140,7 @@
         <p class="note" id="payAgeWarn"></p>
       </div>
       <div class="fld">
-        <label for="annuityYears">年金で受け取る年数</label>
+        <label for="annuityYears">年金で受け取る場合の年数</label>
         <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
       </div>
     </div>
@@ -172,10 +172,8 @@
         </label>
         <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
-    </div>
-    <!-- 老齢年金は見込額と受給開始年齢が一組。見込額は65歳時点の額として受け取り、
-         繰上げ・繰下げの増減は年齢から計算する -->
-    <div class="grid2">
+      <!-- 老齢年金は見込額と受給開始年齢が一組。見込額は65歳時点の額として受け取り、
+           繰上げ・繰下げの増減は年齢から計算する -->
       <div class="fld">
         <label for="publicPension">老齢年金の見込額
           <span class="help" tabindex="0" aria-label="老齢年金の見込額について" aria-describedby="ppTip">？<span class="tipbox" id="ppTip" role="tooltip">ねんきん定期便に載っている年額の見込みです。<strong>65歳から受け取る場合の額</strong>を入れてください。右で受給開始年齢を変えると、繰上げ・繰下げによる増減はこちらで計算します。<br><br>iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span></span>
