@@ -196,6 +196,26 @@ html.theme-anim canvas {
 .theme-toggle__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .theme-toggle__btn > span { pointer-events: none; }
 
+/* ボタンに添える説明の吹き出し。見た目（枠・影・文字）は common/site.css の
+   .tipbox をそのまま使い、ここでは位置だけを決める。
+
+   子セレクタで書いているのは、ツールのページが自分の配置に合わせて
+   .tipbox を丸ごと上書きしているため（左寄せ・幅302pxなど）。
+   単なる .tipbox で書くと、そちらの指定に負けて画面の右外へはみ出す。 */
+.theme-toggle__btn > .tipbox {
+	top: calc(100% + 8px);
+	right: 0;
+	left: auto;
+	width: max-content;
+	/* 320pxは、文言が1行に収まる幅。共通の280pxのままだと
+	   「（現在の設定：システム）」の途中で折り返して読みにくくなる */
+	max-width: min(320px, calc(100vw - 24px));
+	pointer-events: none;
+}
+.theme-toggle__btn > .tipbox::before { right: 12px; left: auto; }
+/* メニューを開いている間は出さない。開く先が吹き出しと同じ場所で、重なってしまう */
+.theme-toggle__btn[aria-expanded="true"] > .tipbox { opacity: 0; visibility: hidden; }
+
 .theme-toggle__menu {
 	position: absolute;
 	top: calc(100% + 6px);

@@ -220,7 +220,10 @@
 			var w = widgets[i];
 			w.icon.textContent = cur.icon;
 			w.btn.setAttribute('aria-label', MENU_TITLE + ': ' + cur.name + '（' + cur.desc + '）');
-			w.btn.title = MENU_TITLE + ': ' + cur.name;
+			/* 吹き出しの文言。ブラウザ標準の title は使わない（出るまでが遅く、
+			   見た目もサイト内の他の吹き出しと揃わないため）。両方あると
+			   二重に出るので、title は付けないこと */
+			w.tip.textContent = MENU_TITLE + 'を変更できます（現在の設定：' + cur.name + '）';
 			for (var j = 0; j < w.items.length; j++) {
 				w.items[j].setAttribute('aria-checked', w.items[j].dataset.mode === mode ? 'true' : 'false');
 			}
@@ -243,6 +246,17 @@
 		icon.className = 'theme-toggle__icon';
 		icon.setAttribute('aria-hidden', 'true');
 		btn.appendChild(icon);
+
+		/* マウスを載せたときの説明。サイト共通の吹き出し（common/site.css の .tipbox）を
+		   そのまま使う。開け閉めはCSSの :hover / :focus-visible だけで行うので、
+		   ここでは入れ物を作るだけでよい（中身は updateWidgets が書き換える）。
+
+		   読み上げには上の aria-label で同じことを伝えているので、
+		   二重に読ませないよう aria-hidden にしてある */
+		var tip = document.createElement('span');
+		tip.className = 'tipbox';
+		tip.setAttribute('aria-hidden', 'true');
+		btn.appendChild(tip);
 
 		var menu = document.createElement('div');
 		menu.className = 'theme-toggle__menu';
@@ -278,7 +292,7 @@
 		wrap.appendChild(menu);
 		host.appendChild(wrap);
 
-		var w = { host: host, btn: btn, icon: icon, menu: menu, items: items };
+		var w = { host: host, btn: btn, icon: icon, tip: tip, menu: menu, items: items };
 		widgets.push(w);
 
 		function open() {

@@ -28,8 +28,8 @@
 <link rel="manifest" href="manifest.json">
 <title>資産運用・金融シミュレーター</title>
 <script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260813a"></script>
-<link rel="stylesheet" href="common/theme.css?v=20260808b">
+<script src="common/theme.js?v=20260815a"></script>
+<link rel="stylesheet" href="common/theme.css?v=20260815a">
 <link rel="stylesheet" href="common/site.css?v=20260813l">
 <style>
   /* 各ツールの識別色。データと結び付いた色なのでテーマ共通トークンには含めない */
@@ -54,23 +54,29 @@
   }
 
   body {
-    padding: 1.25rem 1rem 1.75rem;
+    padding: 1rem 1rem 1.25rem;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.5;
   }
 
   /* 本文の幅は年金・相続・NISAと揃えて840px */
   main { max-width: 840px; margin: 0 auto; }
 
-  .page-head { align-items: center; }
+  /* ツールが増えて縦に長くなったので、見出し行の余白も他のページより詰める。
+     このページは見出しの下に説明文が無く、すぐ一覧が始まるため狭くても窮屈にならない */
+  .page-head {
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
 
   .item {
     background: var(--surface);
     border: 1px solid var(--border);
     border-left: 3px solid var(--edge, var(--border));
     border-radius: 10px;
-    padding: .85rem 1.1rem;
-    margin-bottom: .7rem;
+    padding: .6rem .95rem;
+    margin-bottom: .45rem;
   }
 
   /* 対応ブラウザだけ、枠線の色をごく薄く背景に敷く */
@@ -88,8 +94,8 @@
   .item h2 {
     font-size: 1.05rem;
     font-weight: 600;
-    line-height: 1.4;
-    margin: 0 0 .3rem;
+    line-height: 1.35;
+    margin: 0 0 .15rem;
   }
 
   /* その分類に入口ページがあるものは、見出し自体をそこへのリンクにする
@@ -110,12 +116,14 @@
     gap: .1rem 1.4rem;
     margin: 0;
     padding: 0;
+    line-height: 1.45;
   }
 
   .links a {
     display: inline-block;
     text-decoration: none;
-    padding: .1rem 0;
+    /* 指で押す的の高さは、行の高さと上下の余白で 32px 前後を保つ */
+    padding: .15rem 0;
   }
 
   .links a::before {
@@ -129,9 +137,12 @@
   .desc {
     color: var(--muted);
     font-size: .875rem;
-    line-height: 1.55;
-    margin: .35rem 0 0;
+    line-height: 1.5;
+    margin: .2rem 0 0;
   }
+
+  /* 断り書きの前の間隔も詰める（共通の指定は 24px） */
+  .site-privacy { margin-top: 16px; }
 
   /* 共有ボタン・QRの見た目と開け閉めは common/site.css に集約している。
      このページは戻る導線が無く、操作ボタン群を見出し行に置いている点だけが他と違う */
