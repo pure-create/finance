@@ -58,6 +58,17 @@ body{padding:0;font-size:10pt}
 /* 凡例の色見本も塗らない。四角は残して、文字だけの行にならないようにする */
 .lg::before{background:none !important;border:1px solid #000}
 
+/* ---- 併用 ---- */
+/* 割合の帯も内訳の帯と同じ扱い。区画に「一時金 ○万円」「年金 ○万円」と
+   入っているので、塗らなくても何がどちらか読める */
+.mix-bar{border:1px solid #000;background:none}
+.mix-bar .seg{background:none !important;outline:.5pt solid #000;outline-offset:-.25pt;color:#000 !important}
+.best-hint,.mix-sum{break-inside:avoid;page-break-inside:avoid}
+/* 紙の上では押せないので、割合を合わせるボタンは出さない */
+#mixJumpBest{display:none !important}
+.best-hint{background:none;border:1px solid var(--border)}
+.best-hint .tag{background:none !important;border:1px solid currentColor}
+
 /* ---- 白抜き文字（色付きの地に白文字）を、地の色を印刷しなくても読める配色にする ----
 
    色の指定はここで直に書く。ダークのまま印刷された場合、ページ側の

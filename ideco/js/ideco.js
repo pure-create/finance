@@ -12,7 +12,8 @@ const FIELDS = [
 	['taxableIncome', 400, 'ti'],
 	['joinAge', 40, 'ja'], ['payAge', 65, 'pa'],
 	['retireAmount', 2000, 'ra'], ['hireAge', 22, 'ha'], ['retireAge', 60, 'rt'],
-	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp'], ['publicPensionAge', 65, 'ps']
+	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp'], ['publicPensionAge', 65, 'ps'],
+	['mixRatio', 50, 'mx']
 ];
 const DEFAULTS = {};
 for (let i = 0; i < FIELDS.length; i++) DEFAULTS[FIELDS[i][0]] = FIELDS[i][1];
@@ -176,8 +177,12 @@ const markerPlugin = {
 			ctx.fillStyle = Theme.color('--idc-gain');
 			ctx.font = '700 12px sans-serif';
 			ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-			const cx = Math.min(Math.max(x, c.chartArea.left + 44), c.chartArea.right - 44);
-			ctx.fillText('税金が最も少ない ' + state.bestAge + '歳', cx, top + 4);
+			/* 図の端に寄せすぎると文字が切れる。中央そろえなので、
+			   実際の文字幅の半分だけ内側に寄せて収める（決め打ちの余白では足りない） */
+			const label = '税金が最も少ない ' + state.bestAge + '歳';
+			const pad = ctx.measureText(label).width / 2 + 4;
+			const cx = Math.min(Math.max(x, c.chartArea.left + pad), c.chartArea.right - pad);
+			ctx.fillText(label, cx, top + 4);
 			ctx.restore();
 		}
 		const xNow = tickX(c, state.payAge);
@@ -195,9 +200,20 @@ function renderChart(sweep) {
 	const labels = sweep.map(s => s.age);
 	const cOut = Theme.color('--idc-out');   // 一時金（結果の欄と同じ色）
 	const cIn = Theme.color('--idc-in');     // 年金
+	const cGain = Theme.color('--idc-gain'); // 併用
 	const cSub = Theme.color('--text-sub');
 	const cGrid = Theme.color('--grid');
 
+	/* 併用は割合0%と100%も含めて振った中の最小なので、一時金・年金のどちらも
+	   下回らない＝必ずこの2本の下側に沿い、たいていどちらかとぴったり重なる。
+
+	   そこで併用だけ太い帯にして、一時金・年金の後ろに敷く。重なったところは
+	   緑の帯の中を細い線が通る形になり、どちらも読める。
+	   細い線どうしで前後を争わせると、後ろになったほうが完全に消えてしまう。
+
+	   Chart.js は order の小さいものほど後から描く（＝手前に出る）ので、
+	   後ろに回したい併用に大きい値を振る */
+	const mix = sweep.map(s => Math.round(s.mix / 10000));
 	const cfg = {
 		labels: labels,
 		datasets: [
@@ -205,13 +221,18 @@ function renderChart(sweep) {
 				label: '一時金',
 				data: sweep.map(s => Math.round(s.lump / 10000)),
 				borderColor: cOut, backgroundColor: cOut,
-				borderWidth: 3, pointRadius: 0, tension: .1
+				borderWidth: 3, pointRadius: 0, tension: .1, order: 1
 			},
 			{
 				label: '年金',
 				data: sweep.map(s => Math.round(s.annuity / 10000)),
 				borderColor: cIn, backgroundColor: cIn,
-				borderWidth: 3, pointRadius: 0, tension: .1
+				borderWidth: 3, pointRadius: 0, tension: .1, order: 1
+			},
+			{
+				label: '併用（最適な割合）', data: mix,
+				borderColor: cGain, backgroundColor: cGain,
+				borderWidth: 9, pointRadius: 0, tension: .1, order: 3
 			}
 		]
 	};
@@ -244,7 +265,10 @@ function renderChart(sweep) {
 				tooltip: {
 					callbacks: {
 						title: items => items[0].label + '歳で受け取る',
-						label: item => item.dataset.label + '：' + fmt(item.parsed.y) + '万円'
+						label: item => item.dataset.label + '：' + fmt(item.parsed.y) + '万円' +
+							// 併用はどう割ったときの額なのかが分からないと読めない
+							(item.dataset.label.indexOf('併用') === 0
+								? '（一時金' + sweep[item.dataIndex].mixText + '）' : '')
 					},
 					// Chart.js の既定は明暗によらず黒地。ページの吹き出しと合わせる
 					backgroundColor: Theme.color('--tooltip-bg'),
@@ -258,8 +282,177 @@ function renderChart(sweep) {
 	});
 }
 
+/* ---------- 併用のグラフ ----------
+
+   横軸は一時金にする割合（0〜100%）。0%が全額年金、100%が全額一時金で、
+   両端はそのまま上の年金・一時金と一致する。 */
+let mixChart = null;
+
+/* 税金が最小になる割合の言いかた。最小は1点とは限らず、控除に収まっている間は
+   同額が続くので範囲で出す。全域が同額なら null を返し、呼ぶ側で文を変える
+   （相続シミュレーターの取得割合と同じ出し分け） */
+function mixRangeText(lo, hi) {
+	if (lo === 0 && hi === 100) return null;
+	if (lo === hi) return lo + '%';
+	if (lo === 0) return hi + '%以下';
+	if (hi === 100) return lo + '%以上';
+	return lo + '%〜' + hi + '%';
+}
+
+// 受け取り方の呼び名。1点に決まるときは年金側の割合も添えて、足して100%と分かるようにする
+function mixName(lo, hi) {
+	if (lo === 0 && hi === 100) return '併用（どの割合でも同じ）';
+	if (lo === hi) return '一時金' + lo + '%＋年金' + (100 - lo) + '%の併用';
+	return '一時金' + mixRangeText(lo, hi) + 'の併用';
+}
+
+/* 横軸は 0〜100 の数値がそのまま並ぶので、値と目盛の番号が一致する。
+   受取年齢のグラフが getPixelForTick を使っているのは、あちらが60〜75歳の
+   カテゴリ軸で値と番号がずれるため（上の tickX のコメント）。こちらはずれない */
+const mixMarkerPlugin = {
+	id: 'mixMarker',
+	afterDatasetsDraw(c) {
+		const { top, bottom } = c.chartArea;
+		const ctx = c.ctx;
+		// 税金が最小になる割合の帯。全域が同額なら塗っても意味がないので出さない
+		if (state.mixLo != null && !(state.mixLo === 0 && state.mixHi === 100)) {
+			const xLo = c.scales.x.getPixelForValue(state.mixLo);
+			const xHi = c.scales.x.getPixelForValue(state.mixHi);
+			ctx.save();
+			ctx.fillStyle = Theme.color('--idc-band');
+			ctx.fillRect(xLo, top, Math.max(xHi - xLo, 2), bottom - top);
+			ctx.strokeStyle = Theme.color('--idc-gain');
+			ctx.lineWidth = 1.5;
+			ctx.setLineDash([3, 3]);
+			ctx.beginPath(); ctx.moveTo(xLo, top); ctx.lineTo(xLo, bottom); ctx.stroke();
+			if (xHi - xLo > 2) { ctx.beginPath(); ctx.moveTo(xHi, top); ctx.lineTo(xHi, bottom); ctx.stroke(); }
+			ctx.setLineDash([]);
+			ctx.fillStyle = Theme.color('--idc-gain');
+			ctx.font = '700 12px sans-serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+			// 端で文字が切れないよう、実際の文字幅の半分だけ内側に寄せる
+			const label = '税金が最も少ない ' + state.mixText;
+			const pad = ctx.measureText(label).width / 2 + 4;
+			const cx = Math.min(Math.max((xLo + xHi) / 2, c.chartArea.left + pad), c.chartArea.right - pad);
+			ctx.fillText(label, cx, top + 4);
+			ctx.restore();
+		}
+		// 今えらんでいる割合
+		const x = c.scales.x.getPixelForValue(state.mixPct);
+		ctx.save();
+		ctx.strokeStyle = Theme.color('--warn');
+		ctx.lineWidth = 2;
+		ctx.setLineDash([5, 4]);
+		ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+		ctx.restore();
+	}
+};
+
+function renderMixChart(b) {
+	if (typeof Chart === 'undefined') { $('mixChart').parentNode.style.display = 'none'; return; }
+	const labels = [];
+	for (let i = 0; i <= b.steps; i++) labels.push(i);
+	const cOut = Theme.color('--idc-out');
+	const cIn = Theme.color('--idc-in');
+	const cText = Theme.color('--text');
+	const cSub = Theme.color('--text-sub');
+	const cGrid = Theme.color('--grid');
+	// 合計の線は、カードの地色で縁取りして他の線と重なっても追えるようにする
+	const cHalo = Theme.color('--surface');
+	const toMan = v => Math.round(v / 10000);
+
+	const total = b.points.map(toMan);
+	const cfg = {
+		labels: labels,
+		datasets: [
+			/* order は小さいものほど後から描かれて手前に出る。
+			   判断に使うのは合計なので、合計を最前面にする */
+			{
+				label: '一時金部分の税',
+				data: b.lumpPoints.map(toMan),
+				borderColor: cOut, backgroundColor: cOut,
+				borderWidth: 2, pointRadius: 0, tension: .15, order: 2
+			},
+			{
+				label: '年金部分の税',
+				data: b.annuityPoints.map(toMan),
+				borderColor: cIn, backgroundColor: cIn,
+				borderWidth: 2, pointRadius: 0, tension: .15, order: 2
+			},
+			{
+				label: '合計', data: total,
+				borderColor: cHalo, backgroundColor: cHalo,
+				borderWidth: 7, pointRadius: 0, tension: .15, order: 1, _halo: true
+			},
+			{
+				label: '合計', data: total,
+				borderColor: cText, backgroundColor: cText,
+				borderWidth: 4, pointRadius: 0, tension: .15, order: 0
+			}
+		]
+	};
+	if (mixChart) { mixChart.data = cfg; mixChart.update('none'); return; }
+	mixChart = new Chart($('mixChart'), {
+		type: 'line',
+		data: cfg,
+		plugins: [mixMarkerPlugin],
+		options: {
+			responsive: true, maintainAspectRatio: false, animation: false,
+			interaction: { mode: 'index', intersect: false },
+			scales: {
+				x: {
+					title: { display: true, text: '一時金にする割合（％）', font: { size: 11 }, color: cSub },
+					ticks: {
+						/* 0〜100の全部に目盛が立つので、10%刻みだけ文字を出す。
+						   autoSkip に任せると10%刻み以外が残って歯抜けになるため自前で間引く。
+						   狭い画面では10%刻みでも文字がくっつくので、そこは20%刻みにする */
+						font: { size: 11 }, autoSkip: false, maxRotation: 0, color: cSub,
+						callback: function (v) {
+							const step = this.chart.width < 480 ? 20 : 10;
+							return v % step === 0 ? v + '%' : null;
+						}
+					},
+					grid: { display: false },
+					border: { color: cGrid }
+				},
+				y: {
+					title: { display: true, text: 'iDeCoによって増える税金（万円）', font: { size: 11 }, color: cSub },
+					ticks: { font: { size: 11 }, color: cSub, callback: v => v.toLocaleString('ja-JP') },
+					grid: { color: cGrid },
+					border: { color: cGrid }
+				}
+			},
+			plugins: {
+				legend: {
+					labels: {
+						font: { size: 12 }, boxWidth: 14, boxHeight: 3, color: cSub,
+						// 合計の線は2本重ねているので、凡例には1つだけ出す
+						filter: item => !cfg.datasets[item.datasetIndex]._halo
+					}
+				},
+				tooltip: {
+					filter: item => !item.dataset._halo,
+					callbacks: {
+						title: items => '一時金 ' + items[0].label + '% ＋ 年金 ' + (100 - items[0].label) + '%',
+						label: item => item.dataset.label + '：' + fmt(item.parsed.y) + '万円'
+					},
+					backgroundColor: Theme.color('--tooltip-bg'),
+					titleColor: Theme.color('--tooltip-text'),
+					bodyColor: Theme.color('--tooltip-text'),
+					borderColor: Theme.color('--tooltip-border'),
+					borderWidth: 1
+				}
+			}
+		}
+	});
+}
+
 /* ---------- 画面更新 ---------- */
-const state = { payAge: 65, bestAge: null, chartFrom: PAYOUT_AGE_MIN };
+const state = {
+	payAge: 65, bestAge: null, chartFrom: PAYOUT_AGE_MIN,
+	// 併用のグラフ用：今の割合と、税金が最小になる範囲
+	mixPct: 50, mixLo: null, mixHi: null, mixText: ''
+};
 
 function describeRule(lump) {
 	/* 今の受取順で、どちらの控除がどれだけ削られるかを言葉で出す。
@@ -476,8 +669,16 @@ function update() {
 
 	// 出口
 	const idecoAmount = acc.balance;
-	const cmp = compare(payoutCfg(cfg, idecoAmount, cfg.payAge), Tax);
+	const outCfg = payoutCfg(cfg, idecoAmount, cfg.payAge);
+	const cmp = compare(outCfg, Tax);
 	describeRule(cmp.lump);
+
+	/* 併用。割合を0〜100%まで1%刻みで振って最小を探す（101回で1ミリ秒に満たない）。
+	   グラフと下の案内、それに出口カードの結論でも使う */
+	const bm = bestMix(outCfg, Tax);
+	const mixPct = Math.round(num('mixRatio'));
+	const mix = mixTax(outCfg, Tax, mixPct / 100);
+	const bandText = mixRangeText(bm.lo, bm.hi);
 
 	/* 受け取り方ごとの内訳。
 
@@ -599,24 +800,139 @@ function update() {
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
 	$('annuityDetail').innerHTML = h2;
 
+	/* ---- 併用：一時金と年金にどう割り振るか ---- */
+	state.mixPct = mixPct;
+	state.mixLo = bm.lo;
+	state.mixHi = bm.hi;
+	state.mixText = bandText || '';
+
+	$('mixVal').textContent = mixPct;
+	$('segLump').style.width = mixPct + '%';
+	$('segAnnuity').style.width = (100 - mixPct) + '%';
+	// 区画が狭いと文字がはみ出して読めないので、入る幅のときだけ入れる
+	$('segLump').textContent = mixPct >= 20 ? '一時金 ' + man(mix.lumpAmount) + '万円' : '';
+	$('segAnnuity').textContent = mixPct <= 80 ? '年金 ' + man(mix.annuityAmount) + '万円' : '';
+
+	$('mixLead').textContent = '受け取る ' + man(idecoAmount) +
+		'万円 を、一時金と年金に割り振ります。一時金部分は退職所得控除、年金部分は公的年金等控除を' +
+		'それぞれ使えるので、一方だけでは控除に収まらない場合、組み合わせたほうが税金が少なくなることがあります。';
+
+	// 一時金だけ・年金だけの良いほうと比べて、併用でどれだけ減らせるか
+	const pureLighter = Math.min(cmp.lump.taxByIdeco, cmp.annuity.taxByIdeco);
+	const mixGain = pureLighter - bm.best;
+	const mixWins = mixGain > 5000;
+
+	if (!bandText) {
+		$('mixBestHint').innerHTML = 'この条件では、割合をどう変えても増える税金は <b>' +
+			man(bm.best) + '万円</b> のままです。';
+	} else {
+		const inBest = mixPct >= bm.lo && mixPct <= bm.hi;
+		$('mixBestHint').innerHTML = '<span class="tag">最小</span>一時金を <b>' + bandText +
+			'</b> にすると、iDeCoによって増える税金は <b>' + man(bm.best) + '万円</b>' +
+			(mixWins ? '（一時金だけ・年金だけの良いほうより <b>' + man(mixGain) + '万円</b> 少ない）' : '') +
+			'<button id="mixJumpBest" type="button"' + (inBest ? ' disabled' : '') + '>この割合にする</button>';
+		if (!inBest) {
+			$('mixJumpBest').onclick = () => { setField('mixRatio', bm.lo); update(); };
+		}
+	}
+
+	/* その部分で増える税金。加入期間が勤続期間より長いと控除が増えて減ることもあるので、
+	   出口カードの idecoTaxRow と同じく向きで文と色を変える */
+	function mixTaxRow(amount) {
+		const down = amount < -5000;
+		return rline(down ? 'この部分で減る税金' : 'この部分で増える税金',
+			yen(Math.abs(amount)), 'headline' + (down ? ' down' : ''));
+	}
+
+	// 一時金の部分
+	let h3 = rline('一時金で受け取る額', yen(mix.lumpAmount), 'dim');
+	if (mix.lump) {
+		/* 同じ年に退職金と受け取る場合、控除は通算の勤続年数で1回分。
+		   別の年でも、重なる期間があれば削られる */
+		const adj = mix.lump.sameYear ? '（通算）'
+			: (mix.lump.adjusted === 'ideco' ? '（調整後）' : '');
+		h3 += rline('退職所得控除' + adj, '−' + yen(mix.lump.ideco.deduction), 'dim');
+	}
+	h3 += mixTaxRow(mix.lump ? mix.lump.taxByIdeco : 0);
+	if (!mix.lump) {
+		/* 併用でいちばん効く話なので明示する。退職所得控除の重複調整は金額ではなく
+		   期間で決まるため、1円でも一時金にすると丸ごと効く */
+		h3 += '<div class="zero-note">一時金で受け取らないので、退職所得控除は使いません' +
+			(hasRetire ? '（退職金側の控除も削られません）' : '') + '</div>';
+	}
+	$('mixLumpDetail').innerHTML = h3;
+
+	// 年金の部分
+	const md = mix.annuity;
+	let h4 = rline('年金で受け取る額', yen(mix.annuityAmount), 'dim');
+	if (mix.annuityAmount > 0) {
+		h4 += rline('1年あたりの受取額', man(md.perYear) + '万円 × ' + md.years + '年', 'dim');
+		if (md.growth > 0) h4 += rline('受取中の運用で増える分', '＋' + yen(md.growth), 'dim');
+		const mFrom = md.rows.length ? md.rows[0].misc : 0;
+		const mTo = md.rows.length ? md.rows[md.rows.length - 1].misc : 0;
+		h4 += rline('増える雑所得（年）',
+			man(mFrom) !== man(mTo) ? yen(mFrom) + ' → ' + yen(mTo) : yen(mFrom), 'dim');
+	}
+	h4 += mixTaxRow(md.tax);
+	if (mix.annuityAmount > 0 && md.tax === 0) {
+		h4 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
+	}
+	$('mixAnnuityDetail').innerHTML = h4;
+
+	const mixDown = mix.taxByIdeco < -5000;
+	$('mixSum').className = 'mix-sum' + (mixDown ? ' down' : '');
+	$('mixSumLabel').textContent = '一時金' + mixPct + '％ ＋ 年金' + (100 - mixPct) + '％ で' +
+		(mixDown ? '減る税金' : '増える税金');
+	$('mixSumVal').innerHTML = man(Math.abs(mix.taxByIdeco)) + '<small>万円</small>';
+
+	let mixNote = '一時金にする割合を0%から100%まで1%刻みで振ったものです。' +
+		'左端が全額年金、右端が全額一時金で、上の一時金・年金の額と一致します。' +
+		(bandText ? '増える税金が最も少ないのは、一時金を ' + bandText + ' にしたときです。'
+		          : 'この条件では、どの割合でも増える税金は変わりません。');
+	/* 0%と1%の間の段差。ここだけ理由が読み取れないので、出たときに断る */
+	if (bm.points[1] - bm.points[0] > 10000) {
+		mixNote += '0%と1%の間に段が付くのは、1円でも一時金で受け取ると退職所得控除の重複調整が' +
+			'丸ごと効くためです（金額ではなく期間で決まる規定のため）。';
+	}
+	$('mixChartNote').textContent = mixNote;
+	renderMixChart(bm);
+	if (mixChart) mixChart.draw();
+
 	/* 比べるのは「iDeCoによって増える税金」。
 	   手取りで比べると、年金は受け取り終わるまで運用が続くぶん必ず多くなり、
 	   受け取り方の違いではなく運用期間の差を見ていることになってしまう。
 	   税額なら、退職所得控除の調整や公的年金等控除の効き方をそのまま比べられる */
 	const lumpAdd = L.taxByIdeco, annuityAdd = A.taxByIdeco;
-	const lighter = Math.min(lumpAdd, annuityAdd);
 	const gapTax = Math.abs(annuityAdd - lumpAdd);
-	const lighterName = lumpAdd < annuityAdd ? '一時金' : '年金';
+	const pureName = lumpAdd < annuityAdd ? '一時金' : '年金';
+	/* 併用は割合0%と100%も含めて振った中の最小なので、片方だけの受取を下回ることはあっても
+	   上回らない。答えがページの中で2つに割れないよう、ここも併用込みで判定する
+	   （割合ごとの内訳は下の併用カードに出る） */
+	const lighter = mixWins ? bm.best : pureLighter;
 	/* 加入期間が勤続期間より長いと控除が増えて、税金がむしろ減ることがある。
 	   そのときは符号付きで出さず、「減る」と言葉で伝える */
 	const taxDown = lighter < -5000;
 	const sub = '<span class="gsub">もう一方より ' + man(gapTax) +
 		'万円 少ない（iDeCoを受け取らない場合との差）</span>';
-	$('grandLabel').innerHTML = gapTax < 10000
-		? '一時金と年金で税金の変わり方はほぼ同じ<span class="gsub">iDeCoを受け取らない場合との差</span>'
-		: (taxDown ? '税金が減るのは <b>' + lighterName + '</b>' + sub
-		           : '増える税金が少ないのは <b>' + lighterName + '</b>' + sub);
+	if (mixWins) {
+		$('grandLabel').innerHTML = (taxDown ? '税金が減るのは ' : '増える税金が最も少ないのは ') +
+			'<b>' + mixName(bm.lo, bm.hi) + '</b>' +
+			'<span class="gsub">一時金だけ・年金だけで受け取るより ' + man(mixGain) +
+			'万円 少ない（iDeCoを受け取らない場合との差）</span>';
+	} else {
+		$('grandLabel').innerHTML = gapTax < 10000
+			? '一時金と年金で税金の変わり方はほぼ同じ<span class="gsub">iDeCoを受け取らない場合との差</span>'
+			: (taxDown ? '税金が減るのは <b>' + pureName + '</b>' + sub
+			           : '増える税金が少ないのは <b>' + pureName + '</b>' + sub);
+	}
 	$('grandVal').innerHTML = man(Math.abs(lighter)) + '<small>万円</small>';
+
+	/* 併用のほうが少ないときだけ、下のカードへ橋渡しする。
+	   上の2つの欄には併用の内訳が出ないので、これが無いと数字の出どころが分からない */
+	$('mixPointer').innerHTML = mixWins
+		? '一時金と年金を組み合わせると、どちらか一方で受け取るより <b>' + man(mixGain) +
+		  '万円</b> 少なくできます。割合ごとの内訳は下の「一時金と年金の併用」をご覧ください。'
+		: '';
 
 	/* 入口で軽くなった税金から、出口で増える税金を引いた正味。
 	   運用期間に左右されない、iDeCoの税制上の損得そのもの。
@@ -656,20 +972,32 @@ function update() {
 			yieldRate: cfg.yieldRate, taxableIncome: cfg.taxableIncome,
 			initialBalance: cfg.initialBalance
 		}, Tax);
-		const c = compare(payoutCfg(cfg, a.balance, age), Tax);
-		sweep.push({ age: age, lump: c.lump.taxByIdeco, annuity: c.annuity.taxByIdeco });
+		const pc = payoutCfg(cfg, a.balance, age);
+		const c = compare(pc, Tax);
+		// 併用はその年齢での最小（16年齢 × 101割合でも数ミリ秒に収まる）
+		const bmAge = bestMix(pc, Tax);
+		sweep.push({
+			age: age, lump: c.lump.taxByIdeco, annuity: c.annuity.taxByIdeco,
+			mix: bmAge.best, mixText: mixRangeText(bmAge.lo, bmAge.hi) || '割合を問わず',
+			mixLo: bmAge.lo, mixHi: bmAge.hi
+		});
 	}
 	// 税金は少ないほうがよいので、最小の組み合わせを探す
 	let best = Infinity, bestAge = null, bestName = '';
 	for (const s of sweep) {
 		if (s.lump < best) { best = s.lump; bestAge = s.age; bestName = '一時金'; }
 		if (s.annuity < best) { best = s.annuity; bestAge = s.age; bestName = '年金'; }
+		// 併用は端も含めた最小なので必ず同額以下になる。真に少ないときだけ言い換える
+		if (s.mix < best - 5000) {
+			best = s.mix; bestAge = s.age; bestName = mixName(s.mixLo, s.mixHi);
+		}
 	}
 	state.bestAge = bestAge;
 	state.chartFrom = sweep[0].age;
 	$('chartNote').textContent =
 		'受け取る年齢を遅らせると残高が増えて税金も増える一方、加入年数が延びて退職所得控除も大きくなり、' +
 		'退職金との間隔が変わって控除の調整も動きます。' +
+		'併用の線は、その年齢で割合を振ったときのいちばん少ない額です。' +
 		'iDeCoによって増える税金が最も少ないのは、' + bestAge + '歳に' + bestName +
 		'で受け取る場合（' + man(best) + '万円）です。';
 	renderChart(sweep);
@@ -702,6 +1030,7 @@ Share.init({ buildUrl: buildShareUrl });
    Chart.js の scales / legend の色は生成時にしか設定されないため update() では足りない */
 Theme.onChange(() => {
 	if (chart) { chart.destroy(); chart = null; }
+	if (mixChart) { mixChart.destroy(); mixChart = null; }
 	update();
 });
 
@@ -709,6 +1038,7 @@ Theme.onChange(() => {
    （理由は common/chart-print.js に書いてある） */
 ChartPrint.onPrint(() => {
 	if (chart) { chart.destroy(); chart = null; }
+	if (mixChart) { mixChart.destroy(); mixChart = null; }
 	update();
 });
 

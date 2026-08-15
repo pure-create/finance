@@ -10,6 +10,7 @@ const tax = require('../common/tax-core.js');
 const {
 	contributionLimit, joinAgeLimit, taxSaving, accumulate,
 	overlapYears, adjustedDeduction, lumpSumTax, retireOnlyTax, annuityPayment, annuityTax, compare,
+	mixTax, bestMix, MIX_STEPS,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	earliestPayoutAge, PAYOUT_START_BY_PERIOD, LATE_JOIN_AGE, LATE_JOIN_WAIT,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST,
@@ -884,5 +885,127 @@ test('受給開始年齢の表は、年数の降順に並んでいる', () => {
 			'年数が降順でない');
 		assert.ok(PAYOUT_START_BY_PERIOD[i].age > PAYOUT_START_BY_PERIOD[i - 1].age,
 			'年齢が昇順でない');
+	}
+});
+
+/* ---------- 出口：一時金と年金の併用 ----------
+
+   期待値の考え方は一時金・年金と同じで、両端（0%と100%）が
+   それぞれ年金だけ・一時金だけと一致することを軸に固定している。 */
+
+// 退職金2,000万円・22歳就職60歳退職／iDeCo 1,000万円・40歳加入・年金は20年
+const mixBase = {
+	idecoAmount: 10000000, idecoJoinAge: 40, idecoPayAge: 65,
+	retireAmount: 20000000, hireAge: 22, retireAge: 60,
+	annuityYears: 20, publicPension: 1800000, yieldRate: 3
+};
+
+// 受取順の3通り。控除の調整の効き方が変わるので、併用でも全部見る
+const MIX_ORDERS = [
+	[65, 60, '退職金が先→iDeCoが後'],
+	[60, 65, 'iDeCoが先→退職金が後'],
+	[60, 60, '同じ年に受け取る']
+];
+
+test('併用：割合100%は一時金だけ、0%は年金だけと同じ結果になる', () => {
+	for (const [payAge, retireAge, name] of MIX_ORDERS) {
+		const cfg = Object.assign({}, mixBase, { idecoPayAge: payAge, retireAge: retireAge });
+		const c = compare(cfg, tax);
+		const all = mixTax(cfg, tax, 1), none = mixTax(cfg, tax, 0);
+		near(all.tax, c.lump.tax, 1e-6, name + '：100%の税額が一時金と食い違う');
+		near(all.taxByIdeco, c.lump.taxByIdeco, 1e-6, name + '：100%の増える税金が一時金と食い違う');
+		near(none.tax, c.annuity.tax, 1e-6, name + '：0%の税額が年金と食い違う');
+		near(none.taxByIdeco, c.annuity.taxByIdeco, 1e-6, name + '：0%の増える税金が年金と食い違う');
+	}
+});
+
+test('併用：一時金を受け取らないなら、退職所得控除の重複調整は起きない', () => {
+	/* lumpSumTax は金額ではなく受取順で調整を掛けるので、0円で呼ぶと
+	   「受け取っていないのに退職金の控除が削られた」税額になってしまう。
+	   0%のときは呼ばずに、退職金は満額の控除で計算されていること */
+	for (const [payAge, retireAge, name] of MIX_ORDERS) {
+		const cfg = Object.assign({}, mixBase, { idecoPayAge: payAge, retireAge: retireAge });
+		const none = mixTax(cfg, tax, 0);
+		assert.strictEqual(none.lump, null, name + '：一時金の計算を呼んでいる');
+		near(none.tax - none.annuity.tax, retireOnlyTax(cfg, tax), 1e-6,
+			name + '：退職金の税額が満額の控除で計算されていない');
+		near(none.taxByIdeco, none.annuity.tax, 1e-6,
+			name + '：増える税金に退職金側の分がまぎれている');
+	}
+});
+
+test('併用：1円でも一時金にすると重複調整が効き、0%と1%の間で跳ねる', () => {
+	// iDeCoを60歳・退職金を65歳（間隔5年 ≤ 9年）なので、退職金側の控除が削られる
+	const cfg = Object.assign({}, mixBase, { idecoPayAge: 60, retireAge: 65 });
+	const none = mixTax(cfg, tax, 0), bit = mixTax(cfg, tax, 0.01);
+	assert.ok(bit.taxByIdeco > none.taxByIdeco,
+		'控除の調整は期間で決まるので、1%でも丸ごと効くはず（0%:' +
+		none.taxByIdeco + ' → 1%:' + bit.taxByIdeco + '）');
+});
+
+test('併用：一時金だけ・年金だけより税金が少なくなる組み合わせがある', () => {
+	// 同じ年に退職金2,000万円とiDeCo 1,000万円を受け取り、老齢年金は180万円
+	const cfg = Object.assign({}, mixBase, { idecoPayAge: 60, retireAge: 60 });
+	const b = bestMix(cfg, tax);
+	const c = compare(cfg, tax);
+	assert.ok(b.best < c.lump.taxByIdeco,
+		'一時金だけ（' + c.lump.taxByIdeco + '）より少ないはず：' + b.best);
+	assert.ok(b.best < c.annuity.taxByIdeco,
+		'年金だけ（' + c.annuity.taxByIdeco + '）より少ないはず：' + b.best);
+	assert.ok(b.at > 0 && b.at < 100, '最小が端ではなく途中にあるはず：' + b.at + '%');
+});
+
+test('併用：どの割合でも非課税なら、最小の範囲は0〜100%になる', () => {
+	// 退職金も老齢年金も無く、加入25年の控除1,150万円に1,000万円が収まる
+	const cfg = Object.assign({}, mixBase, { retireAmount: 0, publicPension: 0 });
+	const b = bestMix(cfg, tax);
+	assert.strictEqual(b.best, 0);
+	assert.strictEqual(b.lo, 0);
+	assert.strictEqual(b.hi, 100);
+});
+
+test('併用：分けた額の合計は、どの割合でも残高と一致する', () => {
+	// 端数の出る残高で、丸めが残高からずれないことを見る
+	const cfg = Object.assign({}, mixBase, { idecoAmount: 9999999 });
+	for (let i = 0; i <= MIX_STEPS; i++) {
+		const m = mixTax(cfg, tax, i / MIX_STEPS);
+		assert.strictEqual(m.lumpAmount + m.annuityAmount, 9999999, i + '%で合計がずれる');
+	}
+});
+
+test('併用：割合は0〜1の外を渡しても端に収まる', () => {
+	const under = mixTax(mixBase, tax, -1), over = mixTax(mixBase, tax, 2);
+	assert.strictEqual(under.lumpAmount, 0);
+	assert.strictEqual(over.annuityAmount, 0);
+});
+
+test('併用：どの受取年齢でも最小とその範囲が壊れない', () => {
+	for (let payAge = PAYOUT_AGE_MIN; payAge <= PAYOUT_AGE_MAX; payAge++) {
+		for (const retireAge of [60, 65, 70]) {
+			const cfg = Object.assign({}, mixBase, { idecoPayAge: payAge, retireAge: retireAge });
+			const b = bestMix(cfg, tax);
+			const c = compare(cfg, tax);
+			const where = payAge + '歳受取・退職' + retireAge + '歳';
+			assert.strictEqual(b.points.length, MIX_STEPS + 1, where + ' 点の数が合わない');
+			assert.ok(b.lo <= b.at && b.at <= b.hi, where + ' 最小の位置が範囲の外');
+			// 端を含めて振っているので、併用の最小が片方だけの受取を上回ることはない
+			assert.ok(b.best <= c.lump.taxByIdeco + 1e-6, where + ' 一時金だけより悪い');
+			assert.ok(b.best <= c.annuity.taxByIdeco + 1e-6, where + ' 年金だけより悪い');
+			for (let i = 0; i <= MIX_STEPS; i++) {
+				assert.ok(b.points[i] >= b.best - 1e-6, where + ' ' + i + '%が最小を下回る');
+				if (i >= b.lo && i <= b.hi) {
+					near(b.points[i], b.best, 1e-6, where + ' ' + i + '%は範囲内なのに最小でない');
+				}
+			}
+		}
+	}
+});
+
+test('併用：手取りは「総額 − 税額」で一貫している', () => {
+	for (let i = 0; i <= MIX_STEPS; i += 10) {
+		const m = mixTax(mixBase, tax, i / MIX_STEPS);
+		near(m.net, m.gross - m.tax, 1e-6, i + '%');
+		// 総額は「一時金 ＋ 年金の受取総額 ＋ 退職金」。年金分は受取中の運用で増える
+		near(m.gross, m.lumpAmount + m.annuity.gross + mixBase.retireAmount, 1e-6, i + '%の総額');
 	}
 });

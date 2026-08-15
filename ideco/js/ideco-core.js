@@ -441,6 +441,100 @@ function compare(cfg, tax) {
 	};
 }
 
+/* ---------- 出口：一時金と年金の併用 ----------
+
+   残高を割って、一部を一時金・残りを年金で受け取ることもできる。
+   一時金部分は退職所得、年金部分は雑所得になるので、退職所得控除と
+   公的年金等控除の両方を使える。どちらの控除も枠を使い切った先が急に重くなるので、
+   割りかた次第で、一方だけで受け取るより税金が少なくなることがある。 */
+
+const MIX_STEPS = 100;   // 割合は1%刻みで見る（下の bestMix の既定）
+
+/* 受取額だけ差し替えた cfg の写しを作る。呼び出し元の cfg は書き換えない */
+function withAmount(cfg, idecoAmount) {
+	const c = {};
+	for (const k in cfg) {
+		if (Object.prototype.hasOwnProperty.call(cfg, k)) c[k] = cfg[k];
+	}
+	c.idecoAmount = idecoAmount;
+	return c;
+}
+
+/**
+ * 併用したときの税額。ratio は一時金にする割合（0〜1）。
+ * ratio=1 は compare() の lump、ratio=0 は annuity と同じ結果になる。
+ *
+ * cfg は lumpSumTax と annuityTax の両方が要るものを渡す（payoutCfg が作る形）。
+ */
+function mixTax(cfg, tax, ratio) {
+	const r = Math.min(1, Math.max(0, ratio || 0));
+	const lumpAmount = Math.round(cfg.idecoAmount * r);
+	// 年金分は引き算で出す。両方を掛け算で出すと、丸めで合計が残高からずれる
+	const annuityAmount = cfg.idecoAmount - lumpAmount;
+
+	/* 一時金を1円も受け取らないなら、iDeCoからは退職手当等を受けていないので、
+	   退職所得控除の重複調整（9年／19年ルール）はそもそも起きない。
+	   lumpSumTax は金額を見ずに受取順だけで調整を掛けるため、0円で呼ぶと
+	   「受け取っていないのに退職金の控除が削られた」税額が出てしまう。呼び分ける。
+
+	   裏を返すと、1円でも一時金にすれば調整は丸ごと効く。割合0%と1%の間で
+	   税額が跳ぶのはこのためで、金額ではなく期間で決まる規定だから起きる */
+	const lump = lumpAmount > 0
+		? lumpSumTax(withAmount(cfg, lumpAmount), tax)
+		: null;
+	const annuity = annuityTax(withAmount(cfg, annuityAmount), tax);
+
+	// iDeCoが無かった場合に退職金だけにかかる税額。比較の基準にもなる
+	const withoutIdeco = retireOnlyTax(cfg, tax);
+	// 一時金を受け取らない場合、退職金は自分の勤続年数の控除を満額使える＝基準と同じ
+	const total = (lump ? lump.tax : withoutIdeco) + annuity.tax;
+	const gross = lumpAmount + annuity.gross + (cfg.retireAmount || 0);
+
+	return {
+		ratio: r, lumpAmount: lumpAmount, annuityAmount: annuityAmount,
+		lump: lump, annuity: annuity,
+		tax: total, gross: gross, net: gross - total,
+		taxWithoutIdeco: withoutIdeco,
+		// 一時金・年金と同じ土俵で比べるための「iDeCoによって増える税金」
+		taxByIdeco: total - withoutIdeco
+	};
+}
+
+/* 割合を0〜100%まで振って、iDeCoによって増える税金が最も少ない割合を探す。
+   points[i] は i%を一時金にしたときの増える税金。
+
+   全点を見る。曲線は凸ではないので二分探索やその手の詰めかたは使えない
+   （公的年金等控除は収入が増えるほど伸びるが伸びかたが一定でなく、
+   途中に小さな山ができる。加えて0%と1%の間には上に書いた段差がある）。
+   101回でも1ミリ秒に満たないので、素直に全部見るほうが確実。
+
+   最小は1点とは限らない（控除に収まって全域0円になることもある）ので、
+   最小の位置から左右に広げた範囲 lo〜hi を返す。 */
+function bestMix(cfg, tax, steps) {
+	const n = steps || MIX_STEPS;
+	const points = [], lumpPoints = [], annuityPoints = [];
+	let best = Infinity, at = 0;
+	for (let i = 0; i <= n; i++) {
+		const m = mixTax(cfg, tax, i / n);
+		const t = m.taxByIdeco;
+		points.push(t);
+		/* 内訳もそのまま持って返す。グラフが「一時金部分の税」と「年金部分の税」を
+		   別の線で出すのに使う。2つを足すと points と一致する。
+		   一時金部分には、退職金側の控除が削られた分も乗る（原因が一時金なので） */
+		lumpPoints.push(m.lump ? m.lump.taxByIdeco : 0);
+		annuityPoints.push(m.annuity.tax);
+		if (t < best) { best = t; at = i; }
+	}
+	const EPS = 1e-6;
+	let lo = at, hi = at;
+	while (lo > 0 && points[lo - 1] <= best + EPS) lo--;
+	while (hi < n && points[hi + 1] <= best + EPS) hi++;
+	return {
+		points: points, lumpPoints: lumpPoints, annuityPoints: annuityPoints,
+		steps: n, best: best, at: at, lo: lo, hi: hi
+	};
+}
+
 /* ノードから読み込んだときに計算部分を公開する（テスト用） */
 if (typeof module !== 'undefined' && module.exports) {
 	module.exports = {
@@ -449,6 +543,7 @@ if (typeof module !== 'undefined' && module.exports) {
 		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction, isShortTenure: isShortTenure,
 		lumpSumTax: lumpSumTax, retireOnlyTax: retireOnlyTax, annuityPayment: annuityPayment,
 		annuityTax: annuityTax, compare: compare,
+		mixTax: mixTax, bestMix: bestMix, MIX_STEPS: MIX_STEPS,
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,
 		JOIN_AGE_LIMIT: JOIN_AGE_LIMIT,
