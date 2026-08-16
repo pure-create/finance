@@ -770,23 +770,29 @@ function update() {
 	   売った場合の譲渡益税と並べ、差し引きでどちらが軽いかまで出す。
 	   受け取り方ごとに運用益が違う（年金は受け取り終わるまで運用が続く）ので、
 	   gain は欄ごとに渡す */
+	function refDiff(taxByIdeco, ref) {
+		/* 差は、画面に出ている万円どうしの引き算で出す。円のまま引いてから
+		   まるめると、両方の端数の出かたで表示が1万円合わないことがある
+		   （税額も課税口座の税金も、どちらも万円にまるめて出している） */
+		const diffMan = Math.round(taxByIdeco / 10000) - Math.round(ref / 10000);
+		return {
+			cls: 'ref-diff' + (diffMan < 0 ? ' safe' : ''),
+			text: '課税口座と比較すると' + (diffMan === 0 ? 'iDeCoはほぼ同じ'
+				: 'iDeCoが <b>' + fmt(Math.abs(diffMan)) + '万円 ' +
+				  (diffMan < 0 ? '得' : '損') + '</b>')
+		};
+	}
+
 	function refLines(taxByIdeco, gain) {
 		// 運用益が無ければ課税口座でも税金は出ないので、比べるものが無い（利回り0%など）
 		if (!(gain > 0)) return '';
 		const ref = taxableAccountTax(gain);
-		/* 差は、画面に出ている万円どうしの引き算で出す。円のまま引いてから
-		   まるめると、両方の端数の出かたで表示が1万円合わないことがある
-		   （上の税額と、この欄の課税口座の税金は、どちらも万円にまるめて出している） */
-		const diffMan = Math.round(taxByIdeco / 10000) - Math.round(ref / 10000);
-		const verdict = diffMan === 0
-			? 'iDeCoはほぼ同じ'
-			: 'iDeCoが <b>' + fmt(Math.abs(diffMan)) + '万円 ' + (diffMan < 0 ? '得' : '損') + '</b>';
+		const d = refDiff(taxByIdeco, ref);
 		return '<div class="ref">' +
 			'<div class="ref-cap">参考：同じ額を課税口座で運用して売った場合</div>' +
 			rline('運用益 ' + yen(gain) + ' × ' + fmtRate(TAXABLE_GAIN_TAX_RATE) + '%',
 				yen(ref), 'dim') +
-			'<div class="ref-diff' + (diffMan < 0 ? ' safe' : '') + '">' +
-			'課税口座と比較すると' + verdict + '</div>' +
+			'<div class="' + d.cls + '">' + d.text + '</div>' +
 			'</div>';
 	}
 
@@ -973,6 +979,20 @@ function update() {
 	$('mixSumLabel').textContent = '一時金' + mixPct + '％ ＋ 年金' + (100 - mixPct) + '％ で' +
 		(mixDown ? '減る税金' : '増える税金');
 	$('mixSumVal').innerHTML = man(Math.abs(mix.taxByIdeco)) + '<small>万円</small>';
+
+	/* 合計を課税口座と比べた差。上の2つの欄と同じ出し方で、割り振り全体の
+	   損得を出す。運用益は積立期間のぶん全部（割合で割っても足せば元に戻る）と、
+	   年金部分が受け取り終わるまでに増える分 */
+	const mixRef = $('mixRefDiff');
+	const mixGainAll = acc.gain + md.growth;
+	if (mixGainAll > 0) {
+		const d = refDiff(mix.taxByIdeco, taxableAccountTax(mixGainAll));
+		mixRef.className = d.cls;
+		mixRef.innerHTML = d.text;
+	} else {
+		mixRef.className = 'ref-diff';
+		mixRef.innerHTML = '';
+	}
 
 	let mixNote = '一時金にする割合を0%から100%まで1%刻みで振ったものです。' +
 		'左端が全額年金、右端が全額一時金で、上の一時金・年金の額と一致します。' +

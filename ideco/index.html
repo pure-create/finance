@@ -290,9 +290,12 @@
           <div id="mixAnnuityDetail"></div>
         </div>
       </div>
+      <!-- この割合での合計。2行目に、それを課税口座と比べた差を入れる
+           （上の2つの欄と同じ出し方で、割り振り全体の損得を最後に出す） -->
       <div class="mix-sum" id="mixSum" aria-live="polite">
         <span class="glabel" id="mixSumLabel">この割合でiDeCoによって増える税金</span>
         <span class="gval" id="mixSumVal">0<small>万円</small></span>
+        <div class="ref-diff" id="mixRefDiff"></div>
       </div>
       <div class="chart-wrap"><canvas id="mixChart" role="img" aria-label="一時金にする割合を0%から100%まで振って、iDeCoによって増える税金を一時金部分・年金部分・合計の3本の折れ線で示したグラフ"></canvas></div>
       <p class="note" id="mixChartNote"></p>
