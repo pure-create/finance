@@ -347,9 +347,11 @@ test('iDeCo：注記の第5号加入者の年齢が定数と一致する', () =>
 	assert.strictEqual(ideco.LATE_JOIN_CATEGORY_LIMIT, ideco.CONTRIBUTION_LIMITS.employee.reformed);
 });
 
-test('iDeCo：注記の老齢年金の受給開始年齢と増減率が定数と一致する', () => {
+/* 受給開始年齢と増減率の説明は、注記から受給開始年齢の欄の吹き出しに移した
+   （prose() はタグを外すので、吹き出しの文もそのまま見える） */
+test('iDeCo：受給開始年齢の説明の年齢と増減率が定数と一致する', () => {
 	const text = prose('ideco/index.html');
-	const m = must(text, /老齢年金の受給開始は原則(\d+)歳ですが、(\d+)歳から(\d+)歳の間で選べます/, 'ideco/index.html');
+	const m = must(text, /原則は(\d+)歳ですが、(\d+)歳から(\d+)歳の間で選べます/, 'ideco/index.html');
 	assert.strictEqual(Number(m[1]), ideco.PUBLIC_PENSION_START_AGE, '原則の受給開始年齢');
 	assert.strictEqual(Number(m[2]), ideco.PUBLIC_PENSION_MIN_AGE, '繰上げの下限');
 	assert.strictEqual(Number(m[3]), ideco.PUBLIC_PENSION_MAX_AGE, '繰下げの上限');
@@ -483,12 +485,15 @@ test('iDeCo：注記の「110万円まで非課税」が公的年金等控除の
 	/* 65歳以上は収入110万円までが非課税、という説明。
 	   tax-core の速算表の下端（65歳以上の最初の区分）と同じでなければならない */
 	const m = must(prose('ideco/index.html'),
-		/65歳以上なら合わせて([\d,]+)万円までは課税されない/, 'ideco/index.html');
-	const stated = yen(m[1]) * 10000;
-	const table = tax.PENSION_INCOME_BRACKETS.from65;
-	const threshold = table[table.length - 2].min;   // 最後は min:0 の受け皿
-	assert.strictEqual(stated, threshold, '注記の額と速算表の区分が違う');
-	// その額までは雑所得が出ないこと自体も確かめる
-	assert.strictEqual(tax.pensionMiscIncome(stated, 65), 0);
-	assert.ok(tax.pensionMiscIncome(stated + 10000, 65) > 0);
+		/65歳以上なら合わせて([\d,]+)万円まで（65歳未満は([\d,]+)万円まで）は課税されない/, 'ideco/index.html');
+	/* 60歳から年金で受け取ることもできるので、65歳未満の枠も書いてある。
+	   どちらも速算表の下端（min:0 の受け皿の1つ上）と同じでなければならない */
+	for (const [stated, key, age] of [[yen(m[1]) * 10000, 'from65', 65], [yen(m[2]) * 10000, 'under65', 64]]) {
+		const table = tax.PENSION_INCOME_BRACKETS[key];
+		const threshold = table[table.length - 2].min;   // 最後は min:0 の受け皿
+		assert.strictEqual(stated, threshold, age + '歳の注記の額と速算表の区分が違う');
+		// その額までは雑所得が出ないこと自体も確かめる
+		assert.strictEqual(tax.pensionMiscIncome(stated, age), 0, age + '歳');
+		assert.ok(tax.pensionMiscIncome(stated + 10000, age) > 0, age + '歳');
+	}
 });
