@@ -29,7 +29,15 @@ body{padding:0;font-size:10pt}
 .srow input[type=range]{display:none}
 .srow{height:auto}
 
+/* 出口カードだけは一時金・年金・併用をまとめて持つので1ページに収まらない。
+   ここは途中で改ページさせ、中の結果欄や帯・グラフの側で切れないようにする */
+#exitCard{break-inside:auto;page-break-inside:auto}
+/* 小見出しがページの末尾に取り残されないようにする */
+.sub-title{break-after:avoid;page-break-after:avoid}
+
 .results{break-inside:avoid;page-break-inside:avoid}
+/* 課税口座との比較は、見出しの一行と2行の数字で1組。切り離さない */
+.ref{break-inside:avoid;page-break-inside:avoid}
 /* 淡い地色（.res-box.lump / .res-box.annuity）は、こちらより指定が強いので
    打ち消しを付ける。一時金か年金かは枠線の色と「一時金」「年金」の印で分かる */
 .res-box,.res-box.lump,.res-box.annuity{background:none !important;break-inside:avoid}

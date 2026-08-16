@@ -8,7 +8,7 @@
    （資産運用シミュレーターと同じ作り） */
 const FIELDS = [
 	['category', 'employee', 'ct'], ['monthly', 23000, 'mo'], ['otherPlan', 0, 'op'],
-	['nowAge', 40, 'na'], ['balance', 0, 'bl'], ['yieldRate', 3, 'yr'],
+	['nowAge', 40, 'na'], ['balance', 0, 'bl'], ['balancePaid', 0, 'bp'], ['yieldRate', 3, 'yr'],
 	['taxableIncome', 400, 'ti'],
 	['joinAge', 40, 'ja'], ['payAge', 65, 'pa'],
 	['retireAmount', 2000, 'ra'], ['hireAge', 22, 'ha'], ['retireAge', 60, 'rt'],
@@ -23,6 +23,9 @@ const fmt = v => Math.round(v).toLocaleString('ja-JP');
 // 円で計算した額を万円の表示にする
 const man = v => fmt(v / 10000);
 const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+/* 割合の定数を「20.315」の形にする。0.20315×100 は二進小数の桁が出る
+   （20.314999999999998）ので、いったん整数に丸めてから戻す */
+const fmtRate = r => String(Math.round(r * 1e5) / 1e3);
 
 // このツールが基準にする「今年」。拠出限度額の切り替えに使う
 const THIS_YEAR = new Date().getFullYear();
@@ -119,6 +122,8 @@ function readConfig() {
 		startAge: Math.round(num('nowAge')),
 		startYear: THIS_YEAR,
 		initialBalance: num('balance') * 10000,
+		// 今ある残高のうちの元本。残高との差が含み益になる（0なら残高＝元本）
+		initialPaid: num('balancePaid') * 10000,
 		yieldRate: num('yieldRate'),
 		taxableIncome: num('taxableIncome') * 10000,
 
@@ -521,6 +526,8 @@ function update() {
 	$('yieldVal').textContent = cfg.yieldRate.toFixed(1);
 	const shared = ['employee', 'corporate', 'publicSv'].indexOf(cfg.category) >= 0;
 	$('otherPlanField').style.display = shared ? '' : 'none';
+	// 元本は今ある残高の内訳なので、残高を入れるまでは出さない
+	$('balancePaidField').style.display = cfg.initialBalance > 0 ? '' : 'none';
 
 	/* 加入した年齢は、これから拠出を始める「現在の年齢」より後には置けない。
 	   積立は現在の年齢から始まるので、後ろに置くと積立期間はそのままで
@@ -595,6 +602,25 @@ function update() {
 	warn.className = warns.length ? 'note warn' : 'note';
 	warn.textContent = warns.join('');
 
+	/* 今ある残高のうち、元本と含み益がいくらになるか。
+	   使うのは課税口座との比較だけなので、入力していない場合は
+	   「残高すべてが元本（含み益なし）」で計算していることも書いておく */
+	const paidNote = $('balancePaidNote');
+	const initGain = cfg.initialBalance - cfg.initialPaid;
+	if (!(cfg.initialBalance > 0)) {
+		paidNote.className = 'note';
+		paidNote.innerHTML = '';
+	} else if (!(cfg.initialPaid > 0)) {
+		paidNote.className = 'note';
+		paidNote.innerHTML = '未入力なので、残高すべてを元本（含み益なし）として計算します';
+	} else if (initGain >= 0) {
+		paidNote.className = 'note';
+		paidNote.innerHTML = '含み益 <b>' + man(initGain) + '万円</b> として計算します';
+	} else {
+		paidNote.className = 'note warn';
+		paidNote.innerHTML = '残高を上回っているので、含み損 <b>' + man(-initGain) + '万円</b> として計算します';
+	}
+
 	/* 老齢年金の受給開始年齢。入力する見込額は65歳時点の額なので、
 	   繰上げ・繰下げで実際にいくらになるかを添える（65歳なら増減はない） */
 	const pensionNote = $('pensionAgeNote');
@@ -613,7 +639,7 @@ function update() {
 		startAge: cfg.startAge, payAge: cfg.payAge, startYear: cfg.startYear,
 		category: cfg.category, monthly: cfg.monthly, otherPlanMonthly: cfg.otherPlanMonthly,
 		yieldRate: cfg.yieldRate, taxableIncome: cfg.taxableIncome,
-		initialBalance: cfg.initialBalance
+		initialBalance: cfg.initialBalance, initialPaid: cfg.initialPaid
 	}, Tax);
 
 	/* 節税額。判断に効くのは毎年の額より累計なので、累計を主役に出す。
@@ -629,20 +655,34 @@ function update() {
 	   払った掛金のうち税金が軽くなって戻ってくる分なので、
 	   掛金を「実質の負担」と「節税で戻る分」に割って並べる。
 	   4つを足すと、そのまま受け取る残高（＝出口の受取額）になる */
-	const total = acc.balance;
-	const pct = v => total > 0 ? (v / total * 100) : 0;
-	$('segInitial').style.width = pct(cfg.initialBalance) + '%';
-	$('segCost').style.width = pct(acc.netCost) + '%';
-	$('segSave').style.width = pct(acc.saved) + '%';
-	$('segGain').style.width = pct(acc.gain) + '%';
+	/* 含み損（元本が残高を上回る）だと運用益がマイナスになりうる。
+	   マイナスの幅は引けないので0で止めるが、そのまま残高で割ると
+	   4つの合計が100%を超えて、どの区画も本来の割合より広く出てしまう。
+	   区画の合計で割り直して、常に帯をちょうど分け合う形にする */
+	const segs = [acc.initialPaid, acc.netCost, acc.saved, Math.max(0, acc.gain)];
+	let segTotal = 0;
+	for (let i = 0; i < segs.length; i++) segTotal += Math.max(0, segs[i]);
+	const pct = v => segTotal > 0 ? Math.max(0, v) / segTotal * 100 : 0;
+	$('segInitial').style.width = pct(segs[0]) + '%';
+	$('segCost').style.width = pct(segs[1]) + '%';
+	$('segSave').style.width = pct(segs[2]) + '%';
+	$('segGain').style.width = pct(segs[3]) + '%';
 
 	const hasInitial = cfg.initialBalance > 0;
 	const lgInitial = $('lgInitial');
 	lgInitial.hidden = !hasInitial;
-	lgInitial.textContent = '今ある残高 ' + man(cfg.initialBalance) + '万円';
+	/* 今ある残高に含み益があるなら、帯の「元の残高」は元本の分だけになり、
+	   含み益は運用益のほうに入る（課税口座なら売るときに課税される部分なので、
+	   これから出る運用益と同じ扱いにする） */
+	lgInitial.textContent = acc.initialGain !== 0
+		? '今ある残高の元本 ' + man(acc.initialPaid) + '万円'
+		: '今ある残高 ' + man(cfg.initialBalance) + '万円';
 	$('lgCost').textContent = '実質の負担 ' + man(acc.netCost) + '万円';
 	$('lgSave').textContent = '節税で戻る分 ' + man(acc.saved) + '万円';
-	$('lgGain').textContent = '運用益 ' + man(acc.gain) + '万円';
+	// 含み損が大きいと、受取までの運用を足しても運用益がマイナスになりうる
+	$('lgGain').textContent = acc.gain < 0
+		? '運用損 ' + man(-acc.gain) + '万円'
+		: '運用益 ' + man(acc.gain) + '万円';
 
 	/* 「実質の負担」と「節税で戻る分」は、これから拠出する分だけの話。
 	   すでにある残高は中身を分けずにそのまま置くので、
@@ -665,6 +705,15 @@ function update() {
 			'<b>' + man(acc.balance) + '万円</b> を受け取ります。';
 	} else {
 		note.innerHTML = '';
+	}
+	/* すでに出ている含み益は、これから出る運用益と同じ扱いで帯に入れている。
+	   残高をそのまま置いていた頃と割り方が変わるので、その旨を添える */
+	if (hasInitial && acc.initialGain !== 0) {
+		note.innerHTML += acc.initialGain > 0
+			? '今ある残高のうち <b>' + man(acc.initialGain) +
+			  '万円</b> はすでに出ている含み益なので、帯では運用益に入れています。'
+			: '今ある残高は元本を <b>' + man(-acc.initialGain) +
+			  '万円</b> 下回っているので、その分を運用益から差し引いています。';
 	}
 
 	// 出口
@@ -713,6 +762,32 @@ function update() {
 		const label = !hasRetire ? 'iDeCoの税金'
 			: (down ? 'iDeCoで減った税金' : 'iDeCoで増えた税金');
 		return rline(label, yen(Math.abs(amount)), 'headline' + (down ? ' down' : ''));
+	}
+
+	/* 各欄の最後に置く、課税口座との比較。
+	   iDeCoの出口の税金は、その額だけでは重いか軽いかが判断できない。
+	   運用中が非課税なのがiDeCoの利点なので、同じ運用益を課税口座で出して
+	   売った場合の譲渡益税と並べ、差し引きでどちらが軽いかまで出す。
+	   受け取り方ごとに運用益が違う（年金は受け取り終わるまで運用が続く）ので、
+	   gain は欄ごとに渡す */
+	function refLines(taxByIdeco, gain) {
+		// 運用益が無ければ課税口座でも税金は出ないので、比べるものが無い（利回り0%など）
+		if (!(gain > 0)) return '';
+		const ref = taxableAccountTax(gain);
+		/* 差は、画面に出ている万円どうしの引き算で出す。円のまま引いてから
+		   まるめると、両方の端数の出かたで表示が1万円合わないことがある
+		   （上の税額と、この欄の課税口座の税金は、どちらも万円にまるめて出している） */
+		const diffMan = Math.round(taxByIdeco / 10000) - Math.round(ref / 10000);
+		const verdict = diffMan === 0
+			? 'iDeCoはほぼ同じ'
+			: 'iDeCoが <b>' + fmt(Math.abs(diffMan)) + '万円 ' + (diffMan < 0 ? '得' : '損') + '</b>';
+		return '<div class="ref">' +
+			'<div class="ref-cap">参考：同じ額を課税口座で運用して売った場合</div>' +
+			rline('運用益 ' + yen(gain) + ' × ' + fmtRate(TAXABLE_GAIN_TAX_RATE) + '%',
+				yen(ref), 'dim') +
+			'<div class="ref-diff' + (diffMan < 0 ? ' safe' : '') + '">' +
+			'課税口座と比較すると' + verdict + '</div>' +
+			'</div>';
 	}
 
 	// 退職金の欄。手取りを返し、行はそのまま h に足す
@@ -764,6 +839,8 @@ function update() {
 			  + '税額をどちらの分か割り振ることはできませんが、'
 			: '');
 	}
+	// 一時金は受け取った時点で運用が終わるので、比べる運用益は積立期間のぶん
+	h += refLines(L.taxByIdeco, acc.gain);
 	$('lumpDetail').innerHTML = h;
 
 	// 年金の内訳
@@ -798,6 +875,8 @@ function update() {
 			'歳から公的年金等控除を分け合うので、そこで雑所得の増え方が変わります。</div>';
 	}
 	if (d.tax === 0) h2 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
+	// 年金は受け取り終わるまで運用が続くので、その分の運用益も比べる相手に含める
+	h2 += refLines(A.taxByIdeco, acc.gain + d.growth);
 	$('annuityDetail').innerHTML = h2;
 
 	/* ---- 併用：一時金と年金にどう割り振るか ---- */
@@ -860,6 +939,12 @@ function update() {
 		h3 += '<div class="zero-note">一時金で受け取らないので、退職所得控除は使いません' +
 			(hasRetire ? '（退職金側の控除も削られません）' : '') + '</div>';
 	}
+	/* 積立期間の運用益は、残高を割った割合でそのまま分かれる
+	   （元本も運用益も同じ比で割られるため） */
+	const lumpShare = idecoAmount > 0 ? mix.lumpAmount / idecoAmount : 0;
+	if (mix.lumpAmount > 0) {
+		h3 += refLines(mix.lump ? mix.lump.taxByIdeco : 0, acc.gain * lumpShare);
+	}
 	$('mixLumpDetail').innerHTML = h3;
 
 	// 年金の部分
@@ -876,6 +961,10 @@ function update() {
 	h4 += mixTaxRow(md.tax);
 	if (mix.annuityAmount > 0 && md.tax === 0) {
 		h4 += '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
+	}
+	if (mix.annuityAmount > 0) {
+		// 年金部分は、割り振られた運用益に受け取り中の運用益を足したもの
+		h4 += refLines(md.tax, acc.gain * (1 - lumpShare) + md.growth);
 	}
 	$('mixAnnuityDetail').innerHTML = h4;
 
@@ -907,7 +996,7 @@ function update() {
 	const pureName = lumpAdd < annuityAdd ? '一時金' : '年金';
 	/* 併用は割合0%と100%も含めて振った中の最小なので、片方だけの受取を下回ることはあっても
 	   上回らない。答えがページの中で2つに割れないよう、ここも併用込みで判定する
-	   （割合ごとの内訳は下の併用カードに出る） */
+	   （割合ごとの内訳は下の併用の欄に出る） */
 	const lighter = mixWins ? bm.best : pureLighter;
 	/* 加入期間が勤続期間より長いと控除が増えて、税金がむしろ減ることがある。
 	   そのときは符号付きで出さず、「減る」と言葉で伝える */
@@ -927,7 +1016,7 @@ function update() {
 	}
 	$('grandVal').innerHTML = man(Math.abs(lighter)) + '<small>万円</small>';
 
-	/* 併用のほうが少ないときだけ、下のカードへ橋渡しする。
+	/* 併用のほうが少ないときだけ、下の併用の欄へ橋渡しする。
 	   上の2つの欄には併用の内訳が出ないので、これが無いと数字の出どころが分からない */
 	$('mixPointer').innerHTML = mixWins
 		? '一時金と年金を組み合わせると、どちらか一方で受け取るより <b>' + man(mixGain) +

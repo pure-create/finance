@@ -102,7 +102,7 @@
         <span class="num-in"><input type="number" id="otherPlan" value="0" min="0" step="1000" inputmode="numeric"><span class="unit">円/月</span></span>
       </div>
     </div>
-    <div class="grid3">
+    <div class="grid2">
       <div class="fld">
         <label for="monthly">毎月の掛金</label>
         <span class="num-in"><input type="number" id="monthly" value="23000" min="0" step="1000" inputmode="numeric"><span class="unit">円</span></span>
@@ -111,11 +111,22 @@
         <label for="nowAge">現在の年齢</label>
         <span class="num-in"><input type="number" id="nowAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
+    </div>
+    <!-- 残高と、そのうちの元本。差が今までの含み益になる。
+         課税口座と比べるときの運用益に効くので、隣どうしに並べる -->
+    <div class="grid2">
       <div class="fld">
         <label for="balance">現在のiDeCo残高
-          <span class="help" tabindex="0" aria-label="現在のiDeCo残高について" aria-describedby="balanceTip">？<span class="tipbox" id="balanceTip" role="tooltip">運営管理機関から届く「お取引状況のお知らせ」などに載っている、<strong>今の資産の時価評価額</strong>（これまでの運用益を含んだ額）をそのまま入れてください。<br><br>これまでに払った掛金や、その間に軽くなった税金を入力する必要はありません。すでに済んだ分なので、この試算では扱いません。下の節税額と内訳は<strong>これから拠出する分だけ</strong>のものです。<br><br>まだ加入していなければ0のままにしてください。</span></span>
+          <span class="help" tabindex="0" aria-label="現在のiDeCo残高について" aria-describedby="balanceTip">？<span class="tipbox" id="balanceTip" role="tooltip">運営管理機関から届く「お取引状況のお知らせ」などに載っている、<strong>今の資産の時価評価額</strong>（これまでの運用益を含んだ額）をそのまま入れてください。<br><br>これまでに軽くなった税金を入力する必要はありません。すでに済んだ分なので、下の節税額は<strong>これから拠出する分だけ</strong>のものです。<br><br>まだ加入していなければ0のままにしてください。</span></span>
         </label>
         <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
+      </div>
+      <div class="fld" id="balancePaidField">
+        <label for="balancePaid">うち掛金の元本
+          <span class="help" tabindex="0" aria-label="掛金の元本について" aria-describedby="balancePaidTip">？<span class="tipbox" id="balancePaidTip" role="tooltip">今の残高のうち、<strong>これまでに払い込んだ掛金の累計</strong>（拠出金累計額）を入れてください。残高との差が、すでに出ている<strong>含み益</strong>になります。<br><br>使うのは「課税口座で同じように運用して売った場合」と比べるところだけです。課税口座なら含み益にも売却時に課税されるためで、iDeCoの税額そのものは元本と運用益を区別しないので変わりません。<br><br>0のままなら、残高すべてを元本（含み益なし）として扱います。</span></span>
+        </label>
+        <span class="num-in"><input type="number" id="balancePaid" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
+        <p class="note" id="balancePaidNote"></p>
       </div>
     </div>
     <div class="ctrl">
@@ -215,18 +226,22 @@
     </div>
   </div>
 
-  <!-- 出口：受け取り方ごとの税額 -->
-  <div class="card">
+  <!-- 出口：受け取り方ごとの税額。
+       一時金・年金・その併用は、どれも「受け取るときの税金」の中の選択肢なので、
+       1枚のカードに入れて、見出しの高さでも並びが分かるようにする -->
+  <div class="card" id="exitCard">
     <h2 class="sec-title">受け取るときの税金（出口）</h2>
     <!-- 今の受取順で、どちらの控除がどれだけ削られるか。下の数字の前提になる -->
     <p class="note rule-note" id="ruleNote"></p>
+
+    <h3 class="sub-title">一時金と年金を比べる</h3>
     <div class="results">
       <div class="res-box lump">
-        <h3><span class="badge">一時金</span>まとめて受け取る</h3>
+        <h4><span class="badge">一時金</span>まとめて受け取る</h4>
         <div id="lumpDetail"></div>
       </div>
       <div class="res-box annuity">
-        <h3><span class="badge">年金</span>分割で受け取る</h3>
+        <h4><span class="badge">年金</span>分割で受け取る</h4>
         <div id="annuityDetail"></div>
       </div>
     </div>
@@ -241,47 +256,47 @@
       <span class="glabel" id="totalLabel">掛金の節税額との差引</span>
       <span class="gval" id="totalVal">0<small>万円</small></span>
     </div>
-    <!-- 併用のほうが少ないときに、下のカードへ橋渡しする -->
+    <!-- 併用のほうが少ないときに、下の併用の欄へ橋渡しする -->
     <p class="note" id="mixPointer"></p>
     <p class="note" id="netNote"></p>
-  </div>
 
-  <!-- 出口：一時金と年金を組み合わせる（併用）。
-       一時金部分は退職所得、年金部分は雑所得になるので、退職所得控除と
-       公的年金等控除を両方使える。どちらの控除も枠を超えた先が重くなるため、
-       割りかたによっては一方だけで受け取るより税金が少なくなる -->
-  <div class="card" id="mixCard">
-    <h2 class="sec-title">一時金と年金の併用</h2>
-    <p class="note mix-lead" id="mixLead"></p>
-    <!-- 割合の帯。スライダーの上に置いて、いま何対何なのかを一目で分かるようにする -->
-    <div class="mix-bar" aria-hidden="true">
-      <div class="seg seg-lump" id="segLump"></div>
-      <div class="seg seg-annuity" id="segAnnuity"></div>
-    </div>
-    <div class="ctrl">
-      <label for="mixRatio">一時金にする割合</label>
-      <div class="srow">
-        <input type="range" id="mixRatio" min="0" max="100" step="1" value="50">
-        <span class="sval"><span id="mixVal">50</span>%</span>
+    <!-- 一時金と年金を組み合わせる（併用）。
+         一時金部分は退職所得、年金部分は雑所得になるので、退職所得控除と
+         公的年金等控除を両方使える。どちらの控除も枠を超えた先が重くなるため、
+         割りかたによっては一方だけで受け取るより税金が少なくなる -->
+    <div class="mix-sec">
+      <h3 class="sub-title">一時金と年金の併用</h3>
+      <p class="note mix-lead" id="mixLead"></p>
+      <!-- 割合の帯。スライダーの上に置いて、いま何対何なのかを一目で分かるようにする -->
+      <div class="mix-bar" aria-hidden="true">
+        <div class="seg seg-lump" id="segLump"></div>
+        <div class="seg seg-annuity" id="segAnnuity"></div>
       </div>
-    </div>
-    <div class="best-hint" id="mixBestHint"></div>
-    <div class="results">
-      <div class="res-box lump">
-        <h3><span class="badge">一時金</span>まとめて受け取る分</h3>
-        <div id="mixLumpDetail"></div>
+      <div class="ctrl">
+        <label for="mixRatio">一時金にする割合</label>
+        <div class="srow">
+          <input type="range" id="mixRatio" min="0" max="100" step="1" value="50">
+          <span class="sval"><span id="mixVal">50</span>%</span>
+        </div>
       </div>
-      <div class="res-box annuity">
-        <h3><span class="badge">年金</span>分割で受け取る分</h3>
-        <div id="mixAnnuityDetail"></div>
+      <div class="best-hint" id="mixBestHint"></div>
+      <div class="results">
+        <div class="res-box lump">
+          <h4><span class="badge">一時金</span>まとめて受け取る分</h4>
+          <div id="mixLumpDetail"></div>
+        </div>
+        <div class="res-box annuity">
+          <h4><span class="badge">年金</span>分割で受け取る分</h4>
+          <div id="mixAnnuityDetail"></div>
+        </div>
       </div>
+      <div class="mix-sum" id="mixSum" aria-live="polite">
+        <span class="glabel" id="mixSumLabel">この割合でiDeCoによって増える税金</span>
+        <span class="gval" id="mixSumVal">0<small>万円</small></span>
+      </div>
+      <div class="chart-wrap"><canvas id="mixChart" role="img" aria-label="一時金にする割合を0%から100%まで振って、iDeCoによって増える税金を一時金部分・年金部分・合計の3本の折れ線で示したグラフ"></canvas></div>
+      <p class="note" id="mixChartNote"></p>
     </div>
-    <div class="mix-sum" id="mixSum" aria-live="polite">
-      <span class="glabel" id="mixSumLabel">この割合でiDeCoによって増える税金</span>
-      <span class="gval" id="mixSumVal">0<small>万円</small></span>
-    </div>
-    <div class="chart-wrap"><canvas id="mixChart" role="img" aria-label="一時金にする割合を0%から100%まで振って、iDeCoによって増える税金を一時金部分・年金部分・合計の3本の折れ線で示したグラフ"></canvas></div>
-    <p class="note" id="mixChartNote"></p>
   </div>
 
   <!-- グラフ -->
@@ -303,6 +318,7 @@
       ・ 年金受取で雑所得が増えると、国民健康保険料や介護保険料も上がりますが、自治体による差が大きいため考慮していません。<br>
       ・ 一時金と年金のどちらが税金が少ないかは、<strong>受け取る年が退職金と同じかどうか</strong>で大きく変わります。<strong>別の年</strong>に受け取るなら、iDeCoは自前の退職所得控除を使って単独で課税されるため、退職金がいくら大きくても一時金の税額は変わりません。<strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されるため、退職金が大きいほど一時金が不利になります。<br>
       ・ 一時金と年金は<strong>併用</strong>できます（残高の一部を一時金、残りを年金で受け取る）。このツールは一時金にする割合を1%刻みで振って、増える税金が最も少なくなる割合を探しています。ただし退職所得控除の重複調整は金額ではなく<strong>期間</strong>で決まるので、1円でも一時金で受け取れば丸ごと効きます（割合0%と1%の間で税額が跳ぶのはこのためです）。一時金と年金を別の年に受け取る組み合わせ（60歳で一時金、65歳から年金など）は扱っていません。併用できるかどうかや指定できる単位（10%単位、金額での指定など）は運営管理機関によって違うので、実際の手続きの前にご確認ください。<br>
+      ・ 各欄の下に出る<strong>「参考：同じ額を課税口座で運用して売った場合」</strong>は、同じ運用益を課税口座（特定口座）で出して売ったときにかかる税金です。<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm' target='_blank' rel='noopener noreferrer'>売却益</a>に20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）がかかるものとして計算し、iDeCoで増える税金との差を出しています。iDeCoは運用中の利益が非課税なので、出口の税金がこの額より少なければ、税金の面では課税口座で運用するより軽く済んだことになります（掛金の所得控除による節税は入口の話なので、この比較には入れていません）。年金受取と併用の年金部分は、受け取り終わるまでの運用益も含みます。課税口座なら取り崩すたびに課税されて残りの運用が細りますが、ここでは運用益の総額に一度だけ率を掛けているので、実際の差はこれよりiDeCo寄りになります。今ある残高は、入力された「うち掛金の元本」との差をすでに出ている含み益とみなし、これから出る運用益と合わせて比べます（元本が未入力なら、残高すべてを元本＝含み益なしとして扱います）。<br>
       ・ 年金の受取総額が受給開始時の残高より多いのは、受け取り終わるまで残りの資産が運用を続けるためです（1年あたりの額が一定になるよう、期首払いの年金として計算しています）。一方の一時金は受け取った後の運用を見込んでいないので、両者の比較は「iDeCoから出てくるまで」の話になります。<br>
       ・ 運用は入力した利回りで一定に増えるものとして計算します。掛金は毎月に分けて拠出するのが普通なので、その年の掛金は年の真ん中でまとめて入るものとして扱います（すでにある残高には1年分、その年の掛金には半年分の利回りが付きます）。信託報酬・口座管理手数料・給付事務手数料は考慮していません（給付事務手数料は受け取りのたびにかかるため、年金や併用で受取回数が増えるほど効きます）。<br>
       ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。

@@ -399,6 +399,19 @@ test('iDeCo：注記の短期退職手当等の条件が定数と一致する', 
 	assert.strictEqual(yen(m[2]) * 10000, tax.SHORT_TENURE_HALF_LIMIT, '2分の1にできる上限');
 });
 
+test('iDeCo：注記の譲渡益税率が定数と一致する', () => {
+	const text = prose('ideco/index.html');
+	const m = must(text, /売却益に([\d.]+)%（所得税(\d+)%＋復興特別所得税([\d.]+)%＋住民税(\d+)%）/, 'ideco/index.html');
+	ratioEquals(m[1], ideco.TAXABLE_GAIN_TAX_RATE, '課税口座の譲渡益税率');
+	// 書かれている内訳の合計が、率そのものと合っているか
+	const parts = (Number(m[2]) + Number(m[3]) + Number(m[4])) / 100;
+	assert.ok(Math.abs(parts - ideco.TAXABLE_GAIN_TAX_RATE) < 1e-12,
+		'内訳の合計が率と合わない 内訳 ' + parts + ' / 定数 ' + ideco.TAXABLE_GAIN_TAX_RATE);
+	// 資産運用シミュレーターと同じ率（片方だけ直すと食い違う）
+	assert.strictEqual(ideco.TAXABLE_GAIN_TAX_RATE, asset.TAX_RATE,
+		'譲渡益税率が2つのツールで違う');
+});
+
 test('iDeCo：受取年齢の入力欄の範囲が定数と一致する', () => {
 	const html = read('ideco/index.html');
 	const m = must(html, /id="payAge"[^>]*min="(\d+)"[^>]*max="(\d+)"/, 'ideco/index.html');

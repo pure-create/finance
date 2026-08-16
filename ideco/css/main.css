@@ -51,6 +51,15 @@ body{padding:16px;min-height:100vh}
 .card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 /* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
 .sec-title{font-size:14px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
+/* カードの中の小見出し（出口カードの「比べる」「併用」）。
+   カードの見出しと同じ字の大きさにすると並びが同じ高さに見えるので、
+   少し小さくし、左の縦線で「この見出しの下」だと分かるようにする */
+.sub-title{
+  font-size:13px;font-weight:700;color:var(--text);
+  margin:0 0 10px;padding-left:9px;border-left:3px solid var(--idc-out);
+}
+/* 併用は前の結論のあとに続くので、区切りの線を入れて話の変わり目を見せる */
+.mix-sec{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
 
 /* ---- 入力欄 ---- */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:12px}
@@ -141,7 +150,7 @@ body{padding:16px;min-height:100vh}
 .res-box.annuity{border-color:var(--idc-in);background:var(--idc-in-soft)}
 /* 選んでいない受け取り方は沈める（比較のために表示は残す） */
 .res-box.dim{opacity:.55}
-.res-box h3{font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.res-box h4{font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:9px;display:flex;align-items:center;gap:7px}
 .badge{
   font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;color:var(--grand-text);
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
@@ -164,6 +173,19 @@ body{padding:16px;min-height:100vh}
 .res-box.annuity .rline.headline{color:var(--idc-in)}
 .rline.headline.down,.res-box.lump .rline.headline.down,.res-box.annuity .rline.headline.down{color:var(--idc-gain)}
 
+/* ---- 課税口座との比較（各欄の最後に置く参考） ----
+   本題はiDeCoの税額なので、結論の行（.headline）より弱く見せる。
+   破線で区切って「ここから先は別の話」だと分かるようにする */
+.ref{margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
+.ref-cap{font-size:11px;color:var(--muted);margin-bottom:2px}
+/* 差し引きの一文。列に割らず文にするのは、「得」「損」がどちらに付くのかを
+   数字と離さないため。iDeCoが軽ければ運用益非課税が効いている（緑）、
+   重ければ出口の税金がそれを食っている（注意の色） */
+.ref-diff{font-size:12.5px;line-height:2;color:var(--idc-warn)}
+/* 強めるのは「〇万円 得（損）」だけ。数字と得損が離れると読み違える */
+.ref-diff b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.ref-diff.safe{color:var(--idc-gain)}
+
 /* 合算されて分けられない場合の断り */
 .split-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7}
 .split-note b{color:var(--text);font-variant-numeric:tabular-nums}
@@ -185,7 +207,7 @@ body{padding:16px;min-height:100vh}
 .gval small{font-size:13px;font-weight:700;margin-left:2px}
 
 /* ---- 併用（一時金と年金の割り振り） ---- */
-/* このカードだけ導入の一文を先に置く。割合を動かす欄なのだと分かるようにする */
+/* ここだけ導入の一文を先に置く。割合を動かす欄なのだと分かるようにする */
 .mix-lead{margin-bottom:10px}
 /* 割合の帯。入口の .stack-bar と同じ作りだが、こちらは2区画で
    「一時金いくら／年金いくら」を出す。スライダーのすぐ上に置く */

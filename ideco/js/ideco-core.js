@@ -138,6 +138,10 @@ const CONTRIBUTION_TIMING = 0.5; // 年の何割が過ぎた時点で入れる�
 /**
  * 拠出と運用の積み上げ。年ごとの残高・拠出累計・節税累計を返す。
  * すでにある残高には1年分、その年の掛金には半年分の利回りが付く。
+ *
+ * cfg.initialPaid は、今ある残高のうち自分が払い込んだ掛金の元本。
+ * 残りはすでに出ている運用益（含み益）で、運用益に数える。
+ * 0（未入力）なら残高すべてを元本＝含み益なしとして扱う。
  */
 function accumulate(cfg, tax) {
 	const startYear = cfg.startYear;
@@ -166,12 +170,25 @@ function accumulate(cfg, tax) {
 		rows.push({ age: age, year: year, limit: limit, contribution: annual, saving: s, balance: balance });
 	}
 	const initial = cfg.initialBalance || 0;
+	/* 今ある残高のうちの元本。残高との差はすでに出ている運用益なので、
+	   これから出る運用益と同じ扱いにする（課税口座で運用していれば、
+	   売るときにまとめて課税される部分）。
+	   元本が残高を上回る＝含み損の場合も、そのまま引いて運用益を減らす。
+
+	   残高が無ければ元本も無い。画面は残高を0にすると元本の欄を隠すが、
+	   入力そのものは残る（保存や共有URLにも乗る）ので、ここで無視する。
+	   見ないと、残高に無い元本を引いて運用益がマイナスに振れてしまう */
+	const initialPaid = (initial > 0 && cfg.initialPaid > 0) ? cfg.initialPaid : initial;
 	return {
 		rows: rows,
 		balance: balance,
 		paid: paid,
 		saved: saved,
-		gain: balance - paid - initial,
+		// 今ある残高の元本と、そこに乗っている含み益（画面の内訳の帯で使う）
+		initialPaid: initialPaid,
+		initialGain: initial - initialPaid,
+		// これから出る運用益と、今ある残高の含み益を合わせた運用益
+		gain: balance - paid - initialPaid,
 		/* 実際に自分の懐から出ていく額。掛金の一部は所得控除で税金が軽くなって
 		   戻ってくるので、その分は負担ではない。
 		   「掛金」と「節税額」を並べて足すと二重に数えることになる */
@@ -441,6 +458,27 @@ function compare(cfg, tax) {
 	};
 }
 
+/* ---------- 参考：課税口座で同じ額を運用した場合 ----------
+
+   出口の税額は、それだけ見ても重いか軽いかが分からない。iDeCoは
+   「運用中は非課税、受け取るときに課税」という制度なので、同じ運用益を
+   課税口座（特定口座）で出した場合にかかる譲渡益税と並べて初めて、
+   出口で払う税金の意味が読める。
+
+   税率は20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）。
+   資産運用シミュレーター（assetSimulator/js/asset-core.js の TAX_RATE）と
+   同じ率で、こちらは受け取り方の比較に使うだけなので、切り替えは持たない。 */
+const TAXABLE_GAIN_TAX_RATE = 0.20315;
+
+/* 運用益にかかる譲渡益税。売るまで課税されないので、受け取るときに
+   一度だけ掛ける。年金や併用のように分けて受け取る場合、課税口座なら
+   取り崩すたびに課税されてその先の運用が細るが、ここでは運用益の総額に
+   一度掛けるだけにしている。課税口座を有利に見る側の簡略化なので、
+   実際の差はこれより iDeCo 寄りになる（画面の注記で断る） */
+function taxableAccountTax(gain) {
+	return Math.max(0, gain || 0) * TAXABLE_GAIN_TAX_RATE;
+}
+
 /* ---------- 出口：一時金と年金の併用 ----------
 
    残高を割って、一部を一時金・残りを年金で受け取ることもできる。
@@ -543,6 +581,7 @@ if (typeof module !== 'undefined' && module.exports) {
 		overlapYears: overlapYears, adjustedDeduction: adjustedDeduction, isShortTenure: isShortTenure,
 		lumpSumTax: lumpSumTax, retireOnlyTax: retireOnlyTax, annuityPayment: annuityPayment,
 		annuityTax: annuityTax, compare: compare,
+		taxableAccountTax: taxableAccountTax, TAXABLE_GAIN_TAX_RATE: TAXABLE_GAIN_TAX_RATE,
 		mixTax: mixTax, bestMix: bestMix, MIX_STEPS: MIX_STEPS,
 		CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
 		LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,

@@ -11,6 +11,7 @@ const {
 	contributionLimit, joinAgeLimit, taxSaving, accumulate,
 	overlapYears, adjustedDeduction, lumpSumTax, retireOnlyTax, annuityPayment, annuityTax, compare,
 	mixTax, bestMix, MIX_STEPS,
+	taxableAccountTax, TAXABLE_GAIN_TAX_RATE,
 	LIMIT_REFORM_YEAR, JOIN_AGE_LIMIT, PAYOUT_AGE_MIN, PAYOUT_AGE_MAX,
 	earliestPayoutAge, PAYOUT_START_BY_PERIOD, LATE_JOIN_AGE, LATE_JOIN_WAIT,
 	OVERLAP_YEARS_IDECO_FIRST, OVERLAP_YEARS_RETIRE_FIRST,
@@ -193,6 +194,53 @@ test('積立：もとからある残高には1年分の利回りが付く', () =
 		payAge: 41, monthly: 0, yieldRate: 10, initialBalance: 1000000
 	}), tax);
 	near(a.balance, 1100000, 1e-6);
+});
+
+test('積立：今ある残高の元本を入れると、差が含み益として運用益に入る', () => {
+	/* 拠出0・利回り10%・1年。残高100万円のうち元本60万円なら、
+	   含み益40万円＋その年の運用益10万円で、運用益は50万円になる */
+	const a = accumulate(Object.assign({}, baseAcc, {
+		payAge: 41, monthly: 0, yieldRate: 10,
+		initialBalance: 1000000, initialPaid: 600000
+	}), tax);
+	near(a.balance, 1100000, 1e-6, '残高は元本の入力で変わらない');
+	assert.strictEqual(a.initialPaid, 600000, '元本');
+	assert.strictEqual(a.initialGain, 400000, '含み益');
+	near(a.gain, 500000, 1e-6, '含み益を含む運用益');
+});
+
+test('積立：元本が未入力なら、残高すべてを元本として扱う', () => {
+	const over = { payAge: 41, monthly: 0, yieldRate: 10, initialBalance: 1000000 };
+	const noPaid = accumulate(Object.assign({}, baseAcc, over), tax);
+	const zeroPaid = accumulate(Object.assign({}, baseAcc, over, { initialPaid: 0 }), tax);
+	for (const [a, name] of [[noPaid, '未指定'], [zeroPaid, '0を指定']]) {
+		assert.strictEqual(a.initialPaid, 1000000, name + '：元本が残高と一致しない');
+		assert.strictEqual(a.initialGain, 0, name + '：含み益が出ている');
+		near(a.gain, 100000, 1e-6, name + '：運用益がその年の分だけになっていない');
+	}
+});
+
+test('積立：残高が無ければ、元本の入力は無視する', () => {
+	/* 画面は残高を0にすると元本の欄を隠すが、値は残ったまま保存や共有URLに乗る。
+	   残高に無い元本を引くと、運用益がマイナスに振れて内訳も比較も狂う */
+	const a = accumulate(Object.assign({}, baseAcc, { yieldRate: 3, initialPaid: 3000000 }), tax);
+	const plain = accumulate(Object.assign({}, baseAcc, { yieldRate: 3 }), tax);
+	assert.strictEqual(a.initialPaid, 0, '元本');
+	assert.strictEqual(a.initialGain, 0, '含み益');
+	near(a.gain, plain.gain, 1e-6, '運用益が元本の入力で変わっている');
+	assert.ok(a.gain > 0, '運用益がマイナスに振れている：' + a.gain);
+});
+
+test('積立：元本が残高を上回るなら、含み損として運用益から引く', () => {
+	// 残高100万円・元本120万円（含み損20万円）。1年で10万円増えても運用益はマイナス
+	const a = accumulate(Object.assign({}, baseAcc, {
+		payAge: 41, monthly: 0, yieldRate: 10,
+		initialBalance: 1000000, initialPaid: 1200000
+	}), tax);
+	assert.strictEqual(a.initialGain, -200000, '含み損');
+	near(a.gain, -100000, 1e-6, '運用益');
+	// 課税口座なら、含み損のうちは売っても税金がかからない
+	assert.strictEqual(taxableAccountTax(a.gain), 0);
 });
 
 test('積立：毎月ずつ積み上げた場合とほぼ一致する', () => {
@@ -651,10 +699,15 @@ test('積立：実質の負担は「掛金 − 節税額」', () => {
 test('積立：残高の内訳を足すと残高そのものになる', () => {
 	/* 画面の帯（元の残高／実質の負担／節税で戻る分／運用益）が
 	   受け取る残高をちょうど分け合っていること */
-	for (const over of [{}, { initialBalance: 3000000 }, { yieldRate: 5 }, { taxableIncome: 0 }]) {
+	const cases = [
+		{}, { initialBalance: 3000000 }, { yieldRate: 5 }, { taxableIncome: 0 },
+		// 含み益がある場合と、含み損の場合。帯の左端は時価ではなく元本になる
+		{ initialBalance: 3000000, initialPaid: 2000000 },
+		{ initialBalance: 3000000, initialPaid: 4000000 }
+	];
+	for (const over of cases) {
 		const a = accumulate(Object.assign({}, baseAcc, { yieldRate: 3 }, over), tax);
-		const initial = over.initialBalance || 0;
-		near(initial + a.netCost + a.saved + a.gain, a.balance, 1e-6,
+		near(a.initialPaid + a.netCost + a.saved + a.gain, a.balance, 1e-6,
 			JSON.stringify(over) + ' で内訳の合計が残高と合わない');
 	}
 });
@@ -1007,5 +1060,32 @@ test('併用：手取りは「総額 − 税額」で一貫している', () => 
 		near(m.net, m.gross - m.tax, 1e-6, i + '%');
 		// 総額は「一時金 ＋ 年金の受取総額 ＋ 退職金」。年金分は受取中の運用で増える
 		near(m.gross, m.lumpAmount + m.annuity.gross + mixBase.retireAmount, 1e-6, i + '%の総額');
+	}
+});
+
+/* ---------- 参考：課税口座で運用した場合 ---------- */
+
+test('課税口座：譲渡益税は20.315%', () => {
+	// 所得税15% ＋ 復興特別所得税0.315%（15%×2.1%） ＋ 住民税5%
+	assert.ok(Math.abs(TAXABLE_GAIN_TAX_RATE - (0.15 + 0.15 * 0.021 + 0.05)) < 1e-12,
+		'内訳の合計と合わない：' + TAXABLE_GAIN_TAX_RATE);
+	near(taxableAccountTax(10000000), 2031500, 1e-6, '運用益1,000万円');
+});
+
+test('課税口座：運用益が無ければ税金も0円', () => {
+	assert.strictEqual(taxableAccountTax(0), 0);
+	// 元本割れ（マイナスの運用益）でも、税金が戻ってくる形にはしない
+	assert.strictEqual(taxableAccountTax(-1000000), 0);
+	assert.strictEqual(taxableAccountTax(undefined), 0);
+});
+
+test('課税口座：運用益に比例する（分けて計算しても合計は同じ）', () => {
+	/* 画面は併用のときに運用益を一時金部分と年金部分へ割り振ってから
+	   それぞれに掛ける。合計がずれないことを見る */
+	const gain = 4720000;
+	for (let i = 0; i <= 10; i++) {
+		const share = i / 10;
+		near(taxableAccountTax(gain * share) + taxableAccountTax(gain * (1 - share)),
+			taxableAccountTax(gain), 1e-6, (i * 10) + '%で分けた場合');
 	}
 });
