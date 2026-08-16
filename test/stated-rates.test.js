@@ -303,23 +303,14 @@ test('「制度データ」の時点が全ページでそろっている', () =>
 
 const ideco = require('../ideco/js/ideco-core.js');
 
-test('iDeCo：注記の拠出限度額が定数と一致する', () => {
-	const text = prose('ideco/index.html');
-	// 第1号
-	const self = must(text, /第1号は月([\d,]+)円→([\d,]+)円/, 'ideco/index.html');
-	assert.strictEqual(yen(self[1]), ideco.CONTRIBUTION_LIMITS.self.current, '第1号の現行');
-	assert.strictEqual(yen(self[2]), ideco.CONTRIBUTION_LIMITS.self.reformed, '第1号の改正後');
-
-	// 第2号（現行は区分で20,000〜23,000円、改正後は62,000円）
-	const emp = must(text, /第2号は月([\d,]+)〜([\d,]+)円→([\d,]+)円/, 'ideco/index.html');
-	assert.strictEqual(yen(emp[1]), ideco.CONTRIBUTION_LIMITS.corporate.current, '第2号の現行の下限');
-	assert.strictEqual(yen(emp[2]), ideco.CONTRIBUTION_LIMITS.employee.current, '第2号の現行の上限');
-	assert.strictEqual(yen(emp[3]), ideco.CONTRIBUTION_LIMITS.employee.reformed, '第2号の改正後');
-
-	// 第3号は変わらない
-	const sp = must(text, /第3号は月([\d,]+)円で変わりません/, 'ideco/index.html');
-	assert.strictEqual(yen(sp[1]), ideco.CONTRIBUTION_LIMITS.spouse.current, '第3号の現行');
-	assert.strictEqual(yen(sp[1]), ideco.CONTRIBUTION_LIMITS.spouse.reformed, '第3号は改正後も同じ');
+/* 区分ごとの限度額の一覧は注記から落とし、加入区分の下に選んだ区分の額を
+   出す形にした（limitNote）。JSが定数から組み立てるので腐らない。
+   静的な文に残っている額は、掛金相当額の吹き出しにある第2号の改正後の枠だけ */
+test('iDeCo：掛金相当額の説明にある第2号の枠が定数と一致する', () => {
+	const m = must(prose('ideco/index.html'),
+		/第2号被保険者の枠は「月([\d.]+)万円 −/, 'ideco/index.html');
+	assert.strictEqual(Number(m[1]) * 10000, ideco.CONTRIBUTION_LIMITS.employee.reformed,
+		'第2号の改正後の枠');
 });
 
 test('iDeCo：注記の改正の時期が定数と一致する', () => {
@@ -330,7 +321,7 @@ test('iDeCo：注記の改正の時期が定数と一致する', () => {
 
 test('iDeCo：注記の加入年齢の上限が定数と一致する', () => {
 	const text = prose('ideco/index.html');
-	const m = must(text, /(\d+)歳未満から(\d+)歳未満に広がります/, 'ideco/index.html');
+	const m = must(text, /(\d+)歳未満から(\d+)歳未満になり/, 'ideco/index.html');
 	assert.strictEqual(Number(m[1]), ideco.JOIN_AGE_LIMIT.current, '現行の上限');
 	assert.strictEqual(Number(m[2]), ideco.JOIN_AGE_LIMIT.reformed, '改正後の上限');
 });
@@ -345,13 +336,14 @@ test('iDeCo：注記の重複期間のルールが定数と一致する', () => 
 	assert.strictEqual(Number(later[1]), ideco.OVERLAP_YEARS_RETIRE_FIRST, '退職金が先の場合');
 });
 
-test('iDeCo：注記の第1号・第3号の年齢と第5号の枠が定数と一致する', () => {
+test('iDeCo：注記の第5号加入者の年齢が定数と一致する', () => {
 	const text = prose('ideco/index.html');
-	const m = must(text, /第1号・第3号被保険者は20歳以上(\d+)歳未満なので/, 'ideco/index.html');
+	const m = must(text, /改正後は(\d+)歳以上(\d+)歳未満で国民年金の被保険者でない人も「第5号加入者」/,
+		'ideco/index.html');
 	assert.strictEqual(Number(m[1]), ideco.NATIONAL_PENSION_END_AGE, '国民年金の被保険者でなくなる年齢');
-	const g = must(text, /「第5号加入者」として拠出でき、枠は第2号と同じ月([\d,]+)円/, 'ideco/index.html');
-	assert.strictEqual(yen(g[1]), ideco.LATE_JOIN_CATEGORY_LIMIT, '第5号加入者の枠');
-	// 第5号は第2号と同じ額。片方だけ直したときに気づけるようにする
+	assert.strictEqual(Number(m[2]), ideco.JOIN_AGE_LIMIT.reformed, '改正後の加入年齢の上限');
+	/* 枠の額は注記から落とし、当てはまる条件のときだけ limitWarn が出すようにした。
+	   第5号は第2号と同じ額なので、片方だけ直したときに気づけるようにしておく */
 	assert.strictEqual(ideco.LATE_JOIN_CATEGORY_LIMIT, ideco.CONTRIBUTION_LIMITS.employee.reformed);
 });
 
@@ -453,24 +445,33 @@ test('iDeCo：選択肢の初期値がJS側の初期値と一致する', () => {
 	}
 });
 
-test('iDeCo：注記の受給開始年齢の表が定数と一致する', () => {
+/* 「8年以上で61歳、6年で62歳…」の一覧は注記から落とし、入力した加入年齢で
+   何歳から受け取れるかを payAgeWarn が出す形にした。注記に残したのは
+   「10年以上で60歳から」「2年ごとに繰り下がり、最も遅くて65歳」の要約なので、
+   その要約が表と食い違っていないかを見る */
+test('iDeCo：注記の受給開始年齢の要約が定数と一致する', () => {
 	const text = prose('ideco/index.html');
-	// 10年以上で60歳から
-	const base = must(text, /(\d+)歳になるまでの通算加入者等期間が(\d+)年以上必要/, 'ideco/index.html');
-	assert.strictEqual(Number(base[1]), ideco.LATE_JOIN_AGE, '期間を数える年齢');
-	assert.strictEqual(Number(base[2]), ideco.PAYOUT_START_BY_PERIOD[0].minYears, '60歳から受け取る条件');
-	assert.strictEqual(ideco.PAYOUT_START_BY_PERIOD[0].age, ideco.PAYOUT_AGE_MIN);
+	const table = ideco.PAYOUT_START_BY_PERIOD;
 
-	// 繰り下がる区分（8年以上で61歳…のように並ぶ）
-	const rows = [...text.matchAll(/(\d+)年以上で(\d+)歳/g)].map(m => ({
-		minYears: Number(m[1]), age: Number(m[2])
-	}));
-	const expected = ideco.PAYOUT_START_BY_PERIOD.slice(1);
-	assert.strictEqual(rows.length, expected.length, '注記の区分の数が表と違う');
-	rows.forEach((row, i) => {
-		assert.strictEqual(row.minYears, expected[i].minYears, i + '番目の年数');
-		assert.strictEqual(row.age, expected[i].age, i + '番目の年齢');
-	});
+	// 10年以上で60歳から
+	const base = must(text, /(\d+)歳から受け取るには、(\d+)歳になるまでの通算加入者等期間が(\d+)年以上必要/,
+		'ideco/index.html');
+	assert.strictEqual(Number(base[1]), table[0].age, '10年以上のときの受給開始年齢');
+	assert.strictEqual(table[0].age, ideco.PAYOUT_AGE_MIN);
+	assert.strictEqual(Number(base[2]), ideco.LATE_JOIN_AGE, '期間を数える年齢');
+	assert.strictEqual(Number(base[3]), table[0].minYears, '60歳から受け取る条件');
+
+	// 足りない場合は2年ごとに繰り下がり、最も遅くて65歳
+	const step = must(text, /受け取れる年齢が(\d+)年ごとに繰り下がり、最も遅くて(\d+)歳から/,
+		'ideco/index.html');
+	assert.strictEqual(Number(step[2]), table[table.length - 1].age, '最も遅い受給開始年齢');
+	/* 最後の行（1年以上）は「2年に満たない残り」を拾うためのもので刻みから外れる。
+	   そこまでの間隔が注記の年数どおりかを見る */
+	for (let i = 1; i < table.length - 1; i++) {
+		assert.strictEqual(table[i - 1].minYears - table[i].minYears, Number(step[1]),
+			table[i].age + '歳の区分までの年数の刻み');
+		assert.strictEqual(table[i].age - table[i - 1].age, 1, table[i].age + '歳の区分の繰り下がり');
+	}
 
 	// 60歳以降に加入した場合の特例
 	const late = must(text, /(\d+)歳以降に初めて加入した場合は、加入から(\d+)年経過後/, 'ideco/index.html');
