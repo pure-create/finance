@@ -55,6 +55,26 @@ function buildYearOptions(selectEl, fromYear, toYear){
 
 // 調整月額の区分数（地方公務員＝8区分、国家公務員＝11区分等、ページのconfig.jsで設定）
 var TYOSEI_AMOUNTS = window.TYOSEI_AMOUNTS || [];
+
+/* 調整月額の「直近5年のうちの月数」を入れる欄を、区分の数だけ作る
+   （上の buildYearOptions と同じく document.write の代替）。
+
+   以前は本文中の <script> が document.write でセルを書き出していた。
+   document.write はHTMLの解析を止めるうえ、値を持つ config.js を
+   <head> で同期に読む必要があり、そのぶん本文が出るのが遅れていた。
+   ここで作るようにしたので、config.js も他のスクリプトと一緒に末尾で読める。 */
+function buildTyoseiInputs(rowEl){
+	if(!rowEl) return;
+	for(var i = 1; i <= TYOSEI_AMOUNTS.length; i++){
+		var td = document.createElement('td');
+		var input = document.createElement('input');
+		input.id = 'tyosei' + i;
+		input.className = 'tyosei';
+		input.setAttribute('inputmode', 'numeric');
+		td.appendChild(input);
+		rowEl.appendChild(td);
+	}
+}
 var STORAGE_KEY = window.RETIRE_STORAGE_KEY || 'retireCalcState';
 
 // 現在の入力内容をURLSearchParamsに変換する
@@ -164,6 +184,8 @@ function clearAll(){
 window.addEventListener('load', function(){
 	buildYearOptions(document.getElementById('birthYear'), thisYear - 67, thisYear - 18);
 	buildYearOptions(document.getElementById('hireYear'), thisYear - 42, thisYear - 2);
+	// 入力欄を作るのは、下の復元（restoreState）と入力の監視より先でなければならない
+	buildTyoseiInputs(document.getElementById('tyosei-inputs'));
 
 	restoreState();
 
@@ -246,26 +268,61 @@ window.addEventListener('load', function(){
 		explainEl.style.top = top + 'px';
 	}
 
+	// 開いている説明をすべて閉じる（他を開いたとき・外を押したとき・Escのとき）
+	function hideAllExplains(except){
+		document.querySelectorAll('div.explain').forEach(function(el){
+			if(el === except) return;
+			el.style.display = 'none';
+			var owner = el.previousElementSibling;
+			if(owner && owner.hasAttribute('aria-expanded')) owner.setAttribute('aria-expanded', 'false');
+		});
+	}
+
+	/* 説明を出す印（div.question）と、その中身（div.explain）を組にする。
+
+	   iDeCo・資産運用の「？」は、吹き出しをCSSだけで出している（common/site.css の
+	   .tipbox）。こちらで同じ作りにできないのは、説明が .table-scroll（overflow:auto）
+	   の中にあり、CSSの重ね方では箱に切られてしまうため。位置決めがJSなのはそのためで、
+	   読み上げソフトへの伝え方（aria-describedby と role="tooltip"）だけを揃えている。 */
+	var explainSeq = 0;
 	document.querySelectorAll('div.question').forEach(function(el){
-		el.setAttribute('tabindex', '0');
-		if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
 		var explain = el.nextElementSibling;
+		if(!(explain && explain.classList.contains('explain'))) return;
+
+		/* 説明文とを結び付けるidは、HTMLに手で振ると印を増やすたびに
+		   重複を確かめることになるので、ここで通し番号で作る */
+		if(!explain.id) explain.id = 'explain-' + (++explainSeq);
+		explain.setAttribute('role', 'tooltip');
+
+		/* 印の中に操作できるものがある場合（「年度途中採用」はチェックボックスを
+		   抱えている）は、印自体を押せるものにしない。入れ子にすると、
+		   キーボードでの停止点が2つ並び、Enterがどちらに効くのかも決まらない。
+		   その場合は説明をチェックボックスに結び付け、そこに焦点が来たら出す。 */
+		var control = el.querySelector('input, select, textarea, button, a[href]');
+		if(control){
+			control.setAttribute('aria-describedby', explain.id);
+		}else{
+			el.setAttribute('tabindex', '0');
+			if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
+			el.setAttribute('aria-expanded', 'false');
+			el.setAttribute('aria-describedby', explain.id);
+		}
 
 		function show(){
+			hideAllExplains(explain);
 			positionExplain(el, explain);
 			fadeIn(explain, 300, 'block');
+			if(el.hasAttribute('aria-expanded')) el.setAttribute('aria-expanded', 'true');
 		}
 		function hide(){
 			fadeOut(explain, 300);
+			if(el.hasAttribute('aria-expanded')) el.setAttribute('aria-expanded', 'false');
 		}
 		function toggle(e){
 			e.stopPropagation();
 			if(explain.style.display === 'block'){
 				hide();
 			}else{
-				document.querySelectorAll('div.explain').forEach(function(other){
-					if(other !== explain) other.style.display = 'none';
-				});
 				show();
 			}
 		}
@@ -274,22 +331,59 @@ window.addEventListener('load', function(){
 			el.addEventListener('mouseenter', show);
 			el.addEventListener('mouseleave', hide);
 		}
-		el.addEventListener('click', toggle);
-		el.addEventListener('keydown', function(e){
-			if(e.key === 'Enter' || e.key === ' '){
-				e.preventDefault();
-				toggle(e);
-			}
-		});
+		if(control){
+			// 押せるのはチェックボックスなので、開閉はしない。焦点の出入りに合わせる
+			control.addEventListener('focus', show);
+			control.addEventListener('blur', hide);
+		}else{
+			el.addEventListener('click', toggle);
+			el.addEventListener('keydown', function(e){
+				if(e.key === 'Enter' || e.key === ' '){
+					e.preventDefault();
+					toggle(e);
+				}
+			});
+			// キーボードで次へ移ったときに、開いたままにしない
+			el.addEventListener('blur', hide);
+		}
 	});
 
 	document.addEventListener('click', function(e){
 		if(!e.target.closest('div.question')){
-			document.querySelectorAll('div.explain').forEach(function(el){
-				el.style.display = 'none';
-			});
+			hideAllExplains();
 		}
 	});
+
+	/* Escで閉じる。共有の吹き出し（common/share.js）やテーマ切替のメニューと
+	   同じ操作にする。浮いているものごとに閉じ方が違うと覚えられない */
+	document.addEventListener('keydown', function(e){
+		if(e.key === 'Escape') hideAllExplains();
+	});
+
+	/* 説明は position:fixed（画面基準）で置いてあるので、画面や表の箱を送ると
+	   印だけが動いて説明が取り残される。送るたびに位置を計算し直して付いて行かせる。
+
+	   送り始めたら閉じる、という手もあるが採らない。指で送ったときの慣性や、
+	   押した相手が画面の端にあってブラウザが送りを入れたときに、開いた直後の
+	   ものまで消えてしまうため（実際、閉じる作りで実測したら開いた直後に消えた）。
+
+	   scroll は続けざまに起きるので、描画の直前にまとめて1回だけ動かす。
+	   capture にするのは、表の箱（.table-scroll）の中を送ったときも拾うため */
+	var moveQueued = false;
+	function moveOpenExplains(){
+		if(moveQueued) return;
+		moveQueued = true;
+		requestAnimationFrame(function(){
+			moveQueued = false;
+			document.querySelectorAll('div.explain').forEach(function(ex){
+				if(ex.style.display !== 'block') return;
+				var owner = ex.previousElementSibling;
+				if(owner) positionExplain(owner, ex);
+			});
+		});
+	}
+	window.addEventListener('scroll', moveOpenExplains, { capture: true, passive: true });
+	window.addEventListener('resize', moveOpenExplains);
 
 	calc();
 });
