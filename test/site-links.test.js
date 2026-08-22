@@ -1,9 +1,15 @@
-/* ページの一覧とリンクの整合性のテスト。
+/* ページの一覧とリンクの整合性、およびページの骨組みのテスト。
 
    ページを増やしたとき、同じことを
      トップページ / 404ページのツリー / sitemap.xml / common/tool-nav.js
    の4か所に手で書き足す必要がある（tool-nav.js のコメントにあるとおり、
    放っておけばいずれ食い違う）。ここでは「食い違っていないか」を機械で見る。
+
+   同じ理由で、どのページも持っているはずの部品（本文へのスキップリンク、
+   ヘッダー行とその中の戻る導線、末尾の導線）も見ている。これらは新しい
+   ページを作るときに既存のページからコピーして作られるので、コピー元を
+   間違えると1つだけ抜けたまま公開されてしまう（画面には何も出ないため、
+   目で見ても気付けない）。
 
    実行: npm test   （プロジェクト直下から） */
 'use strict';
@@ -54,6 +60,10 @@ function resolveLink(fromFile, href) {
 	else if (href.startsWith('/')) p = href.slice(1);
 	else p = path.posix.join(path.posix.dirname(fromFile), href);
 	p = path.posix.normalize(p).replace(/^\.\//, '');
+	/* サイト直下（/finance/ や ../../）は normalize が '.' にする。
+	   そのままだとリポジトリ直下のディレクトリを指すことになり、
+	   「存在するか」の検査が素通りしてしまうので、トップページに直す */
+	if (p === '.') p = '';
 	if (p === '' || p.endsWith('/')) p += 'index.html';
 	return p;
 }
@@ -252,6 +262,82 @@ test('外部リンクは https で、リンク文字が空でない', () => {
 		for (const m of html.matchAll(/<a\s[^>]*href=['"]https:\/\/[^'"]+['"][^>]*>([\s\S]*?)<\/a>/g)) {
 			const label = m[1].replace(/<[^>]+>/g, '').trim();
 			assert.ok(label.length > 0, file + ' にリンク文字が空のリンクがある: ' + m[0]);
+		}
+	}
+});
+
+/* ---------- ページの骨組み ---------- */
+
+/* トップページ自身。ここだけは戻る導線も末尾の導線も持たない
+   （行き先の一覧をページ本体として持っているため） */
+const TOP = 'index.html';
+/* OGP画像の版下。ブラウザで開いて画像を書き出すためだけのもので、
+   サイトのページではないので骨組みの検査からは外す */
+const NOT_A_PAGE = ['og/card.html'];
+const PAGES = HTML_FILES.filter(f => !NOT_A_PAGE.includes(f));
+
+test('どのページにも本文へのスキップリンクと、その行き先がある', () => {
+	for (const file of PAGES) {
+		const html = read(file);
+		assert.match(html, /<a class="skip-link" href="#main">/, file + ' にスキップリンクが無い');
+		assert.match(html, /id="main"/, file + ' に id="main" が無い（スキップリンクの行き先）');
+	}
+});
+
+test('トップページ以外にはヘッダーの戻る導線があり、行き先はトップページ', () => {
+	for (const file of PAGES) {
+		const html = read(file);
+		const link = attr(html, /<a class="home-link" href="([^"]+)"/);
+		if (file === TOP) {
+			assert.ok(!link, 'トップページに自分自身への戻る導線がある');
+			continue;
+		}
+		assert.ok(link, file + ' にヘッダーの戻る導線（.home-link）が無い');
+		assert.strictEqual(resolveLink(file, link), TOP, file + ' の戻る導線がトップページを指していない');
+	}
+});
+
+test('ヘッダー行は <main> の外にあり、戻る導線はその中にある', () => {
+	/* <main> の中に入れると、スキップリンクで飛んだ先がヘッダー行の上になり、
+	   飛ばしたはずの導線を読まされる（404ページで実際にそうなっていた） */
+	for (const file of PAGES) {
+		if (file === TOP) continue;
+		const html = read(file);
+		const head = html.indexOf('class="site-head"');
+		// 開始タグそのものを探す。ただの '<main' だと、注記の中の「<main> の外」に当たる
+		const main = html.search(/<main\b[^>]*id="main"/);
+		const link = html.indexOf('class="home-link"');
+		assert.ok(head !== -1, file + ' にヘッダー行（.site-head）が無い');
+		assert.ok(main !== -1 && head < main, file + ' のヘッダー行が <main> の中にある');
+		assert.ok(link > head && link < main, file + ' の戻る導線がヘッダー行の中に無い');
+	}
+});
+
+test('ページ末尾の導線があり、深さの指定がトップページを指している', () => {
+	/* 404ページは行き先をツリーで丸ごと出しているので持たない */
+	for (const file of PAGES) {
+		const html = read(file);
+		const base = attr(html, /<nav data-tool-nav="([^"]+)"><\/nav>/);
+		if (file === TOP || file === '404.html') {
+			assert.ok(!base, file + ' は行き先の一覧を自前で持つので、末尾の導線は要らない');
+			continue;
+		}
+		assert.ok(base, file + ' に末尾の導線（<nav data-tool-nav>）が無い');
+		// この値は tool-nav.js がリンクを組み立てる起点。ずれると全リンクがずれる
+		assert.strictEqual(resolveLink(file, base), TOP, file + ' の data-tool-nav がトップページを指していない');
+	}
+});
+
+test('横に長い表は、キーボードでも動かせる', () => {
+	/* overflow で横に切れる箱は、tabindex が無いとキーボードだけの人が
+	   右側を読めない。読み上げソフト向けに、箱の名前も要る */
+	for (const file of PAGES) {
+		const html = read(file);
+		for (const m of html.matchAll(/<div class=['"][^'"]*table-scroll[^'"]*['"][^>]*>/g)) {
+			const tag = m[0];
+			assert.match(tag, /tabindex=['"]0['"]/, file + ' の横スクロールする表に tabindex="0" が無い: ' + tag);
+			assert.match(tag, /role=['"]region['"]/, file + ' の横スクロールする表に role="region" が無い: ' + tag);
+			assert.match(tag, /aria-label=['"][^'"]+['"]/, file + ' の横スクロールする表に aria-label が無い: ' + tag);
 		}
 	}
 });

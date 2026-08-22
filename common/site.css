@@ -24,6 +24,15 @@ a { color: var(--accent); }
 a:hover { color: var(--accent-hover); }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
+/* 横に長い表を入れる箱（.table-scroll）。箱そのものの見た目は、NISAと退職手当の
+   それぞれのCSSが持っている。ここに置くのはキーボードで操作するときの枠だけ。
+
+   この箱は指でもマウスでも横に動かせるが、それだけだとキーボードしか使わない人は
+   中身の右側を読めない。HTML側で tabindex="0" を付けて焦点を受けられるようにし、
+   矢印キーで動かせるようにしてある。焦点が当たったことが見えないと押せる場所が
+   分からないので、リンクやボタンと同じ枠をここで描く。 */
+.table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* =============================================================
    本文へのスキップリンク
 
