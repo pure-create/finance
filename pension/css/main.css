@@ -16,12 +16,11 @@
   --sc-75:#f87171; --sc-75-bg:#301617;
 }
 
-*,*::before,*::after{margin:0;padding:0}
-body{padding:16px;min-height:100vh}
-.wrap{max-width:840px;margin:0 auto}
+/* 余白の初期化・body の余白・.wrap の幅・.card の見た目・「？」の色の変化は、
+   3ツールで同じなので common/card-page.css に移した。
+   このファイルで上書きすれば、これまでどおりページ側が勝つ */
 .page-head h1{font-size:17px;letter-spacing:-.02em}
 .page-head .sub{font-size:11px}
-.card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 
 /* 共有ボタン・QRコードの基本形は common/site.css にある。
    ここではこのページの文字サイズだけを調整する */
@@ -43,7 +42,6 @@ body{padding:16px;min-height:100vh}
   width:15px;height:15px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
   color:var(--muted);font-size:10px;font-weight:700;cursor:help;flex-shrink:0;vertical-align:middle;margin-left:5px;
 }
-.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
 .help .tipbox{width:260px;left:-12px;right:auto;line-height:1.7;padding:10px 12px;pointer-events:none}
 .help .tipbox::before{left:14px;right:auto}
 .srow{display:flex;align-items:center;gap:10px}

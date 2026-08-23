@@ -44,11 +44,10 @@
   --grand-net-to:#047857;
 }
 
-*,*::before,*::after{margin:0;padding:0}
+/* 余白の初期化・body の余白・.wrap の幅・.card の見た目・「？」の色の変化は、
+   3ツールで同じなので common/card-page.css に移した。
+   このファイルで上書きすれば、これまでどおりページ側が勝つ */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-body{padding:16px;min-height:100vh}
-.wrap{max-width:840px;margin:0 auto}
-.card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 /* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
 .sec-title{font-size:14px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
 /* カードの中の小見出し（出口カードの「比べる」「併用」）。
@@ -261,7 +260,6 @@ body{padding:16px;min-height:100vh}
   width:16px;height:16px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
   color:var(--muted);font-size:11px;font-weight:700;cursor:help;flex-shrink:0;margin-left:2px;
 }
-.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
 /* 吹き出しは site.css のものを、このページの配置（幅広）に合わせて上書きする。
 
    位置の基準は「？」の印ではなく入力欄そのものにする。印は16px角しかないので、
