@@ -328,6 +328,27 @@ test('ページ末尾の導線があり、深さの指定がトップページ�
 	}
 });
 
+test('NISAの各ページの年が、データの側にもある', () => {
+	/* ページを1年ぶん増やすときは nisa-data.js に年を足し、ページには
+	   const YEAR を書く。どちらかを忘れると、画面が空になるか、
+	   別の年の数字を出したまま公開されてしまう */
+	const years = new Set(
+		[...read('nisa/nisa-data.js').matchAll(/^\t(\d{4}):\s*\{/gm)].map(m => m[1])
+	);
+	assert.ok(years.size > 0, 'nisa-data.js から年を読めていない');
+
+	const pages = HTML_FILES.filter(f => /^nisa\/nisa\d{4}\.html$/.test(f));
+	assert.ok(pages.length > 0, 'NISAのページを見つけられていない');
+	for (const file of pages) {
+		const year = attr(read(file), /const YEAR = (\d{4});/);
+		assert.ok(year, file + ' に const YEAR が無い');
+		assert.ok(years.has(year), file + ' の年（' + year + '）が nisa-data.js に無い');
+		// ファイル名と中身の年が食い違うと、別の年の数字が出たままになる
+		assert.strictEqual(file, 'nisa/nisa' + year + '.html',
+			file + ' のファイル名と const YEAR（' + year + '）が食い違っている');
+	}
+});
+
 test('横に長い表は、キーボードでも動かせる', () => {
 	/* overflow で横に切れる箱は、tabindex が無いとキーボードだけの人が
 	   右側を読めない。読み上げソフト向けに、箱の名前も要る */

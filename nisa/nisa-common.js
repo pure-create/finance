@@ -1,6 +1,14 @@
 // nisa-common.js
-// nisa20XX.html の共通ロジック。呼び出し側で const pop / accounts / nisaData を
-// 定義した後にこのファイルを読み込むこと。
+// nisa20XX.html の共通ロジック。
+// ページ側ですることは、nisa-data.js を読み込んだうえで
+//   <script>const YEAR = 2025;</script>
+// と書いてからこのファイルを読み込むこと、それだけ。
+// 数字は年ごとに nisa-data.js に置いてある（同じ年の数字が2ページに散らないように）。
+
+const yearData=NISA_DATA[YEAR];
+const pop=yearData.pop, accounts=yearData.accounts, nisaData=yearData.buys;
+// 前年の数字。ある年だけ「前年比」の列を出す（最初の年＝2024は前年が無い）
+const prevYear=NISA_DATA[YEAR-1];
 
 const nisaTotal={};
 Object.keys(nisaData).forEach(a=>{ nisaTotal[a]=Object.values(nisaData[a]).reduce((s,v)=>s+v,0); });
@@ -36,8 +44,8 @@ function labelColorOn(bg) {
 // ── テーブル描画 ──
 (function buildSummary(){
   const sb=document.getElementById('summary-body');
-  // prevYear（前年の pop / accounts）が定義されているページでは「前年比」列を追加する
-  const hasPrev = typeof prevYear !== 'undefined';
+  // 前年の数字があるページだけ「前年比」列を追加する
+  const hasPrev = !!prevYear;
   function deltaCell(rate, prevRate){
     const d=rate-prevRate;
     return `<td><span class="pct">${d>=0?'+':''}${d.toFixed(1)}pt</span><span class="cum">前年 ${prevRate.toFixed(1)}%</span></td>`;
