@@ -198,28 +198,29 @@ document.getElementById('iSlider').addEventListener('input',render);
 document.getElementById('taxToggle').addEventListener('change',render);
 
 /* ---------- 共有 ---------- */
-function collectState(){
-  return {
-    r: document.getElementById('rSlider').value,
-    i: document.getElementById('iSlider').value,
-    t: document.getElementById('taxToggle').checked ? 1 : 0,
-  };
-}
-function buildShareUrl(){
-  const params=new URLSearchParams();
-  const s=collectState();
-  for(const k in s) params.set(k,s[k]);
-  return Share.urlWithParams(params);
-}
+/* 共有URLの組み立てと復元は common/state.js（Inputs）が引き受ける。
+   URLでの短い名前（r / i / t）は変えないこと（公開済みの共有リンクが開けなくなる）。
+
+   このツールだけは他と2つ違う。
+   - 入力をこのブラウザに保存しない（つまみ2つとチェック1つで、開き直すのに
+     手間が要らないため）。storageKey を渡さなければ保存しない
+   - 初期値の欄もURLに載せる（omitDefaults: false）。今までの共有リンクが
+     常に3つとも持っていたので、その形のままにしている */
+const inputs = Inputs.create({
+  fields: [
+    ['rSlider', 0, 'r'],
+    ['iSlider', 65, 'i'],
+    // 初期値はHTMLの value / checked と合わせること（税の考慮は既定で入り）
+    ['taxToggle', true, 't']
+  ],
+  omitDefaults: false
+});
+
+function buildShareUrl(){ return inputs.shareUrl(); }
 Share.init({ buildUrl: buildShareUrl });
 
 /* ---------- 初期化（URLパラメータがあれば復元） ---------- */
-(function loadFromURL(){
-  const q=new URLSearchParams(location.search);
-  if(q.has('r')) document.getElementById('rSlider').value=q.get('r');
-  if(q.has('i')) document.getElementById('iSlider').value=q.get('i');
-  if(q.has('t')) document.getElementById('taxToggle').checked=q.get('t')==='1';
-})();
+inputs.restore();
 
 render();
 

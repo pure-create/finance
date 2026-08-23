@@ -15,9 +15,6 @@ const FIELDS = [
 	['annuityYears', 10, 'ay'], ['publicPension', 180, 'pp'], ['publicPensionAge', 65, 'ps'],
 	['mixRatio', 50, 'mx']
 ];
-const DEFAULTS = {};
-for (let i = 0; i < FIELDS.length; i++) DEFAULTS[FIELDS[i][0]] = FIELDS[i][1];
-
 const $ = id => document.getElementById(id);
 const fmt = v => Math.round(v).toLocaleString('ja-JP');
 // 円で計算した額を万円の表示にする
@@ -31,84 +28,16 @@ const fmtRate = r => String(Math.round(r * 1e5) / 1e3);
 const THIS_YEAR = new Date().getFullYear();
 
 /* ---------- 保存・共有 ---------- */
-const STORAGE_KEY = 'idecoSim.v1';
+/* 保存・復元・共有URLの中身は common/state.js（Inputs）が持つ。
+   上の FIELDS 表がそのまま「何を保存し、URLでは何という名前にするか」になる。
+   保存先の名前と、URLでの短い名前は変えないこと（公開済みの共有リンクが
+   開けなくなり、次に開いた人の入力も消えるため） */
+const inputs = Inputs.create({ fields: FIELDS, storageKey: 'idecoSim.v1' });
 
-function fieldValue(id) {
-	const el = $(id);
-	return el ? el.value : null;
-}
-
-function setField(id, v) {
-	const el = $(id);
-	if (el === null || v === null || v === undefined) return;
-	let s = String(v);
-	if (el.tagName === 'SELECT') {
-		for (let i = 0; i < el.options.length; i++) {
-			if (el.options[i].value === s) { el.value = s; return; }
-		}
-		return; // 選択肢にない値は無視して今の選択を保つ
-	}
-	if (el.type === 'number' || el.type === 'range') {
-		let n = parseFloat(s);
-		if (!isFinite(n)) return;
-		// 共有URLに極端な値が入っていても壊れないよう min/max に収める
-		const lo = parseFloat(el.min), hi = parseFloat(el.max);
-		if (isFinite(lo)) n = Math.max(lo, n);
-		if (isFinite(hi)) n = Math.min(hi, n);
-		s = String(n);
-	}
-	el.value = s;
-}
-
-// 初期値と同じ欄は省いて短いURLにする
-function isDefaultField(id) {
-	const el = $(id), d = DEFAULTS[id];
-	if (!el) return true;
-	if (el.type === 'number' || el.type === 'range') return parseFloat(el.value) === parseFloat(d);
-	return el.value === String(d);
-}
-
-function serializeState() {
-	const params = new URLSearchParams();
-	for (let i = 0; i < FIELDS.length; i++) {
-		const id = FIELDS[i][0], key = FIELDS[i][2];
-		if (!isDefaultField(id)) params.set(key, fieldValue(id));
-	}
-	return params;
-}
-
-function buildShareUrl() { return Share.urlWithParams(serializeState()); }
-
-function saveState() {
-	try {
-		localStorage.setItem(STORAGE_KEY, serializeState().toString());
-	} catch (e) {
-		// プライベートブラウジング等で保存できない場合は何もしない
-	}
-}
-
-function applyStateFromParams(params) {
-	for (let i = 0; i < FIELDS.length; i++) {
-		const id = FIELDS[i][0], key = FIELDS[i][2];
-		if (params.has(key)) setField(id, params.get(key));
-	}
-}
-
-function applyDefaults() {
-	for (let i = 0; i < FIELDS.length; i++) setField(FIELDS[i][0], DEFAULTS[FIELDS[i][0]]);
-}
-
-// URLクエリ（共有リンク）優先、なければlocalStorageから復元する
-function restoreState() {
-	const q = new URLSearchParams(location.search);
-	if (q.toString()) { applyStateFromParams(q); return; }
-	try {
-		const saved = localStorage.getItem(STORAGE_KEY);
-		if (saved) applyStateFromParams(new URLSearchParams(saved));
-	} catch (e) {
-		// 読み込めない場合は初期値のまま
-	}
-}
+function buildShareUrl() { return inputs.shareUrl(); }
+function saveState() { inputs.save(); }
+function applyDefaults() { inputs.applyDefaults(); }
+function restoreState() { inputs.restore(); }
 
 /* ---------- 入力の読み取り ---------- */
 
@@ -917,7 +846,7 @@ function update() {
 			(mixWins ? '（一時金だけ・年金だけの良いほうより <b>' + man(mixGain) + '万円</b> 少ない）' : '') +
 			'<button id="mixJumpBest" type="button"' + (inBest ? ' disabled' : '') + '>この割合にする</button>';
 		if (!inBest) {
-			$('mixJumpBest').onclick = () => { setField('mixRatio', bm.lo); update(); };
+			$('mixJumpBest').onclick = () => { inputs.set('mixRatio', bm.lo); update(); };
 		}
 	}
 

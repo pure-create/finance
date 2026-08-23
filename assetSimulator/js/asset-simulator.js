@@ -20,9 +20,6 @@ const FIELDS = [
 	['inflation', 2.0, 'if'], ['taxOn', true, 'tx'], ['nisaOn', true, 'ni'], ['nisaUsed', 0, 'nu'],
 	['trials', 2000, 'tr'], ['viewMode', 'real', 'vw'], ['seedFixed', true, 'sd'], ['showPaths', true, 'sp']
 ];
-const DEFAULTS = {};
-for (let i = 0; i < FIELDS.length; i++) DEFAULTS[FIELDS[i][0]] = FIELDS[i][1];
-
 function num(id) { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
 
 function readConfig() {
@@ -57,96 +54,17 @@ function readConfig() {
 }
 
 /* ---------- 保存・共有 ---------- */
-const STORAGE_KEY = 'assetSimulator.v1';
-
-// 入力欄の値を文字列で取り出す（チェックボックスは1/0）
-function fieldValue(id) {
-	const el = $(id);
-	if (!el) return null;
-	return el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
-}
-
-// 文字列を入力欄へ書き戻す。選択肢にない値・範囲外の値は受け付けない
-function setField(id, v) {
-	const el = $(id);
-	if (el === null || v === null || v === undefined) return;
-	if (el.type === 'checkbox') { el.checked = (v === true || v === '1'); return; }
-	let s = String(v);
-	if (el.tagName === 'SELECT') {
-		for (let i = 0; i < el.options.length; i++) {
-			if (el.options[i].value === s) { el.value = s; return; }
-		}
-		return; // 不正な値は無視して現在の選択を保つ
-	}
-	if (el.type === 'number' && s !== '') {
-		let n = parseFloat(s);
-		if (!isFinite(n)) return;
-		// 共有URLに極端な値が入っていても壊れないよう min/max に収める
-		const lo = parseFloat(el.min), hi = parseFloat(el.max);
-		if (isFinite(lo)) n = Math.max(lo, n);
-		if (isFinite(hi)) n = Math.min(hi, n);
-		s = String(n);
-	}
-	el.value = s;
-}
-
-// 初期値と同じ欄は省いて短いURLにする
-function isDefaultField(id) {
-	const el = $(id), d = DEFAULTS[id];
-	if (!el) return true;
-	if (el.type === 'checkbox') return el.checked === d;
-	if (el.type === 'number') return parseFloat(el.value) === parseFloat(d);
-	return el.value === String(d);
-}
-
-function serializeState() {
-	const params = new URLSearchParams();
-	for (let i = 0; i < FIELDS.length; i++) {
-		const id = FIELDS[i][0], key = FIELDS[i][2];
-		if (!isDefaultField(id)) params.set(key, fieldValue(id));
-	}
-	return params;
-}
-
-function applyStateFromParams(params) {
-	for (let i = 0; i < FIELDS.length; i++) {
-		const id = FIELDS[i][0], key = FIELDS[i][2];
-		if (params.has(key)) setField(id, params.get(key));
-	}
-}
-
-function applyDefaults() {
-	for (let i = 0; i < FIELDS.length; i++) setField(FIELDS[i][0], DEFAULTS[FIELDS[i][0]]);
-}
+/* 保存・復元・共有URLの中身は common/state.js（Inputs）が持つ。
+   上の FIELDS 表がそのまま「何を保存し、URLでは何という名前にするか」になる。
+   保存先の名前と、URLでの短い名前は変えないこと（公開済みの共有リンクが
+   開けなくなり、次に開いた人の入力も消えるため） */
+const inputs = Inputs.create({ fields: FIELDS, storageKey: 'assetSimulator.v1' });
 
 // 現在の入力内容を反映した共有リンクのURLを組み立てる
-function buildShareUrl() {
-	return Share.urlWithParams(serializeState());
-}
-
-// 次回訪問時に同じ条件で開けるよう、入力内容をこのブラウザに保存する
-function saveState() {
-	try {
-		localStorage.setItem(STORAGE_KEY, serializeState().toString());
-	} catch (e) {
-		// プライベートブラウジング等で保存できない場合は何もしない
-	}
-}
-
-// 共有リンク（URLクエリ）を優先し、なければ前回の入力内容を復元する
-function restoreState() {
-	const urlParams = new URLSearchParams(window.location.search);
-	if (urlParams.toString()) { applyStateFromParams(urlParams); return; }
-	try {
-		const saved = localStorage.getItem(STORAGE_KEY);
-		if (saved) applyStateFromParams(new URLSearchParams(saved));
-	} catch (e) {
-		// 読み込めない場合は初期値のまま
-	}
-}
+function buildShareUrl() { return inputs.shareUrl(); }
 
 function persistAndShare() {
-	saveState();
+	inputs.save();
 	Share.refreshQr();
 }
 
@@ -1297,7 +1215,7 @@ function redrawOnly() {
 
 window.addEventListener('DOMContentLoaded', function () {
 	// 共有リンク、なければ前回の入力内容を復元してから計算する
-	restoreState();
+	inputs.restore();
 
 	// 入力の変更をすべて拾う。表示の切り替えだけなら再計算せず描き直す
 	const VIEW_ONLY = { viewMode: 1, showPaths: 1 };
@@ -1313,17 +1231,19 @@ window.addEventListener('DOMContentLoaded', function () {
 		}
 		scheduleRun();
 	}
-	const inputs = document.querySelectorAll('.panel input, .panel select');
-	for (let i = 0; i < inputs.length; i++) {
-		inputs[i].addEventListener('input', onFieldChange);
-		inputs[i].addEventListener('change', onFieldChange);
+	/* 入力欄そのもの。上の inputs（保存・共有を引き受ける Inputs）と
+	   紛らわしいので別の名前にしている */
+	const fieldEls = document.querySelectorAll('.panel input, .panel select');
+	for (let i = 0; i < fieldEls.length; i++) {
+		fieldEls[i].addEventListener('input', onFieldChange);
+		fieldEls[i].addEventListener('change', onFieldChange);
 	}
 	$('allYears').addEventListener('change', renderTable);
 	$('allocFix').addEventListener('click', normalizeAlloc);
 
 	$('resetBtn').addEventListener('click', function () {
-		applyDefaults();
-		try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* 何もしない */ }
+		inputs.applyDefaults();
+		inputs.clearSaved();
 		try {
 			// 共有リンクで開いていた場合、再読み込みで元の条件に戻らないようクエリを外す
 			if (window.history && window.history.replaceState) {

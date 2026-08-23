@@ -19,7 +19,7 @@
        qrId:     'shareQr',
        msgId:    'shareMsg',
        popId:    'sharePop',
-       buildUrl: function () { return Share.urlWithParams(serializeState()); }
+       buildUrl: function () { return inputs.shareUrl(); }   // inputs は common/state.js
      });
      Share.refreshQr();   // 入力が変わったら呼ぶ
 

@@ -75,74 +75,40 @@ function buildTyoseiInputs(rowEl){
 		rowEl.appendChild(td);
 	}
 }
-var STORAGE_KEY = window.RETIRE_STORAGE_KEY || 'retireCalcState';
+/* 保存・復元・共有URLの中身は common/state.js（Inputs）が持つ。
+   ここで渡すのは「どの欄を、URLでは何という名前で扱うか」の表だけ。
 
-// 現在の入力内容をURLSearchParamsに変換する
-function serializeState(){
-	var params = new URLSearchParams();
-	var birthYearEl = document.getElementById('birthYear');
-	var hireYearEl = document.getElementById('hireYear');
-	var middleYearEl = document.getElementById('middle_year');
-	var salaryEl = document.getElementById('salary');
-	if(birthYearEl.value) params.set('by', birthYearEl.value);
-	if(hireYearEl.value) params.set('hy', hireYearEl.value);
-	if(middleYearEl.checked) params.set('mid', '1');
-	var salRaw = (salaryEl.value || '').toString().replace(/,/g, '').trim();
-	if(salRaw) params.set('sal', salRaw);
+   URLでの短い名前（by / hy / mid / sal / t1…）と保存先の名前は変えないこと。
+   公開済みの共有リンクが開けなくなり、次に開いた人の入力も消える。
+
+   調整月額の欄は区分の数だけあるので、ここで組み立てる（数は config.js が持つ）。
+   初期値をすべて「空」にしているのは、未入力の欄をURLに載せないため
+   （以前の「値があるときだけ params.set する」と同じ結果になる）。 */
+function buildStateFields(){
+	var fields = [
+		['birthYear', '', 'by'],
+		['hireYear', '', 'hy'],
+		['middle_year', false, 'mid'],
+		['salary', '', 'sal', {
+			// 画面には「412,000」と桁区切りで出すが、URLには数字だけを載せる
+			read: function(el){ return (el.value || '').toString().replace(/,/g, '').trim(); },
+			write: function(el, v){ el.value = v; formatSalaryDisplay(el); }
+		}]
+	];
 	for(var i = 1; i <= TYOSEI_AMOUNTS.length; i++){
-		var v = document.getElementById('tyosei' + i).value;
-		if(v) params.set('t' + i, v);
+		fields.push(['tyosei' + i, '', 't' + i]);
 	}
-	return params;
+	return fields;
 }
+
+var inputs = Inputs.create({
+	fields: buildStateFields(),
+	storageKey: window.RETIRE_STORAGE_KEY || 'retireCalcState'
+});
 
 // 現在の入力内容を反映した共有リンクのURLを組み立てる
 function buildShareUrl(){
-	return Share.urlWithParams(serializeState());
-}
-
-// localStorageに現在の入力内容を保存する
-function saveState(){
-	try{
-		localStorage.setItem(STORAGE_KEY, serializeState().toString());
-	}catch(e){
-		// プライベートブラウジング等で保存できない場合は何もしない
-	}
-}
-
-// URLSearchParamsの内容をフォームに反映する
-function applyStateFromParams(params){
-	var birthYearEl = document.getElementById('birthYear');
-	var hireYearEl = document.getElementById('hireYear');
-	var middleYearEl = document.getElementById('middle_year');
-	var salaryEl = document.getElementById('salary');
-	if(params.has('by')) birthYearEl.value = params.get('by');
-	if(params.has('hy')) hireYearEl.value = params.get('hy');
-	if(params.get('mid') === '1') middleYearEl.checked = true;
-	if(params.has('sal')){
-		salaryEl.value = params.get('sal');
-		formatSalaryDisplay(salaryEl);
-	}
-	for(var i = 1; i <= TYOSEI_AMOUNTS.length; i++){
-		if(params.has('t' + i)) document.getElementById('tyosei' + i).value = params.get('t' + i);
-	}
-}
-
-// URLクエリ（共有リンク）優先、なければlocalStorageから入力内容を復元する
-function restoreState(){
-	var urlParams = new URLSearchParams(window.location.search);
-	if(urlParams.toString()){
-		applyStateFromParams(urlParams);
-		return;
-	}
-	try{
-		var saved = localStorage.getItem(STORAGE_KEY);
-		if(saved){
-			applyStateFromParams(new URLSearchParams(saved));
-		}
-	}catch(e){
-		// 読み込めない場合は何もしない
-	}
+	return inputs.shareUrl();
 }
 
 // 金額欄をカンマ区切り表示にする（編集中はunformatSalaryForEditで数字のみに戻す）
@@ -159,18 +125,8 @@ function unformatSalaryForEdit(el){
 
 // すべての入力をクリアする
 function clearAll(){
-	document.getElementById('birthYear').value = '';
-	document.getElementById('hireYear').value = '';
-	document.getElementById('middle_year').checked = false;
-	document.getElementById('salary').value = '';
-	for(var i = 1; i <= TYOSEI_AMOUNTS.length; i++){
-		document.getElementById('tyosei' + i).value = '';
-	}
-	try{
-		localStorage.removeItem(STORAGE_KEY);
-	}catch(e){
-		// 何もしない
-	}
+	inputs.applyDefaults();   // 上の表の初期値＝すべて空
+	inputs.clearSaved();
 	try{
 		if(window.history && window.history.replaceState){
 			window.history.replaceState(null, '', window.location.pathname);
@@ -184,10 +140,10 @@ function clearAll(){
 window.addEventListener('load', function(){
 	buildYearOptions(document.getElementById('birthYear'), thisYear - 67, thisYear - 18);
 	buildYearOptions(document.getElementById('hireYear'), thisYear - 42, thisYear - 2);
-	// 入力欄を作るのは、下の復元（restoreState）と入力の監視より先でなければならない
+	// 入力欄を作るのは、下の復元と入力の監視より先でなければならない
 	buildTyoseiInputs(document.getElementById('tyosei-inputs'));
 
-	restoreState();
+	inputs.restore();
 
 	document.querySelectorAll('input, select').forEach(function(el){
 		el.addEventListener('input', calc);
@@ -599,5 +555,5 @@ function calc(){
 	}
 
 	Share.refreshQr();
-	saveState();
+	inputs.save();
 }
