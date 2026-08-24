@@ -91,6 +91,8 @@ header .page-head { margin-bottom: 0; }
 	justify-content: space-between;
 	gap: 8px;
 	margin: 6px 0;
+	/* 「？」の吹き出しの位置の基準。下の .help を参照 */
+	position: relative;
 }
 .row > label { font-size: 13px; color: var(--text-secondary); flex: 1 1 auto; min-width: 0; }
 /* 直前の欄に従属する行（「└ 何歳まで」など） */
@@ -111,6 +113,10 @@ input[type="number"] {
 	border: 1px solid var(--border);
 	border-radius: 6px;
 }
+/* 上限が4桁の欄はここまで枠を詰める。空いた分はラベルに回るので、
+   「NISA生涯枠の使用済み」のような長いラベルでも「？」まで1行に収まる。
+   右端はそろったままなので、単位の位置は他の行と変わらない */
+input[type="number"].narrow { width: 68px; }
 input[type="number"]:focus, select:focus { outline: 2px solid var(--series-1); outline-offset: 1px; }
 select {
 	font-family: inherit; font-size: 15px; padding: 4px 6px;
@@ -118,6 +124,33 @@ select {
 	border: 1px solid var(--border); border-radius: 6px;
 	max-width: 160px;
 }
+/* ===== ヘルプの吹き出し =====
+   入力欄だけでは分かりにくいもの（積立と取り崩しがどの期間に効くかなど）に
+   「？」を添える。印はラベルの中に置く。
+
+   吹き出しは site.css のものを、この左パネルの幅に合わせて上書きする。
+   位置の基準は「？」の印ではなく行そのものにする。印は16px角しかないので、
+   それを基準にすると幅260pxの吹き出しが行からはみ出し、.panel の
+   overflow-y:auto に切り取られてしまう。行にそろえれば必ず内側に収まる。 */
+.help {
+	position: static;
+	display: inline-flex; align-items: center; justify-content: center;
+	width: 16px; height: 16px; border-radius: 50%;
+	border: 1px solid var(--axis); background: var(--surface-1);
+	color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1;
+	cursor: help; flex-shrink: 0; margin-left: 4px; vertical-align: middle;
+}
+.help:hover, .help:focus-visible { border-color: var(--accent); color: var(--accent); }
+.help .tipbox {
+	top: calc(100% + 6px); left: 0; right: 0;
+	/* site.css の width:max-content を消さないと、right:0 が無視されて行からはみ出す */
+	width: auto; max-width: none;
+	line-height: 1.7; padding: 10px 12px;
+	pointer-events: none;
+}
+/* 三角は既定の右端ではなく、ラベル（＝「？」がある側）の下に出す */
+.help .tipbox::before { left: 14px; right: auto; }
+
 .check { display: flex; align-items: center; gap: 7px; margin: 7px 0; font-size: 13px; color: var(--text-secondary); }
 .check input { accent-color: var(--series-1); width: 15px; height: 15px; }
 .hint { font-size: 11.5px; color: var(--muted); margin: 4px 0 8px; line-height: 1.5; }
@@ -299,6 +332,7 @@ html.printing header { padding: 0; }
 html.printing .layout { display: block; padding: 0; }
 html.printing .tooltip,
 html.printing .range-bar,
+html.printing .help,
 html.printing button.reset,
 html.printing button.fix-btn { display: none !important; }
 
@@ -331,6 +365,7 @@ html.printing button.fix-btn { display: none !important; }
 	/* 画面操作のための要素は印刷しない */
 	.tooltip,
 	.range-bar,
+	.help,
 	button.reset,
 	button.fix-btn,
 	#noscript,

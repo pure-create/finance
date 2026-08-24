@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260815a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260815a">
 <link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="./css/main.css?v=20260813c">
+<link rel="stylesheet" href="./css/main.css?v=20260825d">
 </head>
 <body>
 <a class="skip-link" href="#main">本文へ</a>
@@ -80,35 +80,34 @@
 <aside class="panel">
 	<h2>ライフプラン</h2>
 	<div class="row"><label for="ageNow">現在の年齢</label><input type="number" id="ageNow" value="40" min="0" max="100" step="1"><span class="unit">歳</span></div>
-	<div class="row"><label for="ageRetire">取り崩し開始</label><input type="number" id="ageRetire" value="65" min="0" max="110" step="1"><span class="unit">歳</span></div>
+	<div class="row"><label for="ageRetire">取り崩し開始<span class="help" tabindex="0" aria-label="取り崩し開始について" aria-describedby="tipAgeRetire">？<span class="tipbox" id="tipAgeRetire" role="tooltip">積立期と取り崩し期の境目になる年齢です。この年齢に<strong>なるまで</strong>は年間積立額を積み立て、この年齢に<strong>なった年から</strong>年間生活費の取り崩しを始めます（65歳なら、64歳までの各年が積立、65歳の年から取り崩し）。</span></span></label><input type="number" id="ageRetire" value="65" min="0" max="110" step="1"><span class="unit">歳</span></div>
 	<div class="row"><label for="ageEnd">シミュレーション終了</label><input type="number" id="ageEnd" value="95" min="1" max="120" step="1"><span class="unit">歳</span></div>
 
 	<h2>キャッシュフロー</h2>
-	<div class="row"><label for="assetNow">現在の運用資産</label><input type="number" id="assetNow" value="1000" min="0" max="200000" step="50"><span class="unit">万円</span></div>
-	<div class="row"><label for="contribution">年間積立額</label><input type="number" id="contribution" value="120" min="0" max="10000" step="6"><span class="unit">万円</span></div>
-	<div class="row"><label for="lumpSum">退職金（手取り）</label><input type="number" id="lumpSum" value="0" min="0" max="50000" step="100"><span class="unit">万円</span></div>
+	<div class="row"><label for="assetNow">現在の運用資産<span class="help" tabindex="0" aria-label="現在の運用資産について" aria-describedby="tipAssetNow">？<span class="tipbox" id="tipAssetNow" role="tooltip">すでに運用に回している資産の時価です。含み益はゼロ（簿価＝時価）の課税口座として計算を始めるため、この分の値上がり益には取り崩すときに課税されます。NISA枠は、ここから先に積み立てる分にだけ使います。</span></span></label><input type="number" id="assetNow" value="1000" min="0" max="200000" step="50"><span class="unit">万円</span></div>
+	<div class="row"><label for="contribution">年間積立額<span class="help" tabindex="0" aria-label="年間積立額について" aria-describedby="tipContribution">？<span class="tipbox" id="tipContribution" role="tooltip"><strong>取り崩し開始の年齢になるまで</strong>、毎年の年初に積み立てる金額です（取り崩し開始が65歳なら、64歳までの各年）。取り崩し期に入ると積立はしません。現在の物価で入力し、毎年インフレ率で増やして計算します。</span></span></label><input type="number" id="contribution" value="120" min="0" max="10000" step="6"><span class="unit">万円</span></div>
+	<div class="row"><label for="lumpSum">退職金（手取り）<span class="help" tabindex="0" aria-label="退職金（手取り）について" aria-describedby="tipLumpSum">？<span class="tipbox" id="tipLumpSum" role="tooltip">税金を引いた後の、実際に手にする金額を入力します。下の年齢の年初に一度だけ、全額が課税口座に加わります。払い込んだ元本（簿価）として扱うので、この金額そのものに売却益の課税はかかりません。</span></span></label><input type="number" id="lumpSum" value="0" min="0" max="50000" step="100"><span class="unit">万円</span></div>
 	<div class="row sub-row"><label for="lumpAge">└ 受け取る年齢</label><input type="number" id="lumpAge" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-	<div class="row sub-row"><label for="lumpBase">└ 金額の扱い</label><select id="lumpBase">
+	<div class="row sub-row"><label for="lumpBase">└ 金額の扱い<span class="help" tabindex="0" aria-label="金額の扱いについて" aria-describedby="tipLumpBase">？<span class="tipbox" id="tipLumpBase" role="tooltip"><strong>名目のまま</strong>は、入力した額をそのまま受け取るものとして扱います（物価が上がっても増えません）。<strong>現在の物価</strong>は、他の金額欄と同じく毎年インフレ率で増やします。<br><br>退職金の元になる給料月額は物価に連動して上がるとは限らず、退職所得控除も名目で固定された金額のため、初期値は「名目のまま」にしています。給与水準が物価に合わせて上がると見込むなら切り替えてください。</span></span></label><select id="lumpBase">
 		<option value="nominal">名目のまま</option>
 		<option value="real">現在の物価</option>
 	</select></div>
-	<p class="hint">税引後の手取額を入力します。退職金の元になる給料月額は物価に連動して上がるとは限らず、退職所得控除も名目で固定された金額のため、初期値は<strong>名目のまま</strong>（物価が上がっても増えない）にしています。給与水準が物価に合わせて上がると見込むなら「現在の物価」に切り替えてください。</p>
 	<div id="lumpNotes"></div>
-	<div class="row"><label for="wdMode">取り崩し方式</label><select id="wdMode">
+	<div class="row"><label for="wdMode">取り崩し方式<span class="help" tabindex="0" aria-label="取り崩し方式について" aria-describedby="tipWdMode">？<span class="tipbox" id="tipWdMode" role="tooltip"><strong>定額（実質）</strong>は、年間生活費から取り崩し期の収入を差し引いた不足分を、毎年取り崩します。<strong>定率</strong>は、その年の残高に決めた割合を掛けた額を取り崩すため、年間生活費と取り崩し期の収入は結果に影響しません。</span></span></label><select id="wdMode">
 		<option value="fixed">定額（実質）</option>
 		<option value="rate">定率（残高の％）</option>
 	</select></div>
-	<div class="row" id="rowWithdraw"><label for="withdraw">年間生活費</label><input type="number" id="withdraw" value="360" min="0" max="10000" step="12"><span class="unit">万円</span></div>
-	<div class="row" id="rowRate" style="display:none"><label for="wdRate">取り崩し率</label><input type="number" id="wdRate" value="4.0" min="0.1" max="20" step="0.1"><span class="unit">%/年</span></div>
+	<div class="row" id="rowWithdraw"><label for="withdraw">年間生活費<span class="help" tabindex="0" aria-label="年間生活費について" aria-describedby="tipWithdraw">？<span class="tipbox" id="tipWithdraw" role="tooltip"><strong>取り崩し開始の年齢から</strong>、毎年かかる生活費です（積立期には使いません）。ここから「取り崩し期の収入」の給与・年金などを差し引いた不足分だけを、資産から取り崩します。現在の物価で入力し、毎年インフレ率で増やして計算します。</span></span></label><input type="number" id="withdraw" value="360" min="0" max="10000" step="12"><span class="unit">万円</span></div>
+	<div class="row" id="rowRate" style="display:none"><label for="wdRate">取り崩し率<span class="help" tabindex="0" aria-label="取り崩し率について" aria-describedby="tipWdRate">？<span class="tipbox" id="tipWdRate" role="tooltip">取り崩し開始の年齢から、毎年その年の残高に掛けて取り崩す割合です。残高に連動するので資産は尽きにくくなりますが、相場が悪い年は取り崩せる額も減ります。この方式では、年間生活費と取り崩し期の収入は使いません。</span></span></label><input type="number" id="wdRate" value="4.0" min="0.1" max="20" step="0.1"><span class="unit">%/年</span></div>
 	<p class="hint">積立額・生活費・収入は<strong>現在の物価</strong>で入力します（毎年インフレ率で自動的に増額）。</p>
 
 	<div id="incomeSection">
 		<h2>取り崩し期の収入</h2>
-		<div class="row"><label for="salary">給与など</label><input type="number" id="salary" value="0" min="0" max="10000" step="12"><span class="unit">万円</span></div>
+		<div class="row"><label for="salary">給与など<span class="help" tabindex="0" aria-label="給与などについて" aria-describedby="tipSalary">？<span class="tipbox" id="tipSalary" role="tooltip">下の「何歳まで」で指定した年齢に<strong>なるまで</strong>受け取るものとして計算します（65歳までなら、64歳の1年間まで）。取り崩し開始より前の分は、年間積立額に反映済みとみなして使いません。</span></span></label><input type="number" id="salary" value="0" min="0" max="10000" step="12"><span class="unit">万円</span></div>
 		<div class="row sub-row"><label for="salaryUntil">└ 何歳まで</label><input type="number" id="salaryUntil" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-		<div class="row"><label for="pension">年金など</label><input type="number" id="pension" value="180" min="0" max="10000" step="6"><span class="unit">万円</span></div>
+		<div class="row"><label for="pension">年金など<span class="help" tabindex="0" aria-label="年金などについて" aria-describedby="tipPension">？<span class="tipbox" id="tipPension" role="tooltip">下の「何歳から」で指定した年齢に<strong>なった年から</strong>受け取るものとして計算します。取り崩し開始から年金が始まるまでの間は収入がないため、生活費の全額を資産から取り崩すことになります。</span></span></label><input type="number" id="pension" value="180" min="0" max="10000" step="6"><span class="unit">万円</span></div>
 		<div class="row sub-row"><label for="pensionFrom">└ 何歳から</label><input type="number" id="pensionFrom" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-		<p class="hint">生活費から差し引く収入です。給与などは<strong>その年齢になるまで</strong>（65歳までなら64歳の1年間まで）、年金などは<strong>その年齢になった年から</strong>受け取るものとして計算します。積立期の収入は年間積立額に反映済みとみなします。</p>
+		<p class="hint">生活費から差し引く収入です。積立期の収入は年間積立額に反映済みとみなします。</p>
 		<div id="incomeNotes"></div>
 	</div>
 
@@ -142,7 +141,7 @@
 	<p class="hint">初期値は日本銀行の<a href="https://www.boj.or.jp/mopo/outline/target.htm" target="_blank" rel="noopener noreferrer">物価安定の目標（2%）</a>に合わせています。変える場合は、資産クラスの期待リターンが<strong>名目</strong>であることに注意してください（インフレ率だけを上げると、その分だけ実質の結果が厳しくなります）。</p>
 	<label class="check"><input type="checkbox" id="taxOn" checked>売却益に課税する（20.315%）</label>
 	<label class="check"><input type="checkbox" id="nisaOn" checked>NISA枠を優先して使う</label>
-	<div class="row" id="rowNisaUsed"><label for="nisaUsed">NISA生涯枠の使用済み</label><input type="number" id="nisaUsed" value="0" min="0" max="1800" step="60"><span class="unit">万円</span></div>
+	<div class="row sub-row" id="rowNisaUsed"><label for="nisaUsed">└ 生涯枠の使用済み<span class="help" tabindex="0" aria-label="生涯枠の使用済みについて" aria-describedby="tipNisaUsed">？<span class="tipbox" id="tipNisaUsed" role="tooltip">これまでにNISAで買った金額の累計（簿価）です。運用して増えた<strong>いまの評価額ではありません</strong>。生涯枠1800万円の残りがこの分だけ少ない状態で、これからの積立を始めます。<br><br>「現在の運用資産」にNISAで持っている分が含まれていても、残高そのものは課税口座として計算します（ここに入れるのは使った枠だけです）。</span></span></label><input type="number" id="nisaUsed" class="narrow" value="0" min="0" max="1800" step="60"><span class="unit">万円</span></div>
 	<p class="hint">NISAは年間360万円・生涯1800万円（簿価）まで。超過分は課税口座で運用し、取り崩し時に売却益へ課税します。</p>
 
 	<h2>試行設定</h2>
