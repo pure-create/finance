@@ -43,8 +43,8 @@
 <script src="../../common/theme.js?v=20260815a"></script>
 <link rel="stylesheet" href="../../common/theme.css?v=20260815a">
 <link rel="stylesheet" href="../../common/site.css?v=20260823b">
-<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260813e">
-<link rel="stylesheet" type="text/css" href="../css/print.css?v=20260808a" media="print">
+<link rel="stylesheet" type="text/css" href="../css/main.css?v=20260825b">
+<link rel="stylesheet" type="text/css" href="../css/print.css?v=20260825b" media="print">
 <title>退職手当計算（国家公務員）</title>
 </head>
 <body>
@@ -81,14 +81,14 @@
 <button type='button' id='clearBtn' class='btn'>入力をリセット</button>
 </div>
 <div class="basis-row">
-<label for="birthYear">生年:</label>
-<select id="birthYear"><option value="" disabled selected>===選択===</option></select>年度
-<label for="hireYear">採用年:</label>
-<select id="hireYear"><option value="" disabled selected>===選択===</option></select>年度
-<div class='container'><div class='question'><label><input type='checkbox' id='middle_year'>年度途中採用</label></div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>
+<span class="basis-item"><span class="basis-label"><label for="birthYear">生年</label><span class="help" tabindex="0" aria-label="生年について" aria-describedby="birthTip">？<span class="tipbox" id="birthTip" role="tooltip">生まれた<strong>年度</strong>を選びます。年度は4月から翌年3月までなので、<strong>1月〜3月生まれの人は、生まれた年の1つ前</strong>を選んでください（2000年2月生まれなら1999年度）。<br><br>ここから各年度末の年齢を出し、定年に達する年度までを表に並べます。</span></span>:</span>
+<select id="birthYear"><option value="" disabled selected>===選択===</option></select>年度</span>
+<span class="basis-item"><span class="basis-label"><label for="hireYear">採用年</label><span class="help" tabindex="0" aria-label="採用年について" aria-describedby="hireTip">？<span class="tipbox" id="hireTip" role="tooltip">退職手当の<strong>勤続期間が始まった年度</strong>を選びます。生年と同じく年度なので、1月〜3月の採用は1つ前の年度になります。<br><br>採用された年ではなく、退職手当の計算のもとになる期間の起算年です。以前の在職期間が通算される異動・転職があった場合は、その通算される期間の始まりを選んでください。休業期間の算入方法は制度により異なります。</span></span>:</span>
+<select id="hireYear"><option value="" disabled selected>===選択===</option></select>年度</span>
+<div class='container'><label><input type='checkbox' id='middle_year'>年度途中採用</label><div class='question' aria-label='年度途中採用について'>？</div><div class='explain'>年度途中の採用（10月など）の場合は<br />チェックを入れてください</div></div>
 </div>
 <div class="basis-row">
-<label for='salary'>俸給月額:</label><input id='salary' inputmode='numeric' autocomplete='off'>円
+<span class="basis-item"><span class="basis-label"><label for='salary'>俸給月額</label><span class="help" tabindex="0" aria-label="俸給月額について" aria-describedby="salaryTip">？<span class="tipbox" id="salaryTip" role="tooltip">退職手当は「<strong>退職日の</strong>俸給月額 × 支給率 ＋ 調整額」で決まります。<br><br>このツールは、ここに入れた額が<strong>どの年度で退職しても変わらない</strong>ものとして表を作ります（昇給を見込みません）。将来の年度の見込みを知りたい場合は、その時点で想定する俸給月額を入れ直してください。<br><br>手当を含まない俸給表の月額を、円単位で入力します。</span></span>:</span><input id='salary' inputmode='numeric' autocomplete='off'>円</span>
 </div>
 調整月額:<span id='tyosei_status' style='display:none;'></span>
 <div class='table-scroll' tabindex='0' role='region' aria-label='調整月額の区分表'>
@@ -99,7 +99,7 @@
 	     この行に足す（区分の数は config.js が持っている） -->
 	<tr id='tyosei-inputs'>
 		<th>
-			<div class='question'>直近5年のうちの月数</div>
+			直近5年のうちの月数<div class='question' aria-label='直近5年のうちの月数について'>？</div>
 			<div class='explain'>
 				直近60か月を基準に入力してください。<br />
 				区分と俸給表の級・号俸との対応は政令で定められており、ここでは区分番号のみを表示しています。<br />
@@ -108,7 +108,7 @@
 	</tr>
 </table>
 </div>
-<div id='tyosei_result'>調整額:<input id='tyosei_price'>円<br /><span id='tyosei_memo'>直近の60か月のなかで各区分にあてはまる月数を数字で入力してください。</span></div>
+<div id='tyosei_result'>調整額<span class="help" tabindex="0" aria-label="調整額について" aria-describedby="tyoseiTip">？<span class="tipbox" id="tyoseiTip" role="tooltip">上の表に入れた月数から自動で計算されます（区分ごとの調整月額 × その区分の月数を、直近60か月ぶん合計した額）。<br><br>この額がそのまま退職手当に乗るとは限りません。<strong>自己都合</strong>は勤続9年以下で支給されず、10年以上24年以下は半額、<strong>自己都合以外</strong>は勤続4年以下が半額になります。減額後の額はこの下に出ます。</span></span>:<input id='tyosei_price'>円<br /><span id='tyosei_memo'>直近の60か月のなかで各区分にあてはまる月数を数字で入力してください。</span></div>
 <div class='section-header'>
 <h2>計算の結果</h2>
 <span class='result-disclaimer'>※概算による試算結果です。実際の退職手当・税額等とは異なる場合があります。</span>
@@ -126,18 +126,18 @@
 			<th rowspan='2' style='width: 140px;'>年度</th>
 			<th rowspan='2'>年齢</th>
 			<th rowspan='2'>
-				<div class='question'>勤続<br />年数</div>
+				勤続<br />年数<div class='question' aria-label='勤続年数について'>？</div>
 				<div class='explain'>
 					1年未満の端数があるときは切り捨てます。<br />
 					休業期間等の勤続期間への算入方法は、法律・規則等により異なる場合があります。<br />
 				</div>
 			</th>
 			<th rowspan='2'>
-				<div class='question'>定年</div>
+				定年<div class='question' aria-label='定年について'>？</div>
 				<div class='explain'>2023年度から2031年度まで<br />段階的に定年が65歳まで<br />引き上げられます</div>
 			</th>
 			<th rowspan='2'>
-				<div class='question'>退職所得<br />控除額</div>
+				退職所得<br />控除額<div class='question' aria-label='退職所得控除額について'>？</div>
 				<div class='explain'>
 					退職金にかかる税は分離課税となっており、他の所得とは切り離して計算します。<br />
 					支給額が退職所得控除額より少なければ所得税や住民税の課税はありません。<br />
@@ -156,14 +156,14 @@
 		</tr>
 		<tr>
 			<th class='own price'>
-				<div class='question'>退職手当</div>
+				退職手当<div class='question' aria-label='自己都合の退職手当について'>？</div>
 				<div class='explain'>
 					基本的な計算式は、退職日の俸給月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
 			<th class='own tax'>
-				<div class='question'>所得税</div>
+				所得税<div class='question' aria-label='自己都合の所得税について'>？</div>
 				<div class='explain'>
 					所得税計算式:<br />
 					<span style='text-decoration:underline;'>(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)</span> × 所得税率 - 控除額<br />
@@ -185,26 +185,26 @@
 				</div>
 			</th>
 			<th class='own tax'>
-				<div class='question'>住民税</div>
+				住民税<div class='question' aria-label='自己都合の住民税について'>？</div>
 				<div class='explain'>
 					住民税は、課税される所得金額（(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
 				</div>
 			</th>
 			<th class='own price'>
-				<div class='question'>手取額</div>
+				手取額<div class='question' aria-label='自己都合の手取額について'>？</div>
 				<div class='explain'>
 					所得税と住民税を差し引いた金額です。<br />
 				</div>
 			</th>
 			<th class='mandatory price'>
-				<div class='question'>退職手当</div>
+				退職手当<div class='question' aria-label='定年・勧奨の退職手当について'>？</div>
 				<div class='explain'>
 					基本的な計算式は、退職日の俸給月額 × 勤続年数に応じた支給率 + 調整額(直近60か月分) です。<br />
 					各行をクリックすると計算式を表示します。<br />
 				</div>
 			</th>
 			<th class='mandatory tax'>
-				<div class='question'>所得税</div>
+				所得税<div class='question' aria-label='定年・勧奨の所得税について'>？</div>
 				<div class='explain'>
 					所得税計算式:<br />
 					<span style='text-decoration:underline;'>(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)</span> × 所得税率 - 控除額<br />
@@ -226,13 +226,13 @@
 				</div>
 			</th>
 			<th class='mandatory tax'>
-				<div class='question'>住民税</div>
+				住民税<div class='question' aria-label='定年・勧奨の住民税について'>？</div>
 				<div class='explain'>
 					住民税は、課税される所得金額（(退職手当 - 退職所得控除額) × 2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
 				</div>
 			</th>
 			<th class='mandatory price'>
-				<div class='question'>手取額</div>
+				手取額<div class='question' aria-label='定年・勧奨の手取額について'>？</div>
 				<div class='explain'>
 					所得税と住民税を差し引いた金額です。<br />
 				</div>
@@ -268,7 +268,7 @@
 <script src="../../common/tax-core.js?v=20260815a"></script>
 <script src="../js/retire-calc.js?v=20260814d"></script>
 <script src="./config.js?v=20260805a"></script>
-<script src="../js/retire-core.js?v=20260823b"></script>
+<script src="../js/retire-core.js?v=20260825a"></script>
 
 </body>
 </html>

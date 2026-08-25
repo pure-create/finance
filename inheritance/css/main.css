@@ -186,6 +186,22 @@
 }
 .tipbox::before{left:14px;right:auto;border-bottom-color:var(--tooltip-border)}
 .help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
+/* 家族の図の中だけは、位置の基準を「？」の印ではなく人の箱にする。
+   印は16px角しかなく、それを基準にすると302pxの吹き出しが画面の外まで伸びて切れる。
+   人の箱は幅158px（狭い画面ではさらに縮む）なので、自分は左端・配偶者は右端に
+   そろえると、どちらの幅でも吹き出しが画面の内側に収まる。
+   .person は既に position:relative（×ボタンの基準）なので、印を static に戻すだけでよい。
+   自分は上の left:-12px がそのまま使えるので、右端にそろえる配偶者だけを書く */
+.person .help{position:static}
+.person .tipbox{max-width:min(302px,calc(100vw - 40px))}
+.person.sp .tipbox{left:auto;right:-12px}
+/* 三角は出さない。「？」は人の箱の右端（単位のうしろ）に付くのに対し、吹き出しは
+   箱より広くて左右いっぱいに広がるので、三角を左右どちらに置いても印を指さない */
+.person .tipbox::before{display:none}
+/* 吹き出しは人の箱から下へはみ出して、子の行に重なる。.couple と .children-row は
+   どちらも z-index:1（つながりの線より前に出すため）で、後に来る子の行が上に載って
+   しまうので、夫婦の行だけをもう一段前に出す */
+.family .couple{z-index:2}
 .yval{font-size:15px;font-weight:700;color:var(--text);min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---- スライダー（割合バーと一体化） ---- */

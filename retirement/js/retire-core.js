@@ -236,10 +236,14 @@ window.addEventListener('load', function(){
 
 	/* 説明を出す印（div.question）と、その中身（div.explain）を組にする。
 
-	   iDeCo・資産運用の「？」は、吹き出しをCSSだけで出している（common/site.css の
-	   .tipbox）。こちらで同じ作りにできないのは、説明が .table-scroll（overflow:auto）
-	   の中にあり、CSSの重ね方では箱に切られてしまうため。位置決めがJSなのはそのためで、
-	   読み上げソフトへの伝え方（aria-describedby と role="tooltip"）だけを揃えている。 */
+	   印は他のツールと同じ「？」の丸で、見た目は css/main.css で .help と揃えている。
+	   吹き出しの出し方だけが違う。iDeCo・資産運用はCSSだけで出しているが（common/site.css
+	   の .tipbox）、こちらの説明は .table-scroll（overflow:auto）の中にあり、CSSの重ね方
+	   では箱に切られてしまう。位置決めがJSなのはそのためで、読み上げソフトへの伝え方
+	   （aria-describedby と role="tooltip"）は揃えている。
+
+	   何についての「？」かは、印の中身が「？」の一字しかないので分からない。
+	   HTML側の aria-label（「勤続年数について」など）で補っている。 */
 	var explainSeq = 0;
 	document.querySelectorAll('div.question').forEach(function(el){
 		var explain = el.nextElementSibling;
@@ -250,19 +254,10 @@ window.addEventListener('load', function(){
 		if(!explain.id) explain.id = 'explain-' + (++explainSeq);
 		explain.setAttribute('role', 'tooltip');
 
-		/* 印の中に操作できるものがある場合（「年度途中採用」はチェックボックスを
-		   抱えている）は、印自体を押せるものにしない。入れ子にすると、
-		   キーボードでの停止点が2つ並び、Enterがどちらに効くのかも決まらない。
-		   その場合は説明をチェックボックスに結び付け、そこに焦点が来たら出す。 */
-		var control = el.querySelector('input, select, textarea, button, a[href]');
-		if(control){
-			control.setAttribute('aria-describedby', explain.id);
-		}else{
-			el.setAttribute('tabindex', '0');
-			if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
-			el.setAttribute('aria-expanded', 'false');
-			el.setAttribute('aria-describedby', explain.id);
-		}
+		el.setAttribute('tabindex', '0');
+		if(!el.hasAttribute('role')) el.setAttribute('role', 'button');
+		el.setAttribute('aria-expanded', 'false');
+		el.setAttribute('aria-describedby', explain.id);
 
 		function show(){
 			hideAllExplains(explain);
@@ -287,21 +282,15 @@ window.addEventListener('load', function(){
 			el.addEventListener('mouseenter', show);
 			el.addEventListener('mouseleave', hide);
 		}
-		if(control){
-			// 押せるのはチェックボックスなので、開閉はしない。焦点の出入りに合わせる
-			control.addEventListener('focus', show);
-			control.addEventListener('blur', hide);
-		}else{
-			el.addEventListener('click', toggle);
-			el.addEventListener('keydown', function(e){
-				if(e.key === 'Enter' || e.key === ' '){
-					e.preventDefault();
-					toggle(e);
-				}
-			});
-			// キーボードで次へ移ったときに、開いたままにしない
-			el.addEventListener('blur', hide);
-		}
+		el.addEventListener('click', toggle);
+		el.addEventListener('keydown', function(e){
+			if(e.key === 'Enter' || e.key === ' '){
+				e.preventDefault();
+				toggle(e);
+			}
+		});
+		// キーボードで次へ移ったときに、開いたままにしない
+		el.addEventListener('blur', hide);
 	});
 
 	document.addEventListener('click', function(e){

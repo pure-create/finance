@@ -85,6 +85,28 @@
      .field-select / .field-check に持たせている（全ページ共通） */
   .chart-controls label { font-size: 13px; color: var(--text-sub); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none; }
   .chart-controls .field-select { min-width: 120px; }
+
+  /* ---- ヘルプの吹き出し ----
+     チェックボックスと「？」を1つのまとまりにする箱。「？」をラベルの中に入れると
+     ラベルへのクリック扱いでチェックが切り替わってしまうので、外に並べている。
+     吹き出しの位置の基準はこの箱にする（印は16px角しかなく、それを基準にすると
+     302pxの吹き出しが狭い画面で外へはみ出して切れる） */
+  .ctl-item { display: flex; align-items: center; gap: 0.4rem; position: relative; }
+  .help {
+    display: inline-flex; align-items: center; justify-content: center; position: static;
+    width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1; cursor: help; flex-shrink: 0;
+  }
+  .help:hover, .help:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .help .tipbox {
+    top: calc(100% + 8px); left: 0; right: auto;
+    width: 302px; max-width: min(302px, calc(100vw - 40px));
+    line-height: 1.7; padding: 10px 12px;
+    pointer-events: none;
+  }
+  /* 三角は出さない。「？」はまとまりの右端に付くのに対し、吹き出しは左端にそろうので、
+     三角を左右どちらに置いても印を指さない（吹き出し自体がすぐ下に出るので要らない） */
+  .help .tipbox::before { display: none; }
   .chart-body { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
   .chart-canvas-wrap { position: relative; width: 500px; height: 500px; max-width: 100%; aspect-ratio: 1 / 1; }
   .chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }

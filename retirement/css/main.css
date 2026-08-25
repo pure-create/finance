@@ -396,22 +396,11 @@ span.msg_input_ok::after {
 	margin-left: 6px;
 }
 
+/* 「年度途中採用」のチェックと、その「？」を1つのまとまりにする箱 */
 div.container {
-	display: inline-block;
-}
-
-div.question {
-	display: inline-block;
-	border-bottom: 1px dashed var(--color-primary);
-	color: inherit;
-	cursor: pointer;
-	transition: border-color 0.15s ease;
-}
-
-div.question:focus-visible {
-	outline: 2px solid var(--color-primary);
-	outline-offset: 2px;
-	border-radius: 2px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 }
 
 div.basis-row {
@@ -420,6 +409,101 @@ div.basis-row {
 	align-items: center;
 	gap: 6px 4px;
 	margin: 6px 0;
+}
+
+/* ===== ヘルプの「？」 =====
+   このページには説明の出し方が2通りある。見た目（丸い「？」）は下でまとめて揃え、
+   中身の出し方だけが違う。
+
+     .help + .tipbox   … 入力欄。CSSだけで出す（他のツールと同じ作り）
+     div.question + div.explain … 表の中。position:fixed とJSで出す
+                                  （.table-scroll の overflow:auto に切られるため。
+                                   retire-core.js の positionExplain を参照）
+
+   どちらも印は名前のすぐ後ろに置く。入力欄ではコロンの手前（「生年？:」）で、
+   何について聞けるのかが一目で分かり、行の末尾に置くより関係がはっきりする。
+
+   ただし <label for> の中には入れない。中に入れると印を押しただけでラベルへの
+   クリックとして扱われ、結び付いた選択肢が開いて吹き出しを覆ってしまう。
+   そのため名前・印・コロンを .basis-label でくるみ、ラベルは名前だけを持つ。
+
+   .basis-item は「ラベル＋選択肢＋単位」をひとまとめにする箱。
+   .basis-row の gap と同じ4pxを内側にも持たせるので、並びの見た目は変わらない。 */
+.basis-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	position: relative;
+}
+
+/* 名前・印・コロンは、間を空けずに1語として見せる */
+.basis-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 1px;
+}
+
+/* 吹き出しは common/site.css のものを上書きする。
+   位置の基準は「？」の印ではなく、印を含むまとまりにする。印は16px角しかなく、
+   それを基準にすると302pxの吹き出しが狭い画面で外へはみ出して切れてしまう */
+div#tyosei_result {
+	position: relative;
+}
+
+/* 印の見た目。表の中（div.question）も入力欄（.help）も同じ丸にする。
+   vertical-align は、表の見出しのように文字の流れの中に置いたときのため */
+.help, div.question {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	position: static;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: 1px solid var(--color-border);
+	background: var(--color-surface);
+	color: var(--color-muted);
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+	cursor: help;
+	flex-shrink: 0;
+	vertical-align: middle;
+}
+
+/* 表の見出しの中だけは、印が文字の流れに直に並ぶので自前で間を空ける
+   （入力欄側は .basis-label / .container の gap が間を持っている） */
+th div.question {
+	margin-left: 3px;
+}
+
+.help:hover, .help:focus-visible,
+div.question:hover, div.question:focus-visible {
+	border-color: var(--color-primary);
+	color: var(--color-primary);
+}
+
+div.question:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+.help .tipbox {
+	top: calc(100% + 8px);
+	left: 0;
+	right: auto;
+	width: 302px;
+	max-width: min(302px, calc(100vw - 40px));
+	line-height: 1.7;
+	padding: 10px 12px;
+	pointer-events: none;
+}
+
+/* 三角は出さない。吹き出しはまとまり（.basis-item / #tyosei_result）の左端に
+   そろうのに対し、印はその中で名前の長さぶん右にずれるので、三角を左端に置いても
+   印を指さない。吹き出し自体が行のすぐ下に出るので、向きを示す必要もない */
+.help .tipbox::before {
+	display: none;
 }
 
 div.noscript-warning {
@@ -442,6 +526,10 @@ div.explain {
 	position: fixed;
 	min-width: 200px;
 	max-width: min(360px, 88vw);
+	/* 「直近5年のうちの月数」の説明は #tyosei-table th:first-child の中にあり、
+	   そこで列幅を詰めるために掛けた white-space:nowrap を受け継いでしまう。
+	   受け継ぐと max-width が効かず、長い一文が箱からはみ出して切れる */
+	white-space: normal;
 	background: var(--tooltip-bg);
 	color: var(--tooltip-text);
 	padding: 14px 16px;

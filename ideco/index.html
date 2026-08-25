@@ -44,7 +44,7 @@
 <link rel="stylesheet" href="../common/theme.css?v=20260815a">
 <link rel="stylesheet" href="../common/site.css?v=20260823b">
 <link rel="stylesheet" href="../common/card-page.css?v=20260823b">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260823a">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260816b" media="print">
 </head>
 <body>
@@ -106,7 +106,9 @@
     </div>
     <div class="grid2">
       <div class="fld">
-        <label for="monthly">毎月の掛金</label>
+        <label for="monthly">毎月の掛金
+          <span class="help" tabindex="0" aria-label="毎月の掛金について" aria-describedby="monthlyTip">？<span class="tipbox" id="monthlyTip" role="tooltip">今年から「iDeCoを受け取る年齢」になるまで、毎月この額を払い続ける前提で計算します。<br><br>加入区分ごとの<strong>上限を超える額を入れた場合は、その年の上限まで自動で切り詰めて</strong>計算します（上限は上の「加入区分」の下に出ます）。<br><br>加入できる年齢の上限を過ぎた年は拠出が止まり、そこから受け取るまでは運用だけが続きます。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="monthly" value="23000" min="0" step="1000" inputmode="numeric"><span class="unit">円</span></span>
       </div>
       <div class="fld">
@@ -132,7 +134,9 @@
       </div>
     </div>
     <div class="ctrl">
-      <label for="yieldRate">想定利回り</label>
+      <label for="yieldRate">想定利回り
+        <span class="help" tabindex="0" aria-label="想定利回りについて" aria-describedby="yieldTip">？<span class="tipbox" id="yieldTip" role="tooltip">名目の年率です。毎年この率で一定に増えるものとして計算します。<br><br>効くのは積立中だけではありません。<strong>年金で受け取っている間の残高にも掛かります</strong>（年金の受取総額が、受給開始時の残高より多くなるのはこのためです）。<br><br>信託報酬・口座管理手数料・給付事務手数料は引いていないので、実際の手取りはこれより少なくなります。</span></span>
+      </label>
       <div class="srow">
         <input type="range" id="yieldRate" min="0" max="8" step="0.1" value="3">
         <span class="sval"><span id="yieldVal">3.0</span>%</span>
@@ -155,7 +159,9 @@
         <p class="note" id="payAgeWarn"></p>
       </div>
       <div class="fld">
-        <label for="annuityYears">年金で受け取る場合の年数</label>
+        <label for="annuityYears">年金で受け取る場合の年数
+          <span class="help" tabindex="0" aria-label="年金で受け取る場合の年数について" aria-describedby="annYearsTip">？<span class="tipbox" id="annYearsTip" role="tooltip">受け取り始めてから何年かけて分割するかです。ここでは5年から20年まで動かせますが、<strong>実際に指定できる年数や単位は運営管理機関の規約によります</strong>。<br><br>長くするほど1年あたりの額が小さくなり、公的年金等控除の枠に収まりやすくなります。ただし受け取り終わるまでの期間が延び、給付事務手数料も受け取るたびにかかります。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
       </div>
     </div>
@@ -168,11 +174,15 @@
     <h2 class="sec-title">退職金・所得・老齢年金</h2>
     <div class="grid3">
       <div class="fld">
-        <label for="retireAmount">退職金（額面）</label>
+        <label for="retireAmount">退職金（額面）
+          <span class="help" tabindex="0" aria-label="退職金（額面）について" aria-describedby="retireAmtTip">？<span class="tipbox" id="retireAmtTip" role="tooltip"><strong>税金を引く前</strong>の支給額を入れてください。退職所得控除や税額はこのツールが計算します（資産運用シミュレーターの「退職金（手取り）」とは逆なので、値を持ち込むときは注意してください）。<br><br>iDeCoと同じ年に受け取る場合、この額が大きいほど一時金が不利になります。別の年でも、控除の重複調整に当たる場合はこの額が税額に効きます。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="retireAmount" value="2000" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
       </div>
       <div class="fld">
-        <label for="retireAge">退職金を受け取る年齢</label>
+        <label for="retireAge">退職金を受け取る年齢
+          <span class="help" tabindex="0" aria-label="退職金を受け取る年齢について" aria-describedby="retireAgeTip">？<span class="tipbox" id="retireAgeTip" role="tooltip">「iDeCoを受け取る年齢」との<strong>間隔</strong>で税額が大きく変わる欄です。<br><br><strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されます。<br><br><strong>別の年</strong>なら、iDeCoは自分の加入年数の控除を使って単独で課税されます。ただしiDeCoが先で9年内、退職金が先で19年内に当たると、勤続期間と加入期間の重なりの分だけ控除が削られます。対象の年数を外せば、どちらの控除も削られません。</span></span>
+        </label>
         <span class="num-in"><input type="number" id="retireAge" value="60" min="15" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
       </div>
       <div class="fld">

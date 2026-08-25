@@ -111,7 +111,7 @@ function renderFamily() {
       <div class="person sp">
         <button class="remove-btn" id="delSpouse" title="配偶者を削除" aria-label="配偶者を削除">×</button>
         <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
-        <span class="plabel">配偶者</span>
+        <span class="plabel">配偶者<span class="help" tabindex="0" aria-label="配偶者の資産額について" aria-describedby="assetSpTip">？<span class="tipbox" id="assetSpTip" role="tooltip">配偶者が<strong>もともと持っている</strong>資産だけを入れてください。一次相続で配偶者が受け取る分は、下の「一次相続の遺産分割」から自動で足されます。<br><br>二次相続の遺産額は「この額 ＋ 一次相続での取得額 − 一次相続で納めた税額 ± 資産増減」として計算し、子が均等に相続する前提です。</span></span></span>
         <span class="asset-in"><input type="number" id="assetSp" value="${prev}" min="0" step="100" inputmode="numeric" aria-label="配偶者の資産額（万円）"><span class="unit">万円</span></span>
         <span class="oku" id="okuSp"></span>
       </div>`;

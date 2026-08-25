@@ -44,7 +44,7 @@
 <link rel="stylesheet" href="../common/theme.css?v=20260815a">
 <link rel="stylesheet" href="../common/site.css?v=20260823b">
 <link rel="stylesheet" href="../common/card-page.css?v=20260823b">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260823a">
+<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b">
 <link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
 </head>
 <body>
@@ -85,7 +85,9 @@
       <div class="couple">
         <div class="person me">
           <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
-          <span class="plabel">自分（被相続人）</span>
+          <!-- 「？」は金額の行ではなく名前の行に置く。人の箱は幅158pxしかなく、
+               金額の行（入力欄＋単位）に足すと単位が折り返してしまうため -->
+          <span class="plabel">自分（被相続人）<span class="help" tabindex="0" aria-label="自分の資産額について" aria-describedby="assetMeTip">？<span class="tipbox" id="assetMeTip" role="tooltip">相続税の<strong>評価額</strong>の合計です（売買の時価ではありません）。土地は路線価など、建物は固定資産税評価額、預貯金や上場株式は相続開始時の残高で数えます。<br><br>下の「自宅の土地の評価額」と「自分の死亡保険金」も、まずこの額に<strong>含めて</strong>ください。下の欄は、そのうち特例や非課税枠を当てる部分を指し示すためのものです。<br><br>債務・葬式費用は考慮していないので、それらがある場合は差し引いた後の額を入れてください。</span></span></span>
           <span class="asset-in"><input type="number" id="assetMe" value="7000" min="0" step="100" inputmode="numeric" aria-label="自分の資産額（万円）"><span class="unit">万円</span></span>
           <span class="oku" id="okuMe"></span>
         </div>
@@ -258,6 +260,6 @@
 <script src="../common/share.js?v=20260823a"></script>
 <script src="../common/tool-nav.js?v=20260814a"></script>
 <script src="./js/inheritance-core.js?v=20260814e"></script>
-<script src="./js/inheritance.js?v=20260815b"></script>
+<script src="./js/inheritance.js?v=20260825b"></script>
 </body>
 </html>

@@ -43,7 +43,7 @@
 <script src="../common/theme.js?v=20260815a"></script>
 <link rel="stylesheet" href="../common/theme.css?v=20260815a">
 <link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="nisa-common.css?v=20260811a">
+<link rel="stylesheet" href="nisa-common.css?v=20260825b">
 </head>
 <body>
 <a class="skip-link" href="#main">本文へ</a>
@@ -91,10 +91,15 @@
       <option value="80歳以上">80歳以上</option>
       <option value="現役世代合計">20代〜50代合計</option>
     </select>
-    <label>
-      <input type="checkbox" id="chkInactive" class="field-check" checked>
-      <span>口座未開設・買付なしを含む</span>
-    </label>
+    <!-- 「？」はラベルの外に出す。中に入れるとラベルへのクリックとして
+         チェックボックスまで切り替わってしまう -->
+    <span class="ctl-item">
+      <label>
+        <input type="checkbox" id="chkInactive" class="field-check" checked>
+        <span>口座未開設・買付なしを含む</span>
+      </label>
+      <span class="help" tabindex="0" aria-label="口座未開設・買付なしを含むについて" aria-describedby="inactiveTip">？<span class="tipbox" id="inactiveTip" role="tooltip">円グラフの<strong>分母</strong>を切り替えます。<br><br><strong>入れる</strong>と、その年代の人口全体に対する割合になります（「口座未開設」と「0円（買付なし）」の2つが扇形に加わり、買付をしている人の割合はその分だけ小さく出ます）。<br><br><strong>外す</strong>と、その2つを除いた「実際に買付をした人」の中での割合になり、残った階級だけで100%になります。</span></span>
+    </span>
   </div>
   <div class="chart-body">
     <div class="chart-canvas-wrap">

@@ -79,13 +79,10 @@ a.switch-link {
 	color: black;
 }
 
-div.explain, tr.calc_memo {
+/* 「？」は押して読むための印なので、中身ごと紙には出さない
+   （入力欄側の吹き出し .tipbox は common/site.css が消す） */
+div.explain, tr.calc_memo, .help, div.question {
 	display: none !important;
-}
-
-div.question {
-	border-bottom: none;
-	cursor: default;
 }
 
 .table-scroll {

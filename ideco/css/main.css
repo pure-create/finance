@@ -267,6 +267,10 @@
    入力欄の端にそろえれば、どちらの幅でも欄の中に収まる。 */
 .fld{position:relative}
 .fld .help{position:static}
+/* スライダーの行（想定利回りなど）も同じ扱いにする。
+   .ctrl はカードの幅いっぱいなので、吹き出しは302pxのまま左端にそろう */
+.ctrl{position:relative}
+.ctrl .help{position:static}
 .tipbox{
   top:calc(100% + 8px);left:0;right:auto;width:302px;max-width:100%;
   line-height:1.7;padding:10px 12px;
