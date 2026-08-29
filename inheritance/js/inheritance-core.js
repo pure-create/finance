@@ -137,3 +137,11 @@ if (typeof module !== 'undefined' && module.exports) {
     INSURANCE_PER_HEIR: INSURANCE_PER_HEIR
   };
 }
+
+/* 他の試算ページも同じ相続税の速算表を使えるよう、ブラウザでも明示的に公開する。
+   classic script のトップレベル関数に依存しないので、読み込み順が分かりやすい。 */
+if (typeof window !== 'undefined') {
+  window.InheritanceTaxCore = {
+    taxOnShare: taxOnShare, totalTax: totalTax, BRACKETS: BRACKETS
+  };
+}

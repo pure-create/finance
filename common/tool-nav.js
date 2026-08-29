@@ -37,6 +37,7 @@
 		{ label: '年金',               dir: 'pension/',        href: 'pension/' },
 		{ label: 'iDeCo',              dir: 'ideco/',          href: 'ideco/' },
 		{ label: '相続',               dir: 'inheritance/',    href: 'inheritance/' },
+		{ label: '贈与税・相続対策',   dir: 'gift/',           href: 'gift/' },
 		{ label: 'プライバシーポリシー', dir: 'privacy/',       href: 'privacy/' }
 	];
 

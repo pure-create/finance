@@ -1,0 +1,72 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const gift = require('../gift/js/gift-core.js');
+const inheritance = require('../inheritance/js/inheritance-core.js');
+
+test('贈与税: 基礎控除と一般・特例税率の早見値', () => {
+  for (const [amount, general, special] of [[110, 0, 0], [200, 9, 9], [300, 19, 19], [500, 53, 48.5], [1000, 231, 177]]) {
+    assert.equal(gift.giftTax(amount, 'general').tax, general);
+    assert.equal(gift.giftTax(amount, 'special').tax, special);
+  }
+});
+
+test('2人から150万円ずつでも、子の年合計300万円に基礎控除を一回だけ使う', () => {
+  assert.equal(gift.giftTax(300, 'special').tax, 19);
+  assert.notEqual(gift.giftTax(150, 'special').tax * 2, 19);
+});
+
+test('子どもの年齢は各贈与年の1月1日時点で一般・特例を判定する', () => {
+  assert.equal(gift.giftCategoryForAge(17), 'general');
+  assert.equal(gift.giftCategoryForAge(18), 'special');
+  const r = gift.simulateScenario({ estate: 10000, children: 1, childAges: [17], rate: 0, years: 2, annualGift: 500 });
+  assert.equal(r.detail[0].generalChildren, 1);
+  assert.equal(r.detail[0].giftTax, 53);
+  assert.equal(r.detail[1].specialChildren, 1);
+  assert.equal(r.detail[1].giftTax, 48.5);
+  assert.equal(r.giftTax, 101.5);
+});
+
+test('年齢が異なる子どもには同じ年でも一般・特例税率を個別適用する', () => {
+  const r = gift.simulateScenario({ estate: 10000, children: 2, childAges: [17, 18], rate: 0, years: 1, annualGift: 500 });
+  assert.equal(r.detail[0].generalChildren, 1);
+  assert.equal(r.detail[0].specialChildren, 1);
+  assert.equal(r.detail[0].giftTax, 53 + 48.5);
+});
+
+test('2031年以後: 3年以内は全額、3年超7年以内は合計100万円控除', () => {
+  const h = [
+    { year: 2030, amount: 50, tax: 0 }, { year: 2031, amount: 100, tax: 0 },
+    { year: 2033, amount: 200, tax: 10 }, { year: 2034, amount: 300, tax: 20 },
+    { year: 2037, amount: 400, tax: 30 }
+  ];
+  const r = gift.addBackForGifts(h, 2037);
+  // 2031〜2037が7年。2035〜2037は全額、2031〜2034は650万円から100万円控除。
+  assert.equal(r.added, 400 + (100 + 200 + 300 - 100));
+  assert.equal(r.credit, 60);
+});
+
+test('相続税の総額は既存inheritance-coreと一致する', () => {
+  const r = gift.settleInheritance(30000, 2, []);
+  assert.equal(r.totalBeforeCredits, inheritance.totalTax(30000, false, 2));
+});
+
+test('贈与なし・利回り0では、税額以外に資産は増減しない', () => {
+  const r = gift.simulateScenario({ estate: 30000, children: 2, rate: 0, years: 20, annualGift: 0 });
+  assert.equal(r.giftTax, 0);
+  assert.equal(r.finalKeep + r.inheritanceTax, 30000);
+});
+
+test('相続予定資産が不足しても負の資産や負の税額を作らない', () => {
+  const r = gift.simulateScenario({ estate: 2, children: 2, rate: 0, years: 4, annualGift: 1000 });
+  assert.equal(r.shortfall, true);
+  for (const y of r.detail) { assert.ok(y.asset >= 0 && y.giftTax >= 0); }
+  assert.ok(r.taxTotal >= 0 && Number.isFinite(r.finalKeep));
+});
+
+test('最終手残りのピークが1,000万円超なら次の1,000万円単位まで比較する', () => {
+  const r = gift.adaptiveSweep({ estate: 30000, children: 2, childAges: [20, 20], rate: 5, years: 20 }, 1000, 1000, 10);
+  const best = r.reduce((a, x) => x.finalKeep > a.finalKeep ? x : a);
+  assert.equal(best.annual, 1090);
+  assert.equal(r.at(-1).annual, 2000);
+});
