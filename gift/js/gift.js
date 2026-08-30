@@ -295,7 +295,7 @@
       yen(bestKeep.finalKeep) +
       '）<br><span class="note">比較範囲: 0〜' +
       fmt(comparisonMax) +
-      "万円 / 子1人・年（ピークを含む1,000万円単位まで自動拡張）</span>";
+      "万円 / 子1人・年</span>";
     const major = new Set([110, bestTax.annual, bestKeep.annual]);
     for (let a = 0; a <= comparisonMax; a += 100) major.add(a);
     let rows = [];
