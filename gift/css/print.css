@@ -1,24 +1,85 @@
-@page{margin:12mm}
+@page {
+  margin: 12mm;
+}
 
-body{background:none;color:#000;padding:0;font-size:10pt}
-.wrap{max-width:100%}
-.card{background:none;box-shadow:none;border:1px solid #94a3b8;break-inside:avoid;page-break-inside:avoid}
+body {
+  background: none;
+  color: #000;
+  padding: 0;
+  font-size: 10pt;
+}
+.wrap {
+  max-width: 100%;
+}
+.card {
+  background: none;
+  box-shadow: none;
+  border: 1px solid #94a3b8;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 
 /* 紙では操作できないUI。共有QRは同じ条件を開き直すため共通CSSの方針どおり残す。 */
-.share-btn,.btn,.toggle,.help,.floating-tooltip,.quick-expand,.quick-more,.page-tools>span{display:none!important}
-.range-row input[type="range"]{display:none!important}
-.range-row{justify-content:flex-start}
-.range-val{min-width:0;text-align:left}
+.share-btn,
+.btn,
+.toggle,
+.help,
+.floating-tooltip,
+.quick-expand,
+.quick-more,
+.page-tools > span {
+  display: none !important;
+}
+.range-row input[type="range"] {
+  display: none !important;
+}
+.range-row {
+  justify-content: flex-start;
+}
+.range-val {
+  min-width: 0;
+  text-align: left;
+}
+.field.is-disabled {
+  display: none;
+}
 
 /* 展開状態にかかわらず、早見表は0〜1,000万円の100万円刻みにそろえる。 */
-.quick-detail,.quick-high{display:none!important}
-.quick-table .quick-major td:first-child{display:table-cell}
+.quick-detail,
+.quick-high {
+  display: none !important;
+}
+.quick-table .quick-major td:first-child {
+  display: table-cell;
+}
 
-.chart-wrap{height:220px;break-inside:avoid;page-break-inside:avoid}
-.scroll{overflow:visible}
-.scroll table{font-size:8.5pt}
-.scroll th,.scroll td{position:static;padding:4px 5px}
-.scroll thead{display:table-header-group}
-.note,.tile .k{color:#333}
-.best{background:none;border:1px solid #7c3aed}
-.warning{color:#9f1239}
+.chart-wrap {
+  height: 220px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.scroll {
+  overflow: visible;
+}
+.scroll table {
+  font-size: 8.5pt;
+}
+.scroll th,
+.scroll td {
+  position: static;
+  padding: 4px 5px;
+}
+.scroll thead {
+  display: table-header-group;
+}
+.note,
+.tile .k {
+  color: #333;
+}
+.best {
+  background: none;
+  border: 1px solid #7c3aed;
+}
+.warning {
+  color: #9f1239;
+}
