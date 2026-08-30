@@ -103,7 +103,7 @@ function simulateScenario(input) {
     giftTaxTotal += yearTax;
     return { gross: actual, tax: yearTax, generalChildren, specialChildren };
   }
-  let inheritance = null;
+  let inheritance = null, addBackStartYear = null;
   for (let step = 1; step <= years; step++) {
     const year = SIM_START_YEAR + step - 1;
     const g = give(year);
@@ -111,16 +111,26 @@ function simulateScenario(input) {
     childGift *= 1 + rate;
     let event = '';
     if (step === years) {
-      inheritance = settleInheritance(asset, children, history.map(h => addBackForGifts(h, year)));
+      const childAddbacks = history.map(h => addBackForGifts(h, year));
+      inheritance = settleInheritance(asset, children, childAddbacks);
+      const eligibleYears = childAddbacks.flatMap(x => x.gifts).filter(x => positive(x.amount) > 0).map(x => x.year);
+      if (eligibleYears.length) addBackStartYear = Math.min(...eligibleYears);
       event = '相続';
     }
     detail.push({ year, asset, gift: g.gross, giftTax: g.tax, childGift,
       generalChildren: g.generalChildren, specialChildren: g.specialChildren, event });
   }
+  if (addBackStartYear != null) {
+    const startRow = detail.find(x => x.year === addBackStartYear);
+    if (startRow) startRow.event = '贈与加算対象↓' + (startRow.event ? '／' + startRow.event : '');
+  }
   const inheritanceTax = inheritance.totalTax;
   const inherited = Math.max(0, asset - inheritanceTax);
+  const grossTransfer = giftTotal + asset;
+  const taxTotal = giftTaxTotal + inheritanceTax;
   return { children, childAges, years, detail, shortfall, giftTotal, giftTax: giftTaxTotal,
-    inheritanceTax, taxTotal: giftTaxTotal + inheritanceTax,
+    inheritanceTax, taxTotal, grossTransfer,
+    effectiveTaxRate: grossTransfer ? taxTotal / grossTransfer * 100 : 0,
     childGift, inherited, finalKeep: childGift + inherited, inheritance };
 }
 

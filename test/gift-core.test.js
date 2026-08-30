@@ -46,6 +46,14 @@ test('2031年以後: 3年以内は全額、3年超7年以内は合計100万円�
   assert.equal(r.credit, 60);
 });
 
+test('年次詳細は相続前贈与加算の対象期間となる最初の年を示す', () => {
+  const r = gift.simulateScenario({ estate: 30000, children: 2, childAges: [20, 18], rate: 0, years: 20, annualGift: 200 });
+  const marked = r.detail.filter(x => x.event.includes('贈与加算対象↓'));
+  assert.equal(marked.length, 1);
+  assert.equal(marked[0].year, 2039); // 2045年相続の年単位モデルでは2039〜2045年が7年間
+  assert.equal(r.detail.at(-1).event, '相続');
+});
+
 test('相続税の総額は既存inheritance-coreと一致する', () => {
   const r = gift.settleInheritance(30000, 2, []);
   assert.equal(r.totalBeforeCredits, inheritance.totalTax(30000, false, 2));
@@ -55,6 +63,16 @@ test('贈与なし・利回り0では、税額以外に資産は増減しない'
   const r = gift.simulateScenario({ estate: 30000, children: 2, rate: 0, years: 20, annualGift: 0 });
   assert.equal(r.giftTax, 0);
   assert.equal(r.finalKeep + r.inheritanceTax, 30000);
+});
+
+test('長期比較の実効税率は実際の贈与額と相続時の残資産を分母にする', () => {
+  const r = gift.simulateScenario({
+    estate: 10000, children: 2, childAges: [20, 18],
+    rate: 0, years: 20, annualGift: 200
+  });
+  assert.equal(r.grossTransfer, r.giftTotal + r.detail.at(-1).asset);
+  assert.equal(r.effectiveTaxRate, r.taxTotal / r.grossTransfer * 100);
+  assert.ok(Number.isFinite(r.effectiveTaxRate));
 });
 
 test('相続予定資産が不足しても負の資産や負の税額を作らない', () => {
