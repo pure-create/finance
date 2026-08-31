@@ -1479,6 +1479,8 @@ function validate(cfg) {
     return "シミュレーション期間が長すぎます（90年以内にしてください）。";
   if (cfg.alloc[0] + cfg.alloc[1] + cfg.alloc[2] <= 0)
     return "資産配分を1つ以上入力してください。";
+  if (!isValidCorrelation3(cfg.corr[0], cfg.corr[1], cfg.corr[2]))
+    return "3つの相関係数の組み合わせが成立しません。値を調整してください。";
   return null;
 }
 
@@ -1670,9 +1672,14 @@ function run() {
   $("allocSum").textContent = Math.round(sum * 10) / 10;
   $("allocSum").className = Math.abs(sum - 100) > 0.01 ? "warn" : "";
   renderAllocNote(cfg.alloc, sum);
-  const ps = portfolioStats(cfg.alloc, cfg.ret, cfg.risk, cfg.corr);
-  setNumEl($("portRet"), "portRet", ps.ret, "fixed2");
-  setNumEl($("portRisk"), "portRisk", ps.risk, "fixed2");
+  if (isValidCorrelation3(cfg.corr[0], cfg.corr[1], cfg.corr[2])) {
+    const ps = portfolioStats(cfg.alloc, cfg.ret, cfg.risk, cfg.corr);
+    setNumEl($("portRet"), "portRet", ps.ret, "fixed2");
+    setNumEl($("portRisk"), "portRisk", ps.risk, "fixed2");
+  } else {
+    $("portRet").textContent = "—";
+    $("portRisk").textContent = "—";
+  }
 
   // 方式に応じて入力欄を出し分け
   $("rowWithdraw").style.display = cfg.wdMode === "fixed" ? "" : "none";

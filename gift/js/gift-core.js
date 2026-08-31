@@ -26,9 +26,12 @@ const GIFT_SPECIAL_BRACKETS = [
 /* シミュレーション開始年。ページを開いた端末の暦年を初期値にする。 */
 const SIM_START_YEAR = new Date().getFullYear();
 const OLDER_GIFTS_DEDUCTION = 100;
-const CAPITAL_GAINS_BASE_RATE = 0.2;
-const CAPITAL_GAINS_RATE_WITH_RECONSTRUCTION = 0.20315;
-const RECONSTRUCTION_TAX_END_YEAR = 2037;
+
+function commonTaxCore() {
+  if (typeof Tax !== "undefined") return Tax;
+  if (typeof require === "function") return require("../../common/tax-core.js");
+  throw new Error("Tax core is required");
+}
 
 function finite(v, fallback) {
   v = Number(v);
@@ -62,9 +65,9 @@ function giftTax(amount, category) {
 
 /* 上場株式等の譲渡益税率。復興特別所得税は現行法上2037年まで。 */
 function capitalGainsTaxRate(year) {
-  return Math.floor(finite(year, SIM_START_YEAR)) <= RECONSTRUCTION_TAX_END_YEAR
-    ? CAPITAL_GAINS_RATE_WITH_RECONSTRUCTION
-    : CAPITAL_GAINS_BASE_RATE;
+  return commonTaxCore().capitalGainsTaxRate(
+    Math.floor(finite(year, SIM_START_YEAR)),
+  );
 }
 
 function capitalGainsTax(marketValue, costBasis, year) {
@@ -127,7 +130,10 @@ function addBackForGifts(history, deathYear) {
     year >= 2031
       ? recentAmount + Math.max(0, olderAmount - OLDER_GIFTS_DEDUCTION)
       : sum(all);
-  /* 暦年贈与の加算分に対応する贈与税額。実際の還付は無いため、相続税額を下限に控除する。 */
+  /* 暦年贈与の加算分に対応する贈与税額。3年超7年以内の100万円控除が
+     あっても、相続税法基本通達19-7の算式で使う加算額Cは100万円控除前。
+     そのため対象期間内の贈与税額をここで減額しない。実際の還付は無いので、
+     settleInheritance 側で各人の相続税額を下限として控除する。 */
   return {
     added: added,
     credit: tax(all),
@@ -406,9 +412,10 @@ if (typeof module !== "undefined" && module.exports)
     GIFT_GENERAL_BRACKETS,
     GIFT_SPECIAL_BRACKETS,
     SIM_START_YEAR,
-    CAPITAL_GAINS_BASE_RATE,
-    CAPITAL_GAINS_RATE_WITH_RECONSTRUCTION,
-    RECONSTRUCTION_TAX_END_YEAR,
+    CAPITAL_GAINS_BASE_RATE: commonTaxCore().CAPITAL_GAINS_BASE_RATE,
+    CAPITAL_GAINS_RATE_WITH_RECONSTRUCTION:
+      commonTaxCore().capitalGainsTaxRate(2037),
+    RECONSTRUCTION_TAX_END_YEAR: commonTaxCore().RECONSTRUCTION_TAX_END_YEAR,
     giftCategoryForAge,
     giftTax,
     capitalGainsTaxRate,

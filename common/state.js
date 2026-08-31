@@ -102,6 +102,8 @@
     var d = field.def;
     if (el.type === "checkbox") return el.checked === d;
     if (el.type === "number" || el.type === "range") {
+      // parseFloat("") は NaN なので、空欄同士は文字列として比較する。
+      if (el.value === "" || d === "") return el.value === String(d);
       return parseFloat(el.value) === parseFloat(d);
     }
     return el.value === String(d);
@@ -187,7 +189,14 @@
 	   どこから戻したかを返す（'url' / 'saved' / null） */
   Inputs.prototype.restore = function () {
     var q = new URLSearchParams(global.location.search);
-    if (q.toString()) {
+    var hasInputParam = false;
+    for (var i = 0; i < this.fields.length; i++) {
+      if (q.has(this.fields[i].key)) {
+        hasInputParam = true;
+        break;
+      }
+    }
+    if (hasInputParam) {
       this.apply(q);
       return "url";
     }

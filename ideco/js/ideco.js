@@ -91,6 +91,8 @@ function readConfig() {
 // 出口の計算に渡す形（受取年齢だけ差し替えてグラフを描くので分けてある）
 function payoutCfg(cfg, idecoAmount, payAge) {
   return {
+    startAge: cfg.startAge,
+    startYear: cfg.startYear,
     idecoAmount: idecoAmount,
     idecoJoinAge: cfg.idecoJoinAge,
     idecoPayAge: payAge,
@@ -1034,16 +1036,17 @@ function update() {
     };
   }
 
-  function refLines(taxByIdeco, gain) {
+  function refLines(taxByIdeco, gain, saleYear) {
     // 運用益が無ければ課税口座でも税金は出ないので、比べるものが無い（利回り0%など）
     if (!(gain > 0)) return "";
-    const ref = taxableAccountTax(gain);
+    const rate = Tax.capitalGainsTaxRate(saleYear);
+    const ref = taxableAccountTax(gain, saleYear);
     const d = refDiff(taxByIdeco, ref);
     return (
       '<div class="ref">' +
       '<div class="ref-cap">参考：同じ額を課税口座で運用して売った場合</div>' +
       rline(
-        "運用益 " + yen(gain) + " × " + fmtRate(TAXABLE_GAIN_TAX_RATE) + "%",
+        "運用益 " + yen(gain) + " × " + fmtRate(rate) + "%",
         yen(ref),
         "dim",
       ) +
@@ -1133,7 +1136,11 @@ function update() {
     );
   }
   // 一時金は受け取った時点で運用が終わるので、比べる運用益は積立期間のぶん
-  h += refLines(L.taxByIdeco, acc.gain);
+  h += refLines(
+    L.taxByIdeco,
+    acc.gain,
+    outCfg.startYear + (outCfg.idecoPayAge - outCfg.startAge),
+  );
   $("lumpDetail").innerHTML = h;
 
   // 年金の内訳
@@ -1186,7 +1193,14 @@ function update() {
     h2 +=
       '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
   // 年金は受け取り終わるまで運用が続くので、その分の運用益も比べる相手に含める
-  h2 += refLines(A.taxByIdeco, acc.gain + d.growth);
+  h2 += refLines(
+    A.taxByIdeco,
+    acc.gain + d.growth,
+    outCfg.startYear +
+      (outCfg.idecoPayAge - outCfg.startAge) +
+      outCfg.annuityYears -
+      1,
+  );
   $("annuityDetail").innerHTML = h2;
 
   /* ---- 併用：一時金と年金にどう割り振るか ---- */
@@ -1284,7 +1298,11 @@ function update() {
 	   （元本も運用益も同じ比で割られるため） */
   const lumpShare = idecoAmount > 0 ? mix.lumpAmount / idecoAmount : 0;
   if (mix.lumpAmount > 0) {
-    h3 += refLines(mix.lump ? mix.lump.taxByIdeco : 0, acc.gain * lumpShare);
+    h3 += refLines(
+      mix.lump ? mix.lump.taxByIdeco : 0,
+      acc.gain * lumpShare,
+      outCfg.startYear + (outCfg.idecoPayAge - outCfg.startAge),
+    );
   }
   $("mixLumpDetail").innerHTML = h3;
 
@@ -1314,7 +1332,14 @@ function update() {
   }
   if (mix.annuityAmount > 0) {
     // 年金部分は、割り振られた運用益に受け取り中の運用益を足したもの
-    h4 += refLines(md.tax, acc.gain * (1 - lumpShare) + md.growth);
+    h4 += refLines(
+      md.tax,
+      acc.gain * (1 - lumpShare) + md.growth,
+      outCfg.startYear +
+        (outCfg.idecoPayAge - outCfg.startAge) +
+        outCfg.annuityYears -
+        1,
+    );
   }
   $("mixAnnuityDetail").innerHTML = h4;
 
@@ -1336,7 +1361,15 @@ function update() {
   const mixRef = $("mixRefDiff");
   const mixGainAll = acc.gain + md.growth;
   if (mixGainAll > 0) {
-    const d = refDiff(mix.taxByIdeco, taxableAccountTax(mixGainAll));
+    const finalSaleYear =
+      outCfg.startYear +
+      (outCfg.idecoPayAge - outCfg.startAge) +
+      outCfg.annuityYears -
+      1;
+    const d = refDiff(
+      mix.taxByIdeco,
+      taxableAccountTax(mixGainAll, finalSaleYear),
+    );
     mixRef.className = d.cls;
     mixRef.innerHTML = d.text;
   } else {

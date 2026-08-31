@@ -39,8 +39,26 @@ function makeNormal(rand) {
   };
 }
 
+// 3つの相関係数が、同時に成立する相関行列を作れるか確認する。
+function isValidCorrelation3(r12, r13, r23) {
+  const values = [r12, r13, r23];
+  if (
+    values.some(function (value) {
+      return !Number.isFinite(value) || Math.abs(value) > 1;
+    })
+  ) {
+    return false;
+  }
+  const determinant =
+    1 + 2 * r12 * r13 * r23 - r12 * r12 - r13 * r13 - r23 * r23;
+  return determinant >= -1e-12;
+}
+
 // 3x3 相関行列のコレスキー分解（対角は1）
 function cholesky3(r12, r13, r23) {
+  if (!isValidCorrelation3(r12, r13, r23)) {
+    throw new RangeError("相関係数の組み合わせが成立しません。");
+  }
   const l21 = r12;
   const l22 = Math.sqrt(Math.max(1e-12, 1 - r12 * r12));
   const l31 = r13;
@@ -69,7 +87,13 @@ function percentile(sorted, p) {
 
 const NISA_ANNUAL = 360; // 年間投資枠（万円・簿価）
 const NISA_LIFETIME = 1800; // 生涯投資枠（万円・簿価）
-const TAX_RATE = 0.20315; // 譲渡益税
+function commonTaxCore() {
+  if (typeof Tax !== "undefined") return Tax;
+  if (typeof require === "function") return require("../../common/tax-core.js");
+  throw new Error("Tax core is required");
+}
+const SIM_START_YEAR = new Date().getFullYear();
+const TAX_RATE = commonTaxCore().capitalGainsTaxRate(SIM_START_YEAR);
 const SAMPLE_PATHS = 20; // 重ね描きする個別試行の本数
 
 /**
@@ -114,7 +138,9 @@ function simulate(cfg) {
   const T = Math.max(1, Math.round(cfg.trials));
   const infl = cfg.inflation / 100;
   const fee = cfg.fee / 100;
-  const taxRate = cfg.taxOn ? TAX_RATE : 0;
+  const startYear = Number.isFinite(Number(cfg.startYear))
+    ? Math.floor(Number(cfg.startYear))
+    : SIM_START_YEAR;
 
   // 配分を合計100%に正規化
   const rawW = [cfg.alloc[0], cfg.alloc[1], cfg.alloc[2]];
@@ -158,6 +184,9 @@ function simulate(cfg) {
 
     for (let y = 1; y <= N; y++) {
       const startAge = cfg.ageNow + y - 1;
+      const taxRate = cfg.taxOn
+        ? commonTaxCore().capitalGainsTaxRate(startYear + y - 1)
+        : 0;
       const f = Math.pow(1 + infl, y - 1); // 年初時点の物価倍率
 
       // 退職金は年初に課税口座へ入れる。取り崩しより先に足さないと、
@@ -358,6 +387,7 @@ if (typeof module !== "undefined" && module.exports) {
     percentile: percentile,
     logParams: logParams,
     cholesky3: cholesky3,
+    isValidCorrelation3: isValidCorrelation3,
     mulberry32: mulberry32,
     makeNormal: makeNormal,
     incomeAt: incomeAt,

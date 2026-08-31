@@ -35,19 +35,47 @@ var INCOME_TAX_BRACKETS = [
   { over: 0, rate: 0.05, deduction: 0 },
 ];
 
-// 復興特別所得税の上乗せ（2013年〜2037年）
+// 復興特別所得税の上乗せ（2013年〜2037年）。将来年の試算でも固定で
+// 1.021倍しないよう、税率を使う関数には可能な限り計算年を渡す。
 var RECONSTRUCTION_RATE = 1.021;
+var RECONSTRUCTION_TAX_START_YEAR = 2013;
+var RECONSTRUCTION_TAX_END_YEAR = 2037;
+var CAPITAL_GAINS_BASE_RATE = 0.2;
+var CAPITAL_GAINS_INCOME_TAX_RATE = 0.15;
+
+function taxYear(year) {
+  var n = Number(year);
+  return isFinite(n) ? Math.floor(n) : new Date().getFullYear();
+}
+
+function reconstructionRateForYear(year) {
+  var y = taxYear(year);
+  return y >= RECONSTRUCTION_TAX_START_YEAR && y <= RECONSTRUCTION_TAX_END_YEAR
+    ? RECONSTRUCTION_RATE
+    : 1;
+}
+
+/* 上場株式等の譲渡益税率。本則20%のうち所得税15%にだけ、2037年まで
+   復興特別所得税2.1%が上乗せされる。 */
+function capitalGainsTaxRate(year) {
+  return (
+    CAPITAL_GAINS_BASE_RATE +
+    CAPITAL_GAINS_INCOME_TAX_RATE * (reconstructionRateForYear(year) - 1)
+  );
+}
 
 /* 課税所得金額から所得税額（復興特別所得税込み、円未満切捨て）を求める。
    通常の所得にも退職所得にも同じ表を使う（退職所得は「1/2してから」
    ここへ渡すという違いだけ） */
-function incomeTax(taxableIncome) {
+function incomeTax(taxableIncome, year) {
   var kazei = roundedTaxableIncome(taxableIncome);
   if (kazei <= 0) return 0;
   for (var i = 0; i < INCOME_TAX_BRACKETS.length; i++) {
     var b = INCOME_TAX_BRACKETS[i];
     if (kazei > b.over) {
-      return Math.floor((kazei * b.rate - b.deduction) * RECONSTRUCTION_RATE);
+      return Math.floor(
+        (kazei * b.rate - b.deduction) * reconstructionRateForYear(year),
+      );
     }
   }
   return 0;
@@ -115,12 +143,12 @@ function retireIncome(price, koujo, years) {
    控除額を引数で受けるので、前に受けた退職手当との重複期間で
    調整した控除額（iDeCoの10年ルール）もそのまま渡せる。
    years は短期退職手当等の判定用（上の retireIncome を参照） */
-function calcTax(price, koujo, years) {
+function calcTax(price, koujo, years, year) {
   var kazei = roundedTaxableIncome(retireIncome(price, koujo, years));
   if (kazei <= 0) {
     return { tax: 0, inhabitTax: 0 };
   }
-  return { tax: incomeTax(kazei), inhabitTax: inhabitantTax(kazei) };
+  return { tax: incomeTax(kazei, year), inhabitTax: inhabitantTax(kazei) };
 }
 
 /* ---------- 公的年金等 ---------- */
@@ -179,6 +207,8 @@ function pensionDeduction(revenue, age) {
 var Tax = {
   roundedTaxableIncome: roundedTaxableIncome,
   incomeTax: incomeTax,
+  reconstructionRateForYear: reconstructionRateForYear,
+  capitalGainsTaxRate: capitalGainsTaxRate,
   inhabitantTax: inhabitantTax,
   retireDeductionBase: retireDeductionBase,
   retireDeduction: retireDeduction,
@@ -188,6 +218,9 @@ var Tax = {
   pensionDeduction: pensionDeduction,
   SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
   SHORT_TENURE_HALF_LIMIT: SHORT_TENURE_HALF_LIMIT,
+  RECONSTRUCTION_TAX_START_YEAR: RECONSTRUCTION_TAX_START_YEAR,
+  RECONSTRUCTION_TAX_END_YEAR: RECONSTRUCTION_TAX_END_YEAR,
+  CAPITAL_GAINS_BASE_RATE: CAPITAL_GAINS_BASE_RATE,
 };
 if (typeof window !== "undefined") window.Tax = Tax;
 
@@ -196,6 +229,8 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     roundedTaxableIncome: roundedTaxableIncome,
     incomeTax: incomeTax,
+    reconstructionRateForYear: reconstructionRateForYear,
+    capitalGainsTaxRate: capitalGainsTaxRate,
     inhabitantTax: inhabitantTax,
     retireDeductionBase: retireDeductionBase,
     retireDeduction: retireDeduction,
@@ -206,6 +241,9 @@ if (typeof module !== "undefined" && module.exports) {
     INCOME_TAX_BRACKETS: INCOME_TAX_BRACKETS,
     INHABITANT_TAX_RATE: INHABITANT_TAX_RATE,
     RECONSTRUCTION_RATE: RECONSTRUCTION_RATE,
+    RECONSTRUCTION_TAX_START_YEAR: RECONSTRUCTION_TAX_START_YEAR,
+    RECONSTRUCTION_TAX_END_YEAR: RECONSTRUCTION_TAX_END_YEAR,
+    CAPITAL_GAINS_BASE_RATE: CAPITAL_GAINS_BASE_RATE,
     PENSION_INCOME_BRACKETS: PENSION_INCOME_BRACKETS,
     SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
     SHORT_TENURE_HALF_LIMIT: SHORT_TENURE_HALF_LIMIT,

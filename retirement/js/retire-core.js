@@ -526,7 +526,7 @@ function calc() {
       }
 
       // 自己都合税金の計算
-      var ownTaxResult = calcTax(own_price, koujo);
+      var ownTaxResult = calcTax(own_price, koujo, undefined, stdYear + i);
       own_tax = ownTaxResult.tax;
       own_inhabit_tax = ownTaxResult.inhabitTax;
       if (own_price > 0) {
@@ -559,7 +559,12 @@ function calc() {
       }
 
       // 定年勧奨税金の計算
-      var compulsoryTaxResult = calcTax(compulsory_price, koujo);
+      var compulsoryTaxResult = calcTax(
+        compulsory_price,
+        koujo,
+        undefined,
+        stdYear + i,
+      );
       compulsory_tax = compulsoryTaxResult.tax;
       compulsory_inhabit_tax = compulsoryTaxResult.inhabitTax;
       if (compulsory_price > 0) {

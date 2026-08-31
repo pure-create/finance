@@ -18,6 +18,8 @@ const {
   pensionDeduction,
   INHABITANT_TAX_RATE,
   RECONSTRUCTION_RATE,
+  reconstructionRateForYear,
+  capitalGainsTaxRate,
   SHORT_TENURE_YEARS,
   SHORT_TENURE_HALF_LIMIT,
 } = require("../common/tax-core.js");
@@ -45,6 +47,18 @@ test("課税所得金額は1,000円未満を切り捨てる", () => {
 
 test("復興特別所得税は2.1%の上乗せ", () => {
   assert.strictEqual(RECONSTRUCTION_RATE, 1.021);
+});
+
+test("復興特別所得税は2037年までで、2038年以後は上乗せしない", () => {
+  assert.strictEqual(reconstructionRateForYear(2037), 1.021);
+  assert.strictEqual(reconstructionRateForYear(2038), 1);
+  taxNear(incomeTax(1000000, 2037), 51050);
+  assert.strictEqual(incomeTax(1000000, 2038), 50000);
+});
+
+test("上場株式等の譲渡益税率は2037年まで20.315%、以後20%", () => {
+  assert.ok(Math.abs(capitalGainsTaxRate(2037) - 0.20315) < 1e-12);
+  assert.ok(Math.abs(capitalGainsTaxRate(2038) - 0.2) < 1e-12);
 });
 
 test("住民税の所得割は10%", () => {

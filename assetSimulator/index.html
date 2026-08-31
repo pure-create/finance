@@ -64,7 +64,7 @@
      アイコンと開始URLは manifest.json 側に書いてある -->
     <link rel="manifest" href="../manifest.json" />
     <title>資産運用シミュレーター</title>
-    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260823b" />
@@ -542,7 +542,7 @@
               </div>
             </div>
             <p class="hint">
-              名目リターン（インフレ込み）で入力します。毎年末に元の配分へリバランスする前提です。
+              名目リターン（インフレ込み）で入力します。毎年末に元の配分へリバランスする前提です。3つの相関係数は、同時に成立する組み合わせを入力してください。
             </p>
           </details>
 
@@ -571,7 +571,7 @@
               type="checkbox"
               id="taxOn"
               checked
-            />売却益に課税する（20.315%）</label
+            />売却益に課税する（2037年まで20.315%、以後20%）</label
           >
           <label class="check"
             ><input
@@ -800,8 +800,9 @@
     <script src="../common/tool-nav.js?v=20260831a"></script>
     <script src="../common/qrcode.js?v=20260805a"></script>
     <script src="../common/share.js?v=20260823a"></script>
-    <script src="../common/state.js?v=20260823b"></script>
-    <script src="./js/asset-core.js?v=20260814a"></script>
-    <script src="./js/asset-simulator.js?v=20260823a"></script>
+    <script src="../common/state.js?v=20260901a"></script>
+    <script src="../common/tax-core.js?v=20260831a"></script>
+    <script src="./js/asset-core.js?v=20260901a"></script>
+    <script src="./js/asset-simulator.js?v=20260901a"></script>
   </body>
 </html>

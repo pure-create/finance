@@ -149,11 +149,11 @@ function joinAgeLimit(year) {
    iDeCoの掛金は全額が小規模企業共済等掛金控除になる。
    節税額は「税率×掛金」ではなく、掛金を引く前後の税額の差で出す。
    限界税率の区分をまたぐときに、前者では合わないため。 */
-function taxSaving(taxableIncome, annualContribution, tax) {
+function taxSaving(taxableIncome, annualContribution, tax, year) {
   const before = Math.max(0, taxableIncome);
   const after = Math.max(0, before - Math.max(0, annualContribution));
   return {
-    income: tax.incomeTax(before) - tax.incomeTax(after),
+    income: tax.incomeTax(before, year) - tax.incomeTax(after, year),
     inhabitant: tax.inhabitantTax(before) - tax.inhabitantTax(after),
     get total() {
       return this.income + this.inhabitant;
@@ -202,7 +202,9 @@ function accumulate(cfg, tax) {
     const monthly = canPay ? Math.min(cfg.monthly, limit) : 0;
     const annual = monthly * 12;
 
-    const s = canPay ? taxSaving(cfg.taxableIncome, annual, tax).total : 0;
+    const s = canPay
+      ? taxSaving(cfg.taxableIncome, annual, tax, year).total
+      : 0;
 
     balance =
       balance * (1 + rate) +
@@ -292,7 +294,13 @@ function isShortTenure(amount, deduction, years, tax) {
 function retireOnlyTax(cfg, tax) {
   if (!(cfg.retireAmount > 0)) return 0;
   const years = Math.max(0, Math.floor(cfg.retireAge - cfg.hireAge));
-  const t = tax.calcTax(cfg.retireAmount, tax.retireDeduction(years), years);
+  const receiveYear = cfg.startYear + (cfg.retireAge - cfg.startAge);
+  const t = tax.calcTax(
+    cfg.retireAmount,
+    tax.retireDeduction(years),
+    years,
+    receiveYear,
+  );
   return t.tax + t.inhabitTax;
 }
 
@@ -313,6 +321,8 @@ function lumpSumTax(cfg, tax) {
   );
   const retireYears = Math.max(0, Math.floor(cfg.retireAge - cfg.hireAge));
   const gap = cfg.idecoPayAge - cfg.retireAge; // ＋ならiDeCoが後
+  const idecoYear = cfg.startYear + (cfg.idecoPayAge - cfg.startAge);
+  const retireYear = cfg.startYear + (cfg.retireAge - cfg.startAge);
   const overlap = overlapYears(
     cfg.idecoJoinAge,
     cfg.idecoPayAge,
@@ -331,7 +341,7 @@ function lumpSumTax(cfg, tax) {
   // 退職金が無ければ、iDeCoだけを普通に計算する
   if (!(cfg.retireAmount > 0)) {
     const koujo = tax.retireDeduction(idecoYears);
-    const t = tax.calcTax(cfg.idecoAmount, koujo, idecoYears);
+    const t = tax.calcTax(cfg.idecoAmount, koujo, idecoYears, idecoYear);
     r.ideco = {
       amount: cfg.idecoAmount,
       deduction: koujo,
@@ -348,7 +358,7 @@ function lumpSumTax(cfg, tax) {
     const koujo = tax.retireDeduction(totalYears);
     const amount = cfg.idecoAmount + cfg.retireAmount;
     // 合算して1つの退職所得になるので、短期の判定も通算年数で見る
-    const t = tax.calcTax(amount, koujo, totalYears);
+    const t = tax.calcTax(amount, koujo, totalYears, idecoYear);
     r.combined = {
       amount: amount,
       deduction: koujo,
@@ -374,8 +384,13 @@ function lumpSumTax(cfg, tax) {
     r.adjusted = within ? "ideco" : null;
     const retireKoujo = tax.retireDeduction(retireYears);
     const idecoKoujo = adjustedDeduction(idecoYears, r.overlap, tax);
-    const rt = tax.calcTax(cfg.retireAmount, retireKoujo, retireYears);
-    const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears);
+    const rt = tax.calcTax(
+      cfg.retireAmount,
+      retireKoujo,
+      retireYears,
+      retireYear,
+    );
+    const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears, idecoYear);
     r.retire = {
       amount: cfg.retireAmount,
       deduction: retireKoujo,
@@ -395,8 +410,13 @@ function lumpSumTax(cfg, tax) {
     r.adjusted = within ? "retire" : null;
     const idecoKoujo = tax.retireDeduction(idecoYears);
     const retireKoujo = adjustedDeduction(retireYears, r.overlap, tax);
-    const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears);
-    const rt = tax.calcTax(cfg.retireAmount, retireKoujo, retireYears);
+    const it = tax.calcTax(cfg.idecoAmount, idecoKoujo, idecoYears, idecoYear);
+    const rt = tax.calcTax(
+      cfg.retireAmount,
+      retireKoujo,
+      retireYears,
+      retireYear,
+    );
     r.ideco = {
       amount: cfg.idecoAmount,
       deduction: idecoKoujo,
@@ -524,7 +544,8 @@ function annuityTax(cfg, tax) {
 
     /* 他の所得と合算して累進で決まるが、ここでは「iDeCoで増えた雑所得だけ」に
 		   税率を当てる簡易計算にしている。他の所得の有無で税率が変わる点は注記で断る */
-    const incomeT = tax.incomeTax(added);
+    const receiveYear = cfg.startYear + (age - cfg.startAge);
+    const incomeT = tax.incomeTax(added, receiveYear);
     const inhabitantT = tax.inhabitantTax(added);
     const t = incomeT + inhabitantT;
     total += t;
@@ -592,18 +613,25 @@ function compare(cfg, tax) {
    課税口座（特定口座）で出した場合にかかる譲渡益税と並べて初めて、
    出口で払う税金の意味が読める。
 
-   税率は20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）。
-   資産運用シミュレーター（assetSimulator/js/asset-core.js の TAX_RATE）と
-   同じ率で、こちらは受け取り方の比較に使うだけなので、切り替えは持たない。 */
-const TAXABLE_GAIN_TAX_RATE = 0.20315;
+   売却年が2037年までは20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）、
+   2038年以後は20%。資産運用シミュレーターと同じ common/tax-core.js の
+   年別税率を使う。下の定数は現在年の表示・既存テストとの互換用。 */
+const TAXABLE_GAIN_TAX_RATE =
+  typeof Tax !== "undefined"
+    ? Tax.capitalGainsTaxRate(new Date().getFullYear())
+    : require("../../common/tax-core.js").capitalGainsTaxRate(
+        new Date().getFullYear(),
+      );
 
 /* 運用益にかかる譲渡益税。売るまで課税されないので、受け取るときに
    一度だけ掛ける。年金や併用のように分けて受け取る場合、課税口座なら
    取り崩すたびに課税されてその先の運用が細るが、ここでは運用益の総額に
    一度掛けるだけにしている。課税口座を有利に見る側の簡略化なので、
    実際の差はこれより iDeCo 寄りになる（画面の注記で断る） */
-function taxableAccountTax(gain) {
-  return Math.max(0, gain || 0) * TAXABLE_GAIN_TAX_RATE;
+function taxableAccountTax(gain, year) {
+  const tax =
+    typeof Tax !== "undefined" ? Tax : require("../../common/tax-core.js");
+  return Math.max(0, gain || 0) * tax.capitalGainsTaxRate(year);
 }
 
 /* ---------- 出口：一時金と年金の併用 ----------

@@ -64,7 +64,7 @@
      アイコンと開始URLは manifest.json 側に書いてある -->
     <link rel="manifest" href="../manifest.json" />
     <title>年金の損益分岐点シミュレーター</title>
-    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260823b" />
@@ -122,7 +122,7 @@
                     aria-label="想定利回りについて"
                     aria-describedby="yieldTip"
                     >？<span class="tipbox" id="yieldTip" role="tooltip"
-                      >名目の想定利回りです。0.0%〜10.0%の範囲で設定できます。NISAなど非課税口座での運用を想定している場合は、右の「課税あり」のチェックを外してください。</span
+                      >名目の想定利回りです。0.0%〜10.0%の範囲で設定できます。NISAなど非課税口座での運用を想定している場合は、右の「課税あり」のチェックを外してください。「課税あり」は毎年の運用益に税率を掛ける簡易モデルで、取得費や売却時期、損益通算は考慮しません。</span
                     ></span
                   ></label
                 >
@@ -203,7 +203,9 @@
               繰上げ減額率: 0.4%/月（最大24%減）｜繰下げ増額率:
               0.7%/月（最大84%増）<br />
               65歳受給開始の年金額を100%とすると、各受給開始年齢の年金額は60歳：76%、70歳：142%、75歳：184%になります。<br />
-              ・ 物価スライド・加給年金・在職老齢年金等は未考慮。
+              ・ 物価スライド・加給年金・在職老齢年金等は未考慮。<br />
+              ・
+              「課税あり」は毎年の運用益に20.315%を掛ける簡易モデルで、取得費・売却時期・損益通算等は未考慮。
             </p>
             <p class="foot-disclaimer">
               ・
@@ -227,7 +229,7 @@
     <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
     <script src="../common/qrcode.js?v=20260805a"></script>
     <script src="../common/share.js?v=20260823a"></script>
-    <script src="../common/state.js?v=20260823b"></script>
+    <script src="../common/state.js?v=20260901a"></script>
     <script src="./js/pension-core.js?v=20260814b"></script>
     <script src="./js/pension-breakeven.js?v=20260823a"></script>
   </body>

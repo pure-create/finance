@@ -14,6 +14,7 @@ const {
   percentile,
   logParams,
   cholesky3,
+  isValidCorrelation3,
   mulberry32,
   makeNormal,
   incomeAt,
@@ -57,6 +58,7 @@ function cfg(over) {
       nisaUsed: 0,
       trials: 1,
       seed: 20260801,
+      startYear: 2026,
     },
     over || {},
   );
@@ -282,6 +284,23 @@ test("売却益への課税は含み益の割合ぶんだけかかる", () => {
   near(free.medianFinalWithdrawReal, 100, 1e-6, "非課税の手取り");
 });
 
+test("売却益税率は売却年が2038年になると20%へ切り替わる", () => {
+  const common = {
+    ageNow: 65,
+    ageRetire: 65,
+    ageEnd: 67,
+    ret: [10, 0, 0],
+    withdraw: 100,
+    taxOn: true,
+  };
+  const through2037 = simulate(cfg(Object.assign({ startYear: 2036 }, common)));
+  const through2038 = simulate(cfg(Object.assign({ startYear: 2037 }, common)));
+  assert.ok(
+    balanceAt(through2038, 2) > balanceAt(through2037, 2),
+    "2038年の売却に2037年までの税率が使われている",
+  );
+});
+
 test("NISAの生涯枠を使い切っていれば、NISAを使わない場合と同じ結果になる", () => {
   const common = {
     ageNow: 40,
@@ -449,11 +468,16 @@ test("cholesky3：無相関なら単位行列", () => {
   assert.deepStrictEqual(cholesky3(0, 0, 0), [1, 0, 0, 0, 1, 0, 0, 0, 1]);
 });
 
-test("cholesky3：相関1でもNaNにならない", () => {
+test("cholesky3：成立する境界値でもNaNにならない", () => {
   for (const v of cholesky3(1, 1, 1))
     assert.ok(Number.isFinite(v), "相関1でNaN");
-  for (const v of cholesky3(-1, -1, -1))
-    assert.ok(Number.isFinite(v), "相関−1でNaN");
+});
+
+test("相関行列：成立しない組み合わせを拒否する", () => {
+  assert.equal(isValidCorrelation3(0.15, 0, 0.1), true);
+  assert.equal(isValidCorrelation3(-1, -1, -1), false);
+  assert.equal(isValidCorrelation3(1.01, 0, 0), false);
+  assert.throws(() => cholesky3(-1, -1, -1), RangeError);
 });
 
 test("percentile：ソート済み配列から線形補間で求める", () => {

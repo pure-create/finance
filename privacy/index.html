@@ -64,7 +64,7 @@
      アイコンと開始URLは manifest.json 側に書いてある -->
     <link rel="manifest" href="../manifest.json" />
     <title>プライバシーポリシー</title>
-    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260823b" />
@@ -181,7 +181,7 @@
             そのURLを第三者にお渡しになると、URLを知った方は同じ条件の試算を開き、入力された内容を確認できます。お渡しになる相手にご注意ください。
           </li>
           <li>
-            共有用のURLを開いたときは、URLに含まれる試算条件も通信に乗り、下記のアクセス解析にも記録されます。入力している間に送信されることはありません（試算条件がURLに入るのは、共有の操作をしたときだけです）。
+            共有用のURLを開くための通信にはURL内の試算条件が含まれますが、アクセス解析へ送るページURLと参照元からは「?」以降の試算条件を除外しています。入力している間に試算条件が送信されることもありません。
           </li>
         </ul>
 
@@ -193,7 +193,7 @@
         <ul>
           <li>
             Google Analytics は Cookie
-            を使用し、閲覧されたページのURL・参照元・ブラウザや端末の種類・おおよその地域などの情報を収集します。氏名など個人を特定する情報は含まれません。
+            を使用し、閲覧されたページのパス・参照元のパス・ブラウザや端末の種類・おおよその地域などの情報を収集します。共有URLの「?」以降に含まれる試算条件は送信しません。氏名など個人を特定する情報も含まれません。
           </li>
           <li>
             収集された情報は Google

@@ -94,10 +94,16 @@ test("資産運用：NISAの投資枠の説明が定数と一致する", () => {
 test("資産運用：譲渡益税率の表示が定数と一致する", () => {
   const m = must(
     prose("assetSimulator/index.html"),
-    /売却益に課税する（([\d.]+)%）/,
+    /売却益に課税する（2037年まで([\d.]+)%、以後([\d.]+)%）/,
     "assetSimulator/index.html",
   );
-  ratioEquals(m[1], asset.TAX_RATE, "譲渡益税率");
+  ratioEquals(m[1], tax.capitalGainsTaxRate(2037), "譲渡益税率");
+  ratioEquals(m[2], tax.capitalGainsTaxRate(2038), "2038年以後の譲渡益税率");
+  assert.strictEqual(
+    asset.TAX_RATE,
+    tax.capitalGainsTaxRate(new Date().getFullYear()),
+    "資産運用の現在年の税率が共通関数と違う",
+  );
 });
 
 /* ---------- 二次相続シミュレーター ---------- */
@@ -710,18 +716,28 @@ test("iDeCo：注記の譲渡益税率が定数と一致する", () => {
   const text = prose("ideco/index.html");
   const m = must(
     text,
-    /売却益に([\d.]+)%（所得税(\d+)%＋復興特別所得税([\d.]+)%＋住民税(\d+)%）/,
+    /売却年が2037年までは([\d.]+)%（所得税(\d+)%＋復興特別所得税([\d.]+)%＋住民税(\d+)%）、2038年以後は([\d.]+)%/,
     "ideco/index.html",
   );
-  ratioEquals(m[1], ideco.TAXABLE_GAIN_TAX_RATE, "課税口座の譲渡益税率");
+  ratioEquals(m[1], tax.capitalGainsTaxRate(2037), "課税口座の譲渡益税率");
   // 書かれている内訳の合計が、率そのものと合っているか
   const parts = (Number(m[2]) + Number(m[3]) + Number(m[4])) / 100;
   assert.ok(
-    Math.abs(parts - ideco.TAXABLE_GAIN_TAX_RATE) < 1e-12,
+    Math.abs(parts - tax.capitalGainsTaxRate(2037)) < 1e-12,
     "内訳の合計が率と合わない 内訳 " +
       parts +
       " / 定数 " +
-      ideco.TAXABLE_GAIN_TAX_RATE,
+      tax.capitalGainsTaxRate(2037),
+  );
+  ratioEquals(
+    m[5],
+    tax.capitalGainsTaxRate(2038),
+    "2038年以後の課税口座の譲渡益税率",
+  );
+  assert.strictEqual(
+    ideco.TAXABLE_GAIN_TAX_RATE,
+    tax.capitalGainsTaxRate(new Date().getFullYear()),
+    "iDeCoの現在年の税率が共通関数と違う",
   );
   // 資産運用シミュレーターと同じ率（片方だけ直すと食い違う）
   assert.strictEqual(

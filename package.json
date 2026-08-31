@@ -3,6 +3,11 @@
   "private": true,
   "description": "資産運用・金融シミュレーターの計算部分のテスト。サイト自体はビルド不要の静的HTMLで、このファイルはテストを走らせるためだけにある",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "format": "prettier --write \"**/*.{html,css,js,json,md,yml}\"",
+    "format:check": "prettier --check \"**/*.{html,css,js,json,md,yml}\""
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
   }
 }
