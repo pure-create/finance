@@ -46,10 +46,14 @@ body {
 
 /* 展開状態にかかわらず、早見表は0〜1,000万円の100万円刻みにそろえる。 */
 .quick-detail,
+.compare-detail,
 .quick-high {
   display: none !important;
 }
 .quick-table .quick-major td:first-child {
+  display: table-cell;
+}
+.compare-table .compare-major td:first-child {
   display: table-cell;
 }
 

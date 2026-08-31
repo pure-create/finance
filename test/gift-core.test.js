@@ -59,6 +59,7 @@ test("贈与・相続で取得費を引き継ぎ、最終売却時に全含み�
     estate: 1000,
     unrealizedGain: 400,
     considerCapitalGainsTax: true,
+    giftMethod: "inKind",
     children: 1,
     childAges: [20],
     rate: 0,
@@ -68,6 +69,51 @@ test("贈与・相続で取得費を引き継ぎ、最終売却時に全含み�
   closeTo(r.capitalGainsTax, 400 * 0.20315);
   closeTo(r.finalKeep + r.taxTotal, 1000);
   closeTo(r.taxTotal, r.giftTax + r.inheritanceTax + r.capitalGainsTax);
+});
+
+test("贈与方法の既定値は、親が売却益税を負担する現金贈与", () => {
+  const input = {
+    startYear: 2026,
+    estate: 2000,
+    unrealizedGain: 800,
+    considerCapitalGainsTax: true,
+    children: 1,
+    childAges: [20],
+    rate: 0,
+    years: 2,
+    annualGift: 500,
+  };
+  const cash = gift.simulateScenario({ ...input, giftMethod: "cash" });
+  const byDefault = gift.simulateScenario(input);
+  const inKind = gift.simulateScenario({ ...input, giftMethod: "inKind" });
+
+  assert.equal(byDefault.giftMethod, "cash");
+  closeTo(byDefault.finalKeep, cash.finalKeep);
+  closeTo(byDefault.taxTotal, cash.taxTotal);
+  assert.ok(cash.detail[0].capitalGainsTax > inKind.detail[0].capitalGainsTax);
+  closeTo(cash.childGiftBasis, cash.childGift);
+  assert.ok(inKind.childGiftBasis < inKind.childGift);
+  closeTo(cash.finalKeep + cash.taxTotal, 2000);
+  closeTo(inKind.finalKeep + inKind.taxTotal, 2000);
+});
+
+test("売却益課税を考慮しない場合は、現物贈与と現金贈与の結果が一致する", () => {
+  const input = {
+    estate: 10000,
+    unrealizedGain: 4000,
+    considerCapitalGainsTax: false,
+    children: 2,
+    childAges: [20, 18],
+    rate: 5,
+    years: 20,
+    annualGift: 300,
+  };
+  const cash = gift.simulateScenario({ ...input, giftMethod: "cash" });
+  const inKind = gift.simulateScenario({ ...input, giftMethod: "inKind" });
+  closeTo(cash.giftTax, inKind.giftTax);
+  closeTo(cash.inheritanceTax, inKind.inheritanceTax);
+  closeTo(cash.taxTotal, inKind.taxTotal);
+  closeTo(cash.finalKeep, inKind.finalKeep);
 });
 
 test("売却益課税を選ばなければ含み益を入力しても従来結果を変えない", () => {

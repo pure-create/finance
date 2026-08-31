@@ -12,6 +12,7 @@
     ["years", 20, "y"],
     ["considerCapitalGainsTax", false, "cgt"],
     ["unrealizedGain", 0, "ug"],
+    ["giftMethod", "cash", "gm"],
     ["childAge1", 20, "a1"],
     ["childAge2", 18, "a2"],
     ["childAge3", 20, "a3"],
@@ -36,6 +37,7 @@
       startYear: SIM_START_YEAR,
       considerCapitalGainsTax: $("considerCapitalGainsTax").checked,
       unrealizedGain: +$("unrealizedGain").value,
+      giftMethod: $("giftMethod").value,
       childAges: Array.from(
         { length: children },
         (_, i) => +$("childAge" + (i + 1)).value,
@@ -55,10 +57,13 @@
     const enabled = $("considerCapitalGainsTax").checked;
     const estate = Math.max(0, +$("estate").value || 0);
     const gain = $("unrealizedGain");
+    const method = $("giftMethod");
     gain.disabled = !enabled;
+    method.disabled = !enabled;
     gain.max = String(estate);
     if (+gain.value > estate) gain.value = String(estate);
     $("unrealizedGainField").classList.toggle("is-disabled", !enabled);
+    $("giftMethodField").classList.toggle("is-disabled", !enabled);
   }
   function niceTickStep(max) {
     const target = Math.max(100, max / 6),
@@ -296,35 +301,51 @@
       '）<br><span class="note">比較範囲: 0〜' +
       fmt(comparisonMax) +
       "万円 / 子1人・年</span>";
-    const major = new Set([110, bestTax.annual, bestKeep.annual]);
-    for (let a = 0; a <= comparisonMax; a += 100) major.add(a);
+    const highlighted = new Set([bestKeep.annual]);
     let rows = [];
-    currentSweep
-      .filter((x) => major.has(x.annual))
-      .forEach((x) =>
-        rows.push(
-          '<tr class="' +
-            (x === bestKeep ? "chosen" : "") +
-            '"><td>' +
-            fmt(x.annual) +
-            "</td><td>" +
-            yen(x.giftTotal) +
-            "</td><td>" +
-            yen(x.giftTax) +
-            "</td><td>" +
-            yen(x.inheritanceTax) +
-            "</td><td>" +
-            yen(x.capitalGainsTax) +
-            "</td><td>" +
-            yen(x.taxTotal) +
-            "</td><td>" +
-            yen(x.finalKeep) +
-            "</td><td>" +
-            (x.finalKeep - base.finalKeep >= 0 ? "+" : "") +
-            yen(x.finalKeep - base.finalKeep) +
-            "</td></tr>",
-        ),
+    currentSweep.forEach((x) => {
+      const hundredStep = x.annual % 100 === 0,
+        visible = hundredStep || highlighted.has(x.annual),
+        group = Math.floor(x.annual / 100) * 100,
+        button =
+          hundredStep && x.annual < comparisonMax
+            ? '<button class="quick-expand compare-expand" type="button" data-start="' +
+              x.annual +
+              '" data-tooltip="次の100万円までを10万円刻みで表示します。" aria-expanded="false" aria-label="' +
+              fmt(x.annual) +
+              "万円から" +
+              fmt(x.annual + 100) +
+              '万円までを10万円刻みで表示"><span class="quick-arrow" aria-hidden="true">▽</span></button>'
+            : "",
+        classes = [visible ? "compare-major" : "compare-detail"];
+      if (x === bestKeep) classes.push("chosen");
+      rows.push(
+        '<tr class="' +
+          classes.join(" ") +
+          '"' +
+          (visible ? "" : ' data-group="' + group + '" hidden') +
+          "><td><span>" +
+          fmt(x.annual) +
+          "</span>" +
+          button +
+          "</td><td>" +
+          yen(x.giftTotal) +
+          "</td><td>" +
+          yen(x.giftTax) +
+          "</td><td>" +
+          yen(x.inheritanceTax) +
+          "</td><td>" +
+          yen(x.capitalGainsTax) +
+          "</td><td>" +
+          yen(x.taxTotal) +
+          "</td><td>" +
+          yen(x.finalKeep) +
+          "</td><td>" +
+          (x.finalKeep - base.finalKeep >= 0 ? "+" : "") +
+          yen(x.finalKeep - base.finalKeep) +
+          "</td></tr>",
       );
+    });
     $("compareBody").innerHTML = rows.join("");
     const labels = currentSweep.map((x) => x.annual),
       ds = (label, data, color, style) =>
@@ -391,28 +412,26 @@
       "万円",
       bestTax.annual,
     );
-    $("bestAnnualTile").textContent = fmt(bestTax.annual) + "万円/人";
-    $("giftTaxTile").textContent = yen(bestTax.giftTax);
-    $("inheritanceTaxTile").textContent = yen(bestTax.inheritanceTax);
-    $("capitalGainsTaxTile").textContent = yen(bestTax.capitalGainsTax);
-    $("totalTaxTile").textContent = yen(bestTax.taxTotal);
-    $("effectiveTaxRateTile").textContent =
-      bestTax.effectiveTaxRate.toFixed(2) + "%";
-    const totalTaxDiff = base.taxTotal - bestTax.taxTotal;
-    const effectiveRateDiff = base.effectiveTaxRate - bestTax.effectiveTaxRate;
-    $("noGiftInheritanceTax").textContent =
-      yen(base.inheritanceTax) +
+    $("bestAnnualTile").textContent = fmt(bestKeep.annual) + "万円/人";
+    $("giftTaxTile").textContent = yen(bestKeep.giftTax);
+    $("inheritanceTaxTile").textContent = yen(bestKeep.inheritanceTax);
+    $("capitalGainsTaxTile").textContent = yen(bestKeep.capitalGainsTax);
+    $("totalTaxTile").textContent = yen(bestKeep.taxTotal);
+    $("finalKeepTile").textContent = yen(bestKeep.finalKeep);
+    const totalTaxDiff = base.taxTotal - bestKeep.taxTotal;
+    const finalKeepDiff = base.finalKeep - bestKeep.finalKeep;
+    $("noGiftTotalTax").textContent =
+      yen(base.taxTotal) +
       "（差額" +
       (totalTaxDiff >= 0 ? "+" : "") +
       yen(totalTaxDiff) +
       "）";
-    $("noGiftCapitalGainsTax").textContent = yen(base.capitalGainsTax);
-    $("noGiftEffectiveTaxRate").textContent =
-      base.effectiveTaxRate.toFixed(2) +
-      "%（" +
-      (effectiveRateDiff >= 0 ? "+" : "") +
-      effectiveRateDiff.toFixed(2) +
-      "%）";
+    $("noGiftFinalKeep").textContent =
+      yen(base.finalKeep) +
+      "（" +
+      (finalKeepDiff >= 0 ? "+" : "") +
+      yen(finalKeepDiff) +
+      "）";
     $("shortfall").hidden = !currentSweep.some((x) => x.shortfall);
   }
   function categoryLabel(x) {
@@ -457,7 +476,9 @@
       "万円 / 子1人</strong>を贈与するケースです。各年1月1日時点の年齢で、子どもごとに一般・特例税率を判定します。";
     if (current.considerCapitalGainsTax)
       $("timelineNote").innerHTML +=
-        " 売却益税は、各年の贈与税支払いに伴う売却分と、相続年の全資産売却分です。";
+        (current.giftMethod === "cash"
+          ? " 売却益税は、各年に現金贈与を行うための親側の売却分と、相続年の全資産売却分です。"
+          : " 売却益税は、各年の贈与税支払いに伴う受贈資産の売却分と、相続年の全資産売却分です。");
   }
   function update() {
     updateChildAgeInputs();
@@ -501,6 +522,24 @@
       .querySelectorAll('.quick-detail[data-group="' + b.dataset.start + '"]')
       .forEach((row) => (row.hidden = !open));
   });
+  $("compareBody").addEventListener("click", (e) => {
+    const b = e.target.closest(".compare-expand");
+    if (!b) return;
+    const open = b.getAttribute("aria-expanded") !== "true";
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    b.querySelector(".quick-arrow").textContent = open ? "△" : "▽";
+    b.setAttribute(
+      "aria-label",
+      fmt(+b.dataset.start) +
+        "万円から" +
+        fmt(+b.dataset.start + 100) +
+        "万円までの10万円刻みを" +
+        (open ? "閉じる" : "表示"),
+    );
+    document
+      .querySelectorAll('.compare-detail[data-group="' + b.dataset.start + '"]')
+      .forEach((row) => (row.hidden = !open));
+  });
   $("quickMore").onclick = () => {
     const open = $("quickMore").getAttribute("aria-expanded") !== "true";
     $("quickMore").setAttribute("aria-expanded", open ? "true" : "false");
@@ -522,26 +561,25 @@
         });
     }
   };
-  const quickTable = document.querySelector(".quick-table");
-  quickTable.addEventListener("pointerover", (e) => {
-    const t = e.target.closest("[data-tooltip]");
-    if (t && quickTable.contains(t)) showQuickTip(t);
-  });
-  quickTable.addEventListener("pointerout", (e) => {
-    if (activeTipTarget && !activeTipTarget.contains(e.relatedTarget))
-      hideQuickTip();
-  });
-  quickTable.addEventListener("focusin", (e) => {
+  document.addEventListener("pointerover", (e) => {
     const t = e.target.closest("[data-tooltip]");
     if (t) showQuickTip(t);
   });
-  quickTable.addEventListener("focusout", (e) => {
+  document.addEventListener("pointerout", (e) => {
+    if (activeTipTarget && !activeTipTarget.contains(e.relatedTarget))
+      hideQuickTip();
+  });
+  document.addEventListener("focusin", (e) => {
+    const t = e.target.closest("[data-tooltip]");
+    if (t) showQuickTip(t);
+  });
+  document.addEventListener("focusout", (e) => {
     if (activeTipTarget && !activeTipTarget.contains(e.relatedTarget))
       hideQuickTip();
   });
   document
-    .querySelector(".quick-scroll")
-    .addEventListener("scroll", hideQuickTip);
+    .querySelectorAll(".quick-scroll, .compare-scroll")
+    .forEach((scroll) => scroll.addEventListener("scroll", hideQuickTip));
   addEventListener("resize", hideQuickTip);
   addEventListener("scroll", hideQuickTip, { passive: true });
   inputs.restore();

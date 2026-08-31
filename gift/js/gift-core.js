@@ -187,6 +187,7 @@ function simulateScenario(input) {
   const rate = Math.max(-0.99, Math.min(1, finite(o.rate, 5) / 100));
   const annual = positive(o.annualGift);
   const considerCapitalGainsTax = Boolean(o.considerCapitalGainsTax);
+  const giftMethod = o.giftMethod === "inKind" ? "inKind" : "cash";
   const suppliedAges = Array.isArray(o.childAges) ? o.childAges : [];
   const childAges = Array.from({ length: children }, (_, i) =>
     Math.max(0, Math.min(100, Math.floor(finite(suppliedAges[i], 18)))),
@@ -203,18 +204,34 @@ function simulateScenario(input) {
   const detail = [];
   function give(year) {
     const wanted = annual * children;
-    const assetBeforeGift = asset;
-    const actual = Math.min(asset, wanted);
+    let actual = 0,
+      basisPerChild = 0,
+      yearCapitalGainsTax = 0;
+    if (giftMethod === "cash") {
+      const sale = sellForNetCash(
+        asset,
+        assetBasis,
+        wanted,
+        year,
+        considerCapitalGainsTax,
+      );
+      actual = Math.max(0, sale.grossSale - sale.capitalGainsTax);
+      asset = sale.marketRemaining;
+      assetBasis = sale.basisRemaining;
+      yearCapitalGainsTax = sale.capitalGainsTax;
+    } else {
+      const assetBeforeGift = asset;
+      actual = Math.min(asset, wanted);
+      const transferredBasis = assetBeforeGift
+        ? assetBasis * (actual / assetBeforeGift)
+        : 0;
+      basisPerChild = transferredBasis / children;
+      asset -= actual;
+      assetBasis = Math.max(0, assetBasis - transferredBasis);
+    }
     if (actual + 1e-9 < wanted) shortfall = true;
     const perChild = actual / children;
-    const transferredBasis = assetBeforeGift
-      ? assetBasis * (actual / assetBeforeGift)
-      : 0;
-    const basisPerChild = transferredBasis / children;
-    asset -= actual;
-    assetBasis = Math.max(0, assetBasis - transferredBasis);
     let yearTax = 0,
-      yearCapitalGainsTax = 0,
       generalChildren = 0,
       specialChildren = 0;
     for (let i = 0; i < children; i++) {
@@ -223,17 +240,23 @@ function simulateScenario(input) {
       const gt = giftTax(perChild, category);
       category === "special" ? specialChildren++ : generalChildren++;
       history[i].push({ year, amount: perChild, tax: gt.tax, age, category });
-      const payment = sellForNetCash(
-        perChild,
-        basisPerChild,
-        gt.tax,
-        year,
-        considerCapitalGainsTax,
-      );
-      childGift += payment.marketRemaining;
-      childGiftBasis += payment.basisRemaining;
+      if (giftMethod === "cash") {
+        const invested = Math.max(0, perChild - gt.tax);
+        childGift += invested;
+        childGiftBasis += invested;
+      } else {
+        const payment = sellForNetCash(
+          perChild,
+          basisPerChild,
+          gt.tax,
+          year,
+          considerCapitalGainsTax,
+        );
+        childGift += payment.marketRemaining;
+        childGiftBasis += payment.basisRemaining;
+        yearCapitalGainsTax += payment.capitalGainsTax;
+      }
       yearTax += gt.tax;
-      yearCapitalGainsTax += payment.capitalGainsTax;
     }
     giftTotal += actual;
     giftTaxTotal += yearTax;
@@ -310,6 +333,7 @@ function simulateScenario(input) {
     inheritanceTax,
     capitalGainsTax: capitalGainsTaxTotal,
     considerCapitalGainsTax,
+    giftMethod,
     unrealizedGain: Math.min(positive(o.estate), positive(o.unrealizedGain)),
     taxTotal,
     grossTransfer,

@@ -32,6 +32,12 @@
   color: var(--text-sub);
   margin-bottom: 5px;
 }
+.field label.field-label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+}
 .num {
   display: flex;
   align-items: center;
@@ -155,8 +161,29 @@
 }
 .summary {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "annual total keep"
+    "gift inheritance gains";
   gap: 8px;
+}
+.summary-annual {
+  grid-area: annual;
+}
+.summary-gift-tax {
+  grid-area: gift;
+}
+.summary-inheritance-tax {
+  grid-area: inheritance;
+}
+.summary-capital-gains-tax {
+  grid-area: gains;
+}
+.summary-total-tax {
+  grid-area: total;
+}
+.summary-final-keep {
+  grid-area: keep;
 }
 .tile {
   background: var(--surface-2);
@@ -168,10 +195,11 @@
   color: var(--muted);
 }
 .tile .v {
-  font-size: 19px;
+  font-size: clamp(15px, 4vw, 19px);
   font-weight: 750;
   margin-top: 3px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .tile.keep .v {
   color: var(--gift-keep);
@@ -292,6 +320,18 @@
   background: color-mix(in srgb, var(--gift-soft) 42%, var(--surface));
 }
 .quick-table .quick-detail td:first-child {
+  padding-left: 24px;
+}
+.compare-table .compare-major td:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.compare-table .compare-detail {
+  background: color-mix(in srgb, var(--gift-soft) 42%, var(--surface));
+}
+.compare-table .compare-detail td:first-child {
   padding-left: 24px;
 }
 .quick-expand {
@@ -441,11 +481,15 @@ html.printing .floating-tooltip,
 html.printing .quick-expand,
 html.printing .quick-more,
 html.printing .quick-detail,
+html.printing .compare-detail,
 html.printing .quick-high,
 html.printing .range-row input[type="range"] {
   display: none !important;
 }
 html.printing .quick-table .quick-major td:first-child {
+  display: table-cell;
+}
+html.printing .compare-table .compare-major td:first-child {
   display: table-cell;
 }
 html.printing .range-row {
@@ -461,11 +505,6 @@ html.printing .field.is-disabled {
 html.printing .chart-wrap {
   height: 220px;
 }
-@media (max-width: 900px) {
-  .summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 @media (max-width: 640px) {
   body {
     padding: 12px;
@@ -478,6 +517,10 @@ html.printing .chart-wrap {
   }
   .summary {
     grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "annual keep"
+      "total gift"
+      "inheritance gains";
   }
   .charts {
     grid-template-columns: 1fr;

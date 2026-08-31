@@ -58,8 +58,8 @@
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260823b" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
-    <link rel="stylesheet" href="./css/main.css?v=20260830h" />
-    <link rel="stylesheet" href="./css/print.css?v=20260830c" media="print" />
+    <link rel="stylesheet" href="./css/main.css?v=20260831b" />
+    <link rel="stylesheet" href="./css/print.css?v=20260831a" media="print" />
   </head>
   <body>
     <a class="skip-link" href="#main">本文へ</a>
@@ -187,7 +187,7 @@
                 <span>売却益への課税を考慮する</span>
               </label>
               <p class="field-note">
-                売却した年が2037年までは20.315%、2038年以後は20%で計算します。贈与税を支払うための各年の一部売却と、最終年の全資産売却が対象です。
+                売却した年が2037年までは20.315%、2038年以後は20%で計算します。各年の課税対象は贈与方法により変わり、最終年は全資産を売却します。
               </p>
             </div>
             <div class="field" id="unrealizedGainField">
@@ -205,6 +205,25 @@
               </span>
               <p class="field-note">
                 課税口座の上場株式・投資信託等に含まれる現在の含み益です。
+              </p>
+            </div>
+            <div class="field is-disabled" id="giftMethodField">
+              <label class="field-label-with-help" for="giftMethod">
+                <span>贈与方法</span>
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="贈与方法について"
+                  data-tooltip="売却して現金贈与：親が贈与額を手取りで用意するため資産を売却し、親側の売却益税も資産から差し引きます。子は贈与税支払い後の現金を再投資します。現物贈与：贈与時には売却せず、親の取得費を子へ引き継ぎます。子が贈与税を支払うための売却時に売却益税を計算します。特定口座間では、受贈者が同一銘柄を保有していると一部数量の現物移管が制限される場合があります。"
+                  >？</span
+                >
+              </label>
+              <select id="giftMethod" disabled>
+                <option value="cash" selected>売却して現金贈与</option>
+                <option value="inKind">現物贈与</option>
+              </select>
+              <p class="field-note">
+                売却益への課税を考慮する場合に選択できます。
               </p>
             </div>
             <div class="field">
@@ -337,50 +356,44 @@
           <h2 class="sec-title">年間贈与額別の比較</h2>
           <div class="best" id="best"></div>
           <div class="summary">
-            <div class="tile">
-              <div class="k">合計税額最小の年間贈与額</div>
+            <div class="tile summary-annual">
+              <div class="k">手残り最大の年間贈与額</div>
               <div class="v" id="bestAnnualTile">—</div>
             </div>
-            <div class="tile tax">
+            <div class="tile tax summary-gift-tax">
               <div class="k">累計贈与税</div>
               <div class="v" id="giftTaxTile">—</div>
             </div>
-            <div class="tile tax">
+            <div class="tile tax summary-inheritance-tax">
               <div class="k">相続税</div>
               <div class="v" id="inheritanceTaxTile">—</div>
             </div>
-            <div class="tile tax">
+            <div class="tile tax summary-capital-gains-tax">
               <div class="k">売却益税</div>
               <div class="v" id="capitalGainsTaxTile">—</div>
             </div>
-            <div class="tile tax">
+            <div class="tile tax summary-total-tax">
               <div class="k">合計税額</div>
               <div class="v" id="totalTaxTile">—</div>
             </div>
-            <div class="tile keep">
-              <div class="k">実効税率</div>
-              <div class="v" id="effectiveTaxRateTile">—</div>
+            <div class="tile keep summary-final-keep">
+              <div class="k">最終手残り</div>
+              <div class="v" id="finalKeepTile">—</div>
             </div>
           </div>
           <div class="no-gift-baseline">
             <span class="no-gift-title">贈与を行わない場合</span>
             <span>
-              相続税額
-              <strong id="noGiftInheritanceTax">—</strong>
+              合計税額
+              <strong id="noGiftTotalTax">—</strong>
             </span>
             <span>
-              売却益税
-              <strong id="noGiftCapitalGainsTax">—</strong>
-            </span>
-            <span>
-              実効税率
-              <strong id="noGiftEffectiveTaxRate">—</strong>
+              最終手残り額
+              <strong id="noGiftFinalKeep">—</strong>
             </span>
           </div>
           <p class="summary-note">
-            各税額と実効税率は、合計税額が最小になるケースの値です。実効税率 ＝
-            合計税額
-            ÷（累計贈与額＋相続時の残資産）。相続前贈与加算額は過去の贈与と重複するため、分母へ再加算しません。
+            各税額と最終手残りは、最終手残りが最大になるケースの値です。贈与を行わない場合の差額も、同じケースとの比較です。
             <br />
             贈与を行う場合は贈与税を早期に支払うため、その税額を運用できず、運用益を得る機会が失われます。そのため、通常は「合計税額の差」より「最終手残りの差」が小さくなります。
           </p>
@@ -388,15 +401,15 @@
             比較範囲の一部では、資産不足により設定額の贈与を継続できません。該当ケースは可能な範囲に自動制限しています。
           </p>
           <div
-            class="scroll"
+            class="scroll compare-scroll"
             tabindex="0"
             role="region"
             aria-label="年間贈与額別の比較表"
           >
-            <table>
+            <table class="compare-table">
               <thead>
                 <tr>
-                  <th>年間贈与額/人</th>
+                  <th>年間贈与額（万円）/人</th>
                   <th>累計贈与額</th>
                   <th>累計贈与税</th>
                   <th>相続税</th>
@@ -472,10 +485,10 @@
               贈与者は子どもの父母である前提です。各贈与年の1月1日時点で18歳未満の子には一般税率、18歳以上の子には特例税率を適用します。
             </li>
             <li>
-              贈与は毎年の年初、贈与税は受贈財産を一部売却して支払い、相続予定資産と子の贈与資産を同じ一定利回りで年末に運用すると仮定します。
+              贈与は毎年の年初に行います。現金贈与では、親が贈与額を手取りで用意できる数量を売却して売却益税を負担し、子は贈与税を差し引いた現金を再投資します。現物贈与では取得費を子へ引き継ぎ、子が受贈資産の一部を売却して贈与税を支払います。
             </li>
             <li>
-              「最終時点の売却益課税を考慮する」を選んだ場合、運用益はすべて値上がり益とし、取得費は増えない前提です。贈与・相続時には取得費を時価に比例して引き継ぎ、贈与税を支払うための売却とシミュレーション最終年の全資産売却に譲渡益税を適用します。税率は2037年まで20.315%、2038年以後20%です。
+              「売却益への課税を考慮する」を選んだ場合、運用益はすべて値上がり益とし、取得費は増えない前提です。現金贈与では親の売却時、現物贈与では子の贈与税支払いに伴う売却時に課税し、いずれもシミュレーション最終年の全資産売却に課税します。税率は2037年まで20.315%、2038年以後20%です。
             </li>
             <li>
               売却益課税では、課税口座の上場株式・投資信託等を想定しています。NISA、配当・分配金への課税、売却手数料、譲渡損失の損益通算・繰越控除、相続財産を売却した場合の取得費加算の特例は考慮しません。
@@ -531,6 +544,11 @@
                 target="_blank"
                 rel="noopener"
                 >No.3267 相続財産を譲渡した場合の取得費の特例</a
+              >、<a
+                href="https://www.jsda.or.jp/about/content/1911_zeisei.pdf"
+                target="_blank"
+                rel="noopener"
+                >日本証券業協会「特定口座間贈与の制限撤廃」要望</a
               >
             </li>
           </ul>
@@ -545,7 +563,7 @@
     <script src="../common/chart-print.js?v=20260815a"></script>
     <script src="../common/tool-nav.js?v=20260814a"></script>
     <script src="../inheritance/js/inheritance-core.js?v=20260829a"></script>
-    <script src="./js/gift-core.js?v=20260830f"></script>
-    <script src="./js/gift.js?v=20260831a"></script>
+    <script src="./js/gift-core.js?v=20260831a"></script>
+    <script src="./js/gift.js?v=20260831g"></script>
   </body>
 </html>
