@@ -28,209 +28,230 @@
    コピー結果だけが3秒で消える吹き出しになる。
    ============================================================= */
 (function (global) {
-	'use strict';
+  "use strict";
 
-	var cfg = null;
-	var msgTimer = null;
-	var qrStale = true;   // 入力が変わったので作り直しが要る、という印
+  var cfg = null;
+  var msgTimer = null;
+  var qrStale = true; // 入力が変わったので作り直しが要る、という印
 
-	/* QRコードの読み取りやすさに関わる設定。
+  /* QRコードの読み取りやすさに関わる設定。
 	   画面に出すQRは、URLが長いほどモジュール（黒白の升目）が細かくなる。
 	   升目が小さすぎるとカメラが読めないので、モジュール数に応じて
 	   表示サイズのほうを広げる。 */
-	var QR_EC = 'L';            // 誤り訂正レベル。画面表示は汚れ・欠けが無いので最小でよく、
-	                            // そのぶんモジュール数が減って同じ大きさでも読みやすくなる
-	var QR_PX_PER_MODULE = 2.15; // 1モジュールあたり確保する画面ピクセル。小さくするとQRも
-	                            // 小さくなるが、読み取りにくくなる（2を下回ると厳しい）
-	var QR_PLATE_PX = 6;        // 白い台紙の余白の合計（site.css の padding 3px を左右で）。
-	                            // box-sizing: border-box なので、この分は升目に使えない
-	var QR_MIN_SIZE = 72;       // common/site.css の .share-qr の既定サイズと合わせること
-	var QR_MAX_SIZE = 144;      // ヘッダーに収まる上限
+  var QR_EC = "L"; // 誤り訂正レベル。画面表示は汚れ・欠けが無いので最小でよく、
+  // そのぶんモジュール数が減って同じ大きさでも読みやすくなる
+  var QR_PX_PER_MODULE = 2.15; // 1モジュールあたり確保する画面ピクセル。小さくするとQRも
+  // 小さくなるが、読み取りにくくなる（2を下回ると厳しい）
+  var QR_PLATE_PX = 6; // 白い台紙の余白の合計（site.css の padding 3px を左右で）。
+  // box-sizing: border-box なので、この分は升目に使えない
+  var QR_MIN_SIZE = 72; // common/site.css の .share-qr の既定サイズと合わせること
+  var QR_MAX_SIZE = 144; // ヘッダーに収まる上限
 
-	function byId(id) { return id ? document.getElementById(id) : null; }
+  function byId(id) {
+    return id ? document.getElementById(id) : null;
+  }
 
-	// 現在のURLからクエリとハッシュを落とし、渡したパラメータを付け直す
-	function urlWithParams(params) {
-		var str = params ? params.toString() : '';
-		var base = global.location.href.split(/[?#]/)[0];
-		return str ? base + '?' + str : base;
-	}
+  // 現在のURLからクエリとハッシュを落とし、渡したパラメータを付け直す
+  function urlWithParams(params) {
+    var str = params ? params.toString() : "";
+    var base = global.location.href.split(/[?#]/)[0];
+    return str ? base + "?" + str : base;
+  }
 
-	function copyToClipboard(text) {
-		if (global.navigator.clipboard && global.isSecureContext) {
-			return global.navigator.clipboard.writeText(text);
-		}
-		// file:// や http:// では Clipboard API が使えないので旧APIに退避する
-		return new Promise(function (resolve, reject) {
-			var ta = document.createElement('textarea');
-			ta.value = text;
-			ta.style.position = 'fixed';
-			ta.style.opacity = '0';
-			document.body.appendChild(ta);
-			ta.select();
-			try {
-				if (document.execCommand('copy')) resolve();
-				else reject(new Error('copy failed'));
-			} catch (e) {
-				reject(e);
-			} finally {
-				ta.remove();
-			}
-		});
-	}
+  function copyToClipboard(text) {
+    if (global.navigator.clipboard && global.isSecureContext) {
+      return global.navigator.clipboard.writeText(text);
+    }
+    // file:// や http:// では Clipboard API が使えないので旧APIに退避する
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        if (document.execCommand("copy")) resolve();
+        else reject(new Error("copy failed"));
+      } catch (e) {
+        reject(e);
+      } finally {
+        ta.remove();
+      }
+    });
+  }
 
-	// コピー結果はHTMLとして差し込むので、URLに現れうる文字はそのまま出さない
-	function escapeHtml(text) {
-		return String(text)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;');
-	}
+  // コピー結果はHTMLとして差し込むので、URLに現れうる文字はそのまま出さない
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 
-	// コピーしたURLの現物。長くても窓からはみ出さないよう、囲みはCSS側で折り返す
-	function urlBox(url) {
-		return '<span class="share-url">' + escapeHtml(url) + '</span>';
-	}
+  // コピーしたURLの現物。長くても窓からはみ出さないよう、囲みはCSS側で折り返す
+  function urlBox(url) {
+    return '<span class="share-url">' + escapeHtml(url) + "</span>";
+  }
 
-	/* コピーしたURLは、何が渡るのかを見て確かめられるよう必ず添える。
+  /* コピーしたURLは、何が渡るのかを見て確かめられるよう必ず添える。
 	   「?」以降の断りだけは、試算条件が載っているときに限る。入力が初期値のままだと
 	   クエリの付かないページがあるほか、トップページなどそもそも入力を持たないページもあり、
 	   そこで「?」の話をしても当てはまらない */
-	function okNote(url) {
-		var note = url.indexOf('?') >= 0 ? '<br>URLの「?」以降に試算条件が含まれています。' : '';
-		return note + urlBox(url);
-	}
+  function okNote(url) {
+    var note =
+      url.indexOf("?") >= 0
+        ? "<br>URLの「?」以降に試算条件が含まれています。"
+        : "";
+    return note + urlBox(url);
+  }
 
-	function popEl() { return cfg ? byId(cfg.popId) : null; }
-	// 開いているかどうかは .show の有無で持つ。閉じるときにフェードさせたいので、
-	// hidden 属性（display:none）ではなく opacity / visibility で切り替えている
-	function isOpen() { var p = popEl(); return !!p && p.classList.contains('show'); }
+  function popEl() {
+    return cfg ? byId(cfg.popId) : null;
+  }
+  // 開いているかどうかは .show の有無で持つ。閉じるときにフェードさせたいので、
+  // hidden 属性（display:none）ではなく opacity / visibility で切り替えている
+  function isOpen() {
+    var p = popEl();
+    return !!p && p.classList.contains("show");
+  }
 
-	// コピー結果を知らせる
-	function flash(html) {
-		var el = cfg && byId(cfg.msgId);
-		if (!el) return;
-		clearTimeout(msgTimer);
-		el.innerHTML = html;
-		el.classList.add('show');
-		// ポップオーバーの中に置いているページでは消さない。QRを読み取る時間が要るのと、
-		// 閉じる操作（再押下・外側クリック・Esc）をポップオーバー側が持っているため
-		if (popEl()) return;
-		msgTimer = setTimeout(function () { el.classList.remove('show'); }, 3000);
-	}
+  // コピー結果を知らせる
+  function flash(html) {
+    var el = cfg && byId(cfg.msgId);
+    if (!el) return;
+    clearTimeout(msgTimer);
+    el.innerHTML = html;
+    el.classList.add("show");
+    // ポップオーバーの中に置いているページでは消さない。QRを読み取る時間が要るのと、
+    // 閉じる操作（再押下・外側クリック・Esc）をポップオーバー側が持っているため
+    if (popEl()) return;
+    msgTimer = setTimeout(function () {
+      el.classList.remove("show");
+    }, 3000);
+  }
 
-	// 共有リンクのQRコードを実際に描画する（スマートフォンへの共有用）
-	function drawQr() {
-		if (!cfg) return;
-		var el = byId(cfg.qrId);
-		if (!el || typeof global.qrcode === 'undefined') return;
-		qrStale = false;
-		try {
-			var qr = global.qrcode(0, QR_EC);
-			qr.addData(cfg.buildUrl());
-			qr.make();
-			el.innerHTML = qr.createSvgTag(4);
+  // 共有リンクのQRコードを実際に描画する（スマートフォンへの共有用）
+  function drawQr() {
+    if (!cfg) return;
+    var el = byId(cfg.qrId);
+    if (!el || typeof global.qrcode === "undefined") return;
+    qrStale = false;
+    try {
+      var qr = global.qrcode(0, QR_EC);
+      qr.addData(cfg.buildUrl());
+      qr.make();
+      el.innerHTML = qr.createSvgTag(4);
 
-			// 入力内容が増えるほどURLが長くなり、モジュールが細かくなって読めなくなる。
-			// 静穏帯（上下左右4モジュール）込みの升目数から必要な大きさを逆算する。
-			var modules = qr.getModuleCount() + 8;
-			var size = Math.ceil(modules * QR_PX_PER_MODULE) + QR_PLATE_PX;
-			size = Math.max(QR_MIN_SIZE, Math.min(QR_MAX_SIZE, size));
-			el.style.setProperty('--qr-size', size + 'px');
-		} catch (e) {
-			// URLが長すぎてQRに収まらない場合などは、枠ごと消す
-			el.innerHTML = '';
-			el.style.removeProperty('--qr-size');
-		}
-	}
+      // 入力内容が増えるほどURLが長くなり、モジュールが細かくなって読めなくなる。
+      // 静穏帯（上下左右4モジュール）込みの升目数から必要な大きさを逆算する。
+      var modules = qr.getModuleCount() + 8;
+      var size = Math.ceil(modules * QR_PX_PER_MODULE) + QR_PLATE_PX;
+      size = Math.max(QR_MIN_SIZE, Math.min(QR_MAX_SIZE, size));
+      el.style.setProperty("--qr-size", size + "px");
+    } catch (e) {
+      // URLが長すぎてQRに収まらない場合などは、枠ごと消す
+      el.innerHTML = "";
+      el.style.removeProperty("--qr-size");
+    }
+  }
 
-	/* 入力が変わったときに各ページから呼ばれる。
+  /* 入力が変わったときに各ページから呼ばれる。
 	   閉じている間は印を立てるだけにして、開くときにまとめて作る。
 	   スライダーを動かしている最中に毎回QRを作り直さないためのもの */
-	function refreshQr() {
-		if (!cfg) return;
-		qrStale = true;
-		var p = popEl();
-		if (p && !isOpen()) return;
-		drawQr();
-	}
+  function refreshQr() {
+    if (!cfg) return;
+    qrStale = true;
+    var p = popEl();
+    if (p && !isOpen()) return;
+    drawQr();
+  }
 
-	// 中身が古ければ作り直す（開くとき・印刷の直前に使う）
-	function ensureQr() {
-		if (qrStale) drawQr();
-	}
+  // 中身が古ければ作り直す（開くとき・印刷の直前に使う）
+  function ensureQr() {
+    if (qrStale) drawQr();
+  }
 
-	function setOpen(open) {
-		var p = popEl();
-		if (!p) return;
-		// 中身は先に用意する。フェードで出てくる途中にQRが差し替わらないようにするため
-		if (open) ensureQr();
-		p.classList.toggle('show', open);
-		var btn = byId(cfg.buttonId);
-		if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-	}
+  function setOpen(open) {
+    var p = popEl();
+    if (!p) return;
+    // 中身は先に用意する。フェードで出てくる途中にQRが差し替わらないようにするため
+    if (open) ensureQr();
+    p.classList.toggle("show", open);
+    var btn = byId(cfg.buttonId);
+    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
 
-	function init(options) {
-		cfg = {
-			buttonId: options.buttonId || 'shareBtn',
-			qrId:     options.qrId || 'shareQr',
-			msgId:    options.msgId || 'shareMsg',
-			popId:    options.popId || 'sharePop',
-			buildUrl: options.buildUrl,
-			// 入力内容がURLに載ることと、URLの現物は、この後ろに okNote が付け足す
-			okMsg:    options.okMsg || '試算結果のURLをコピーしました。',
-			ngMsg:    options.ngMsg || 'コピーできませんでした。'
-		};
+  function init(options) {
+    cfg = {
+      buttonId: options.buttonId || "shareBtn",
+      qrId: options.qrId || "shareQr",
+      msgId: options.msgId || "shareMsg",
+      popId: options.popId || "sharePop",
+      buildUrl: options.buildUrl,
+      // 入力内容がURLに載ることと、URLの現物は、この後ろに okNote が付け足す
+      okMsg: options.okMsg || "試算結果のURLをコピーしました。",
+      ngMsg: options.ngMsg || "コピーできませんでした。",
+    };
 
-		var btn = byId(cfg.buttonId);
-		if (btn) {
-			btn.addEventListener('click', function () {
-				// 開いているときは閉じるだけ。コピーし直しても結果は同じなので、
-				// ボタンを「共有の窓を開け閉めするもの」として揃える
-				if (isOpen()) { setOpen(false); return; }
+    var btn = byId(cfg.buttonId);
+    if (btn) {
+      btn.addEventListener("click", function () {
+        // 開いているときは閉じるだけ。コピーし直しても結果は同じなので、
+        // ボタンを「共有の窓を開け閉めするもの」として揃える
+        if (isOpen()) {
+          setOpen(false);
+          return;
+        }
 
-				var url = cfg.buildUrl();
-				copyToClipboard(url).then(
-					function () { flash(cfg.okMsg + okNote(url)); },
-					// コピーできなかったときは、手で拾えるようにURLをそのまま見せる
-					function () { flash(cfg.ngMsg + urlBox(url)); }
-				);
-				setOpen(true);
-			});
-		}
+        var url = cfg.buildUrl();
+        copyToClipboard(url).then(
+          function () {
+            flash(cfg.okMsg + okNote(url));
+          },
+          // コピーできなかったときは、手で拾えるようにURLをそのまま見せる
+          function () {
+            flash(cfg.ngMsg + urlBox(url));
+          },
+        );
+        setOpen(true);
+      });
+    }
 
-		if (popEl()) {
-			// 窓の中（QRやコピー結果）を押したときも閉じる。読み終えて押す先は
-			// 共有ボタンとは限らず、目の前のQRを押しても消えないと閉じ方が分からない。
-			// 中に押せるものは無いので、どこを押しても閉じてよい
-			popEl().addEventListener('click', function () { setOpen(false); });
+    if (popEl()) {
+      // 窓の中（QRやコピー結果）を押したときも閉じる。読み終えて押す先は
+      // 共有ボタンとは限らず、目の前のQRを押しても消えないと閉じ方が分からない。
+      // 中に押せるものは無いので、どこを押しても閉じてよい
+      popEl().addEventListener("click", function () {
+        setOpen(false);
+      });
 
-			// 外側をクリック、または Esc で閉じる（テーマ切替のメニューと同じ操作感にする）
-			document.addEventListener('click', function (e) {
-				if (!isOpen()) return;
-				var wrap = popEl().parentNode;
-				if (wrap && !wrap.contains(e.target)) setOpen(false);
-			});
-			document.addEventListener('keydown', function (e) {
-				if (e.key !== 'Escape' || !isOpen()) return;
-				setOpen(false);
-				var b = byId(cfg.buttonId);
-				if (b) b.focus();
-			});
-		}
+      // 外側をクリック、または Esc で閉じる（テーマ切替のメニューと同じ操作感にする）
+      document.addEventListener("click", function (e) {
+        if (!isOpen()) return;
+        var wrap = popEl().parentNode;
+        if (wrap && !wrap.contains(e.target)) setOpen(false);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" || !isOpen()) return;
+        setOpen(false);
+        var b = byId(cfg.buttonId);
+        if (b) b.focus();
+      });
+    }
 
-		/* 閉じたまま印刷されてもQRは紙に載せる（紙から同じ条件の試算を開き直せるようにするため）。
+    /* 閉じたまま印刷されてもQRは紙に載せる（紙から同じ条件の試算を開き直せるようにするため）。
 		   描画は同期処理なので、この中で作っておけば版面に間に合う */
-		global.addEventListener('beforeprint', ensureQr);
+    global.addEventListener("beforeprint", ensureQr);
 
-		refreshQr();
-	}
+    refreshQr();
+  }
 
-	global.Share = {
-		init: init,
-		refreshQr: refreshQr,
-		urlWithParams: urlWithParams,
-		copyToClipboard: copyToClipboard,
-		flash: flash
-	};
+  global.Share = {
+    init: init,
+    refreshQr: refreshQr,
+    urlWithParams: urlWithParams,
+    copyToClipboard: copyToClipboard,
+    flash: flash,
+  };
 })(window);

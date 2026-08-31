@@ -1,186 +1,298 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="金融庁「NISA口座の利用状況調査（2025年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布と前年比。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="金融庁「NISA口座の利用状況調査（2025年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布と前年比。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/nisa/nisa2025.html">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/nisa/nisa2025.html">
-<meta property="og:title" content="NISA利用状況（2025年12月末時点）">
-<meta property="og:description" content="金融庁「NISA口座の利用状況調査（2025年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布と前年比。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/nisa.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="NISA利用状況">
-<meta name="twitter:card" content="summary_large_image">
-<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+    <link
+      rel="canonical"
+      href="https://pure-create.github.io/finance/nisa/nisa2025.html"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta
+      property="og:url"
+      content="https://pure-create.github.io/finance/nisa/nisa2025.html"
+    />
+    <meta property="og:title" content="NISA利用状況（2025年12月末時点）" />
+    <meta
+      property="og:description"
+      content="金融庁「NISA口座の利用状況調査（2025年12月末時点）」と総務省の人口推計データをもとにした、年代別のNISA口座保有率・年間買付額の分布と前年比。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/nisa.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NISA利用状況" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
      名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
-<script type="application/ld+json">
-{
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
-		{"@type": "ListItem", "position": 2, "name": "NISA利用状況（2025年12月末時点）", "item": "https://pure-create.github.io/finance/nisa/nisa2025.html"}
-	]
-}
-</script>
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "資産運用・金融シミュレーター",
+            "item": "https://pure-create.github.io/finance/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "NISA利用状況（2025年12月末時点）",
+            "item": "https://pure-create.github.io/finance/nisa/nisa2025.html"
+          }
+        ]
+      }
+    </script>
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="../favicon.ico" sizes="32x32">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="../manifest.json">
-<title>NISA利用状況（2025年12月末時点）</title>
-<script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260815a">
-<link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="nisa-common.css?v=20260825b">
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<div class="site-head">
-  <!-- 「制度データ: ◯年◯月時点」（.data-asof）はこのページには置かない。
+    <link rel="manifest" href="../manifest.json" />
+    <title>NISA利用状況（2025年12月末時点）</title>
+    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <link rel="stylesheet" href="nisa-common.css?v=20260825b" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <div class="site-head">
+      <!-- 「制度データ: ◯年◯月時点」（.data-asof）はこのページには置かない。
        他のページのそれは「いま有効な制度で試算している」ことを示すためのものだが、
        このページが見せるのは過ぎた年末時点の統計で、制度が変わっても中身は変わらない。
        データの時点は見出しの「2025年12月末時点」がそのまま示している。
        他のページから写すときに、うっかり付け足さないこと -->
-  <a class="home-link" href="../">トップページ</a>
-  <div class="page-tools">
-    <div class="share-wrap">
-      <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
-      <div class="share-pop" id="sharePop">
-        <span id="shareQr" class="share-qr" aria-hidden="true"></span>
-        <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+      <a class="home-link" href="../">トップページ</a>
+      <div class="page-tools">
+        <div class="share-wrap">
+          <button
+            class="share-btn"
+            id="shareBtn"
+            type="button"
+            aria-expanded="false"
+            aria-controls="sharePop"
+          >
+            URLを共有
+          </button>
+          <div class="share-pop" id="sharePop">
+            <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+            <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+          </div>
+        </div>
+        <span data-theme-toggle></span>
       </div>
     </div>
-    <span data-theme-toggle></span>
-  </div>
-</div>
-<main id="main" tabindex="-1">
-<div class="page-head">
-  <div class="page-title">
-    <h1>NISA利用状況（2025年12月末時点）</h1>
-    <nav class="year-nav" aria-label="時点の切り替え">
-      <span class="current" aria-current="page">2025年末</span>
-      <a href="nisa2024.html">2024年末</a>
-    </nav>
-  </div>
-</div>
+    <main id="main" tabindex="-1">
+      <div class="page-head">
+        <div class="page-title">
+          <h1>NISA利用状況（2025年12月末時点）</h1>
+          <nav class="year-nav" aria-label="時点の切り替え">
+            <span class="current" aria-current="page">2025年末</span>
+            <a href="nisa2024.html">2024年末</a>
+          </nav>
+        </div>
+      </div>
 
-<!-- 円グラフ -->
-<div class="chart-section">
-  <h2>▼ 年間買付額の分布（年代別）</h2>
-  <div class="chart-controls">
-    <select id="ageSelect" class="field-select" aria-label="円グラフに表示する年代">
-      <option value="10代">10代</option>
-      <option value="20代" selected>20代</option>
-      <option value="30代">30代</option>
-      <option value="40代">40代</option>
-      <option value="50代">50代</option>
-      <option value="60代">60代</option>
-      <option value="70代">70代</option>
-      <option value="80歳以上">80歳以上</option>
-      <option value="現役世代合計">20代〜50代合計</option>
-    </select>
-    <!-- 「？」はラベルの外に出す。中に入れるとラベルへのクリックとして
+      <!-- 円グラフ -->
+      <div class="chart-section">
+        <h2>▼ 年間買付額の分布（年代別）</h2>
+        <div class="chart-controls">
+          <select
+            id="ageSelect"
+            class="field-select"
+            aria-label="円グラフに表示する年代"
+          >
+            <option value="10代">10代</option>
+            <option value="20代" selected>20代</option>
+            <option value="30代">30代</option>
+            <option value="40代">40代</option>
+            <option value="50代">50代</option>
+            <option value="60代">60代</option>
+            <option value="70代">70代</option>
+            <option value="80歳以上">80歳以上</option>
+            <option value="現役世代合計">20代〜50代合計</option>
+          </select>
+          <!-- 「？」はラベルの外に出す。中に入れるとラベルへのクリックとして
          チェックボックスまで切り替わってしまう -->
-    <span class="ctl-item">
-      <label>
-        <input type="checkbox" id="chkInactive" class="field-check" checked>
-        <span>口座未開設・買付なしを含む</span>
-      </label>
-      <span class="help" tabindex="0" aria-label="口座未開設・買付なしを含むについて" aria-describedby="inactiveTip">？<span class="tipbox" id="inactiveTip" role="tooltip">円グラフの<strong>分母</strong>を切り替えます。<br><br><strong>入れる</strong>と、その年代の人口全体に対する割合になります（「口座未開設」と「0円（買付なし）」の2つが扇形に加わり、買付をしている人の割合はその分だけ小さく出ます）。<br><br><strong>外す</strong>と、その2つを除いた「実際に買付をした人」の中での割合になり、残った階級だけで100%になります。</span></span>
-    </span>
-  </div>
-  <div class="chart-body">
-    <div class="chart-canvas-wrap">
-      <canvas id="pieChart" role="img" aria-label="選択した年代の年間買付額分布を示す円グラフ（内訳は下の凡例リストを参照）"></canvas>
-      <div class="chart-center-label">
-        <div class="center-age" id="centerAge"></div>
+          <span class="ctl-item">
+            <label>
+              <input
+                type="checkbox"
+                id="chkInactive"
+                class="field-check"
+                checked
+              />
+              <span>口座未開設・買付なしを含む</span>
+            </label>
+            <span
+              class="help"
+              tabindex="0"
+              aria-label="口座未開設・買付なしを含むについて"
+              aria-describedby="inactiveTip"
+              >？<span class="tipbox" id="inactiveTip" role="tooltip"
+                >円グラフの<strong>分母</strong>を切り替えます。<br /><br /><strong
+                  >入れる</strong
+                >と、その年代の人口全体に対する割合になります（「口座未開設」と「0円（買付なし）」の2つが扇形に加わり、買付をしている人の割合はその分だけ小さく出ます）。<br /><br /><strong
+                  >外す</strong
+                >と、その2つを除いた「実際に買付をした人」の中での割合になり、残った階級だけで100%になります。</span
+              ></span
+            >
+          </span>
+        </div>
+        <div class="chart-body">
+          <div class="chart-canvas-wrap">
+            <canvas
+              id="pieChart"
+              role="img"
+              aria-label="選択した年代の年間買付額分布を示す円グラフ（内訳は下の凡例リストを参照）"
+            ></canvas>
+            <div class="chart-center-label">
+              <div class="center-age" id="centerAge"></div>
+            </div>
+          </div>
+          <ul class="chart-legend-list" id="chartLegend"></ul>
+        </div>
       </div>
-    </div>
-    <ul class="chart-legend-list" id="chartLegend"></ul>
-  </div>
-</div>
 
-<div class="section-label">▼ 年代別サマリー</div>
-<div class="table-scroll" tabindex="0" role="region" aria-label="年代別サマリーの表">
-<table>
-  <thead>
-    <tr>
-      <th style="width:14%;text-align:left">年代</th>
-      <th>総人口</th><th>NISA口座数</th><th>口座保有率</th><th>前年比</th><th>口座未開設率</th>
-    </tr>
-  </thead>
-  <tbody id="summary-body"></tbody>
-</table>
-</div>
+      <div class="section-label">▼ 年代別サマリー</div>
+      <div
+        class="table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label="年代別サマリーの表"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 14%; text-align: left">年代</th>
+              <th>総人口</th>
+              <th>NISA口座数</th>
+              <th>口座保有率</th>
+              <th>前年比</th>
+              <th>口座未開設率</th>
+            </tr>
+          </thead>
+          <tbody id="summary-body"></tbody>
+        </table>
+      </div>
 
-<div class="section-label" style="margin-top:2rem">▼ 買付額別の人口比（20代〜50代）</div>
-<p class="cum-note">小数字（↑XX%）は「この区分<strong>以上</strong>の人の割合」の累計です</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="買付額別の人口比（20代〜50代）の表">
-<table>
-  <thead>
-    <tr>
-      <th style="width:26%;text-align:left">区分（年間買付額）</th>
-      <th>20代</th><th>30代</th><th>40代</th><th>50代</th><th>20代〜50代合計</th>
-    </tr>
-  </thead>
-  <tbody id="table-body-working"></tbody>
-</table>
-</div>
+      <div class="section-label" style="margin-top: 2rem">
+        ▼ 買付額別の人口比（20代〜50代）
+      </div>
+      <p class="cum-note">
+        小数字（↑XX%）は「この区分<strong>以上</strong>の人の割合」の累計です
+      </p>
+      <div
+        class="table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label="買付額別の人口比（20代〜50代）の表"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 26%; text-align: left">区分（年間買付額）</th>
+              <th>20代</th>
+              <th>30代</th>
+              <th>40代</th>
+              <th>50代</th>
+              <th>20代〜50代合計</th>
+            </tr>
+          </thead>
+          <tbody id="table-body-working"></tbody>
+        </table>
+      </div>
 
-<p class="ref-label">▼ 参考：その他の年代（買付額別・人口比）</p>
-<div class="table-scroll" tabindex="0" role="region" aria-label="参考：その他の年代（買付額別・人口比）の表">
-<table>
-  <thead>
-    <tr>
-      <th style="width:26%;text-align:left">区分（年間買付額）</th>
-      <th>10代 ※</th><th>60代</th><th>70代</th><th>80歳以上</th>
-    </tr>
-  </thead>
-  <tbody id="table-body-ref"></tbody>
-</table>
-</div>
-<p class="ref-label" style="margin-top:0.3rem;padding-top:0;border-top:none">※ 10代の総人口は18〜19歳の推計値（注記参照）</p>
+      <p class="ref-label">▼ 参考：その他の年代（買付額別・人口比）</p>
+      <div
+        class="table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label="参考：その他の年代（買付額別・人口比）の表"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 26%; text-align: left">区分（年間買付額）</th>
+              <th>10代 ※</th>
+              <th>60代</th>
+              <th>70代</th>
+              <th>80歳以上</th>
+            </tr>
+          </thead>
+          <tbody id="table-body-ref"></tbody>
+        </table>
+      </div>
+      <p
+        class="ref-label"
+        style="margin-top: 0.3rem; padding-top: 0; border-top: none"
+      >
+        ※ 10代の総人口は18〜19歳の推計値（注記参照）
+      </p>
 
-<script>
-/* このページが見せる年。数字は nisa-data.js にまとめてある
+      <script>
+        /* このページが見せる年。数字は nisa-data.js にまとめてある
    （同じ年の数字が2つのページに散ると、直すときに片方を忘れる）。
    nisa-common.js がこの年と前年の数字を取り出して描く */
-const YEAR = 2025;
-</script>
-<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+        const YEAR = 2025;
+      </script>
+      <!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
-<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
-<script src="../common/vendor/chartjs-plugin-datalabels.min.js?v=2.2.0"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260823a"></script>
-<script src="../common/tool-nav.js?v=20260814a"></script>
-<script src="nisa-data.js?v=20260823b"></script>
-<script src="nisa-common.js?v=20260823a"></script>
+      <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+      <script src="../common/vendor/chartjs-plugin-datalabels.min.js?v=2.2.0"></script>
+      <script src="../common/qrcode.js?v=20260805a"></script>
+      <script src="../common/share.js?v=20260823a"></script>
+      <script src="../common/tool-nav.js?v=20260831a"></script>
+      <script src="nisa-data.js?v=20260823b"></script>
+      <script src="nisa-common.js?v=20260823a"></script>
 
-<footer class="site-foot">
-<p class="foot-note">
-  NISA口座数は<a href="https://www.fsa.go.jp/policy/nisa/20260703.html" target="_blank" rel="noopener">金融庁「NISA口座の利用状況調査（2025年12月末時点）」</a>、人口は<a href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20250&month=24101212" target="_blank" rel="noopener">総務省「人口推計 2025年12月報」</a>の<strong>総人口</strong>（2025年7月1日確定値）を使用しています。<br>
-  ・ 「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出しています。内訳合計には年内に廃止された口座の取引も含まれ、口座数より若干多くなるため、両者の合計は100%になりません。<br>
-  ・ 「前年比」は2024年12月末時点の口座保有率（<a href="nisa2024.html">2024年版</a>と同じデータから算出）との差（ポイント）。<br>
-  ・ 買付額区分は2025年1月〜12月の年間買付額による集計です(上限360万円)。<br>
-  ・ 10代の総人口は、18・19歳の日本人人口（2,123千人、2024年10月1日現在。2025年10月1日現在は2025年国勢調査に伴い未公表）に15〜19歳の総人口／日本人人口比（5,483÷5,327）を乗じて推計（約2,185千人）。
-</p>
-<p class="foot-privacy">・ アクセス解析など情報の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
-</footer>
-<nav data-tool-nav="../"></nav>
-</main>
-</body>
+      <footer class="site-foot">
+        <p class="foot-note">
+          NISA口座数は<a
+            href="https://www.fsa.go.jp/policy/nisa/20260703.html"
+            target="_blank"
+            rel="noopener"
+            >金融庁「NISA口座の利用状況調査（2025年12月末時点）」</a
+          >、人口は<a
+            href="https://www.e-stat.go.jp/stat-search/files?tclass=000001007603&cycle=1&year=20250&month=24101212"
+            target="_blank"
+            rel="noopener"
+            >総務省「人口推計 2025年12月報」</a
+          >の<strong>総人口</strong>（2025年7月1日確定値）を使用しています。<br />
+          ・
+          「口座保有率」はNISA口座数÷総人口。「口座未開設率」は買付額別の表と整合させるため、(総人口－買付額区分の内訳合計)÷総人口で算出しています。内訳合計には年内に廃止された口座の取引も含まれ、口座数より若干多くなるため、両者の合計は100%になりません。<br />
+          ・ 「前年比」は2024年12月末時点の口座保有率（<a href="nisa2024.html"
+            >2024年版</a
+          >と同じデータから算出）との差（ポイント）。<br />
+          ・
+          買付額区分は2025年1月〜12月の年間買付額による集計です(上限360万円)。<br />
+          ・
+          10代の総人口は、18・19歳の日本人人口（2,123千人、2024年10月1日現在。2025年10月1日現在は2025年国勢調査に伴い未公表）に15〜19歳の総人口／日本人人口比（5,483÷5,327）を乗じて推計（約2,185千人）。
+        </p>
+        <p class="foot-privacy">
+          ・ アクセス解析など情報の扱いについては<a href="../privacy/"
+            >プライバシーポリシー</a
+          >をご覧ください。
+        </p>
+      </footer>
+      <nav data-tool-nav="../"></nav>
+    </main>
+  </body>
 </html>

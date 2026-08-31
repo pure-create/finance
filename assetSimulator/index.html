@@ -1,248 +1,807 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="積立と取り崩しをモンテカルロ法でシミュレーション。期待リターン・相関・インフレ率・NISA枠・退職金・売却益への課税を織り込み、将来の資産推移を試算できます。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="積立と取り崩しをモンテカルロ法でシミュレーション。期待リターン・相関・インフレ率・NISA枠・退職金・売却益への課税を織り込み、将来の資産推移を試算できます。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/assetSimulator/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/assetSimulator/">
-<meta property="og:title" content="資産運用シミュレーター">
-<meta property="og:description" content="積立と取り崩しをモンテカルロ法でシミュレーション。期待リターン・相関・インフレ率・NISA枠・退職金・売却益への課税を織り込み、将来の資産推移を試算できます。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/asset.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="資産運用シミュレーター">
-<meta name="twitter:card" content="summary_large_image">
-<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+    <link
+      rel="canonical"
+      href="https://pure-create.github.io/finance/assetSimulator/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta
+      property="og:url"
+      content="https://pure-create.github.io/finance/assetSimulator/"
+    />
+    <meta property="og:title" content="資産運用シミュレーター" />
+    <meta
+      property="og:description"
+      content="積立と取り崩しをモンテカルロ法でシミュレーション。期待リターン・相関・インフレ率・NISA枠・退職金・売却益への課税を織り込み、将来の資産推移を試算できます。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/asset.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="資産運用シミュレーター" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
      名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
-<script type="application/ld+json">
-{
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
-		{"@type": "ListItem", "position": 2, "name": "資産運用シミュレーター", "item": "https://pure-create.github.io/finance/assetSimulator/"}
-	]
-}
-</script>
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "資産運用・金融シミュレーター",
+            "item": "https://pure-create.github.io/finance/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "資産運用シミュレーター",
+            "item": "https://pure-create.github.io/finance/assetSimulator/"
+          }
+        ]
+      }
+    </script>
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="../favicon.ico" sizes="32x32">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="../manifest.json">
-<title>資産運用シミュレーター</title>
-<script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260815a">
-<link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="./css/main.css?v=20260825d">
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
+    <link rel="manifest" href="../manifest.json" />
+    <title>資産運用シミュレーター</title>
+    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <link rel="stylesheet" href="./css/main.css?v=20260825d" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
 
-<header>
-	<div class="site-head">
-		<a class="home-link" href="../">トップページ</a>
-		<!-- 制度データの時点。NISAの投資枠や譲渡益税率を直したら、ここも更新すること -->
-		<span class="data-asof">制度データ: 2026年8月時点</span>
-		<div class="page-tools">
-			<div class="share-wrap">
-				<button id="shareBtn" class="share-btn" type="button" aria-expanded="false" aria-controls="sharePop">試算結果を共有</button>
-				<div class="share-pop" id="sharePop">
-					<span id="shareQr" class="share-qr" aria-hidden="true"></span>
-					<p id="shareMsg" class="share-msg" aria-live="polite"></p>
-				</div>
-			</div>
-			<span data-theme-toggle></span>
-		</div>
-	</div>
-	<div class="page-head">
-		<div class="page-title">
-			<h1>資産運用シミュレーター</h1>
-			<p class="sub">積立期と取り崩し期を通したモンテカルロ試算。インフレ・税金・NISA枠・資産配分（相関あり）を考慮します。</p>
-		</div>
-	</div>
-</header>
+    <header>
+      <div class="site-head">
+        <a class="home-link" href="../">トップページ</a>
+        <!-- 制度データの時点。NISAの投資枠や譲渡益税率を直したら、ここも更新すること -->
+        <span class="data-asof">制度データ: 2026年8月時点</span>
+        <div class="page-tools">
+          <div class="share-wrap">
+            <button
+              id="shareBtn"
+              class="share-btn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="sharePop"
+            >
+              試算結果を共有
+            </button>
+            <div class="share-pop" id="sharePop">
+              <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+              <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+            </div>
+          </div>
+          <span data-theme-toggle></span>
+        </div>
+      </div>
+      <div class="page-head">
+        <div class="page-title">
+          <h1>資産運用シミュレーター</h1>
+          <p class="sub">
+            積立期と取り崩し期を通したモンテカルロ試算。インフレ・税金・NISA枠・資産配分（相関あり）を考慮します。
+          </p>
+        </div>
+      </div>
+    </header>
 
-<noscript><div id="noscript">JavaScript が無効です。有効にして再読み込みしてください。</div></noscript>
+    <noscript
+      ><div id="noscript">
+        JavaScript が無効です。有効にして再読み込みしてください。
+      </div></noscript
+    >
 
-<main id="main" tabindex="-1">
-<div class="layout">
+    <main id="main" tabindex="-1">
+      <div class="layout">
+        <aside class="panel">
+          <h2>ライフプラン</h2>
+          <div class="row">
+            <label for="ageNow">現在の年齢</label
+            ><input
+              type="number"
+              id="ageNow"
+              value="40"
+              min="0"
+              max="100"
+              step="1"
+            /><span class="unit">歳</span>
+          </div>
+          <div class="row">
+            <label for="ageRetire"
+              >取り崩し開始<span
+                class="help"
+                tabindex="0"
+                aria-label="取り崩し開始について"
+                aria-describedby="tipAgeRetire"
+                >？<span class="tipbox" id="tipAgeRetire" role="tooltip"
+                  >積立期と取り崩し期の境目になる年齢です。この年齢に<strong>なるまで</strong>は年間積立額を積み立て、この年齢に<strong>なった年から</strong>年間生活費の取り崩しを始めます（65歳なら、64歳までの各年が積立、65歳の年から取り崩し）。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="ageRetire"
+              value="65"
+              min="0"
+              max="110"
+              step="1"
+            /><span class="unit">歳</span>
+          </div>
+          <div class="row">
+            <label for="ageEnd">シミュレーション終了</label
+            ><input
+              type="number"
+              id="ageEnd"
+              value="95"
+              min="1"
+              max="120"
+              step="1"
+            /><span class="unit">歳</span>
+          </div>
 
-<aside class="panel">
-	<h2>ライフプラン</h2>
-	<div class="row"><label for="ageNow">現在の年齢</label><input type="number" id="ageNow" value="40" min="0" max="100" step="1"><span class="unit">歳</span></div>
-	<div class="row"><label for="ageRetire">取り崩し開始<span class="help" tabindex="0" aria-label="取り崩し開始について" aria-describedby="tipAgeRetire">？<span class="tipbox" id="tipAgeRetire" role="tooltip">積立期と取り崩し期の境目になる年齢です。この年齢に<strong>なるまで</strong>は年間積立額を積み立て、この年齢に<strong>なった年から</strong>年間生活費の取り崩しを始めます（65歳なら、64歳までの各年が積立、65歳の年から取り崩し）。</span></span></label><input type="number" id="ageRetire" value="65" min="0" max="110" step="1"><span class="unit">歳</span></div>
-	<div class="row"><label for="ageEnd">シミュレーション終了</label><input type="number" id="ageEnd" value="95" min="1" max="120" step="1"><span class="unit">歳</span></div>
+          <h2>キャッシュフロー</h2>
+          <div class="row">
+            <label for="assetNow"
+              >現在の運用資産<span
+                class="help"
+                tabindex="0"
+                aria-label="現在の運用資産について"
+                aria-describedby="tipAssetNow"
+                >？<span class="tipbox" id="tipAssetNow" role="tooltip"
+                  >すでに運用に回している資産の時価です。含み益はゼロ（簿価＝時価）の課税口座として計算を始めるため、この分の値上がり益には取り崩すときに課税されます。NISA枠は、ここから先に積み立てる分にだけ使います。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="assetNow"
+              value="1000"
+              min="0"
+              max="200000"
+              step="50"
+            /><span class="unit">万円</span>
+          </div>
+          <div class="row">
+            <label for="contribution"
+              >年間積立額<span
+                class="help"
+                tabindex="0"
+                aria-label="年間積立額について"
+                aria-describedby="tipContribution"
+                >？<span class="tipbox" id="tipContribution" role="tooltip"
+                  ><strong>取り崩し開始の年齢になるまで</strong
+                  >、毎年の年初に積み立てる金額です（取り崩し開始が65歳なら、64歳までの各年）。取り崩し期に入ると積立はしません。現在の物価で入力し、毎年インフレ率で増やして計算します。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="contribution"
+              value="120"
+              min="0"
+              max="10000"
+              step="6"
+            /><span class="unit">万円</span>
+          </div>
+          <div class="row">
+            <label for="lumpSum"
+              >退職金（手取り）<span
+                class="help"
+                tabindex="0"
+                aria-label="退職金（手取り）について"
+                aria-describedby="tipLumpSum"
+                >？<span class="tipbox" id="tipLumpSum" role="tooltip"
+                  >税金を引いた後の、実際に手にする金額を入力します。下の年齢の年初に一度だけ、全額が課税口座に加わります。払い込んだ元本（簿価）として扱うので、この金額そのものに売却益の課税はかかりません。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="lumpSum"
+              value="0"
+              min="0"
+              max="50000"
+              step="100"
+            /><span class="unit">万円</span>
+          </div>
+          <div class="row sub-row">
+            <label for="lumpAge">└ 受け取る年齢</label
+            ><input
+              type="number"
+              id="lumpAge"
+              value="65"
+              min="0"
+              max="120"
+              step="1"
+            /><span class="unit">歳</span>
+          </div>
+          <div class="row sub-row">
+            <label for="lumpBase"
+              >└ 金額の扱い<span
+                class="help"
+                tabindex="0"
+                aria-label="金額の扱いについて"
+                aria-describedby="tipLumpBase"
+                >？<span class="tipbox" id="tipLumpBase" role="tooltip"
+                  ><strong>名目のまま</strong
+                  >は、入力した額をそのまま受け取るものとして扱います（物価が上がっても増えません）。<strong>現在の物価</strong>は、他の金額欄と同じく毎年インフレ率で増やします。<br /><br />退職金の元になる給料月額は物価に連動して上がるとは限らず、退職所得控除も名目で固定された金額のため、初期値は「名目のまま」にしています。給与水準が物価に合わせて上がると見込むなら切り替えてください。</span
+                ></span
+              ></label
+            ><select id="lumpBase">
+              <option value="nominal">名目のまま</option>
+              <option value="real">現在の物価</option>
+            </select>
+          </div>
+          <div id="lumpNotes"></div>
+          <div class="row">
+            <label for="wdMode"
+              >取り崩し方式<span
+                class="help"
+                tabindex="0"
+                aria-label="取り崩し方式について"
+                aria-describedby="tipWdMode"
+                >？<span class="tipbox" id="tipWdMode" role="tooltip"
+                  ><strong>定額（実質）</strong
+                  >は、年間生活費から取り崩し期の収入を差し引いた不足分を、毎年取り崩します。<strong>定率</strong>は、その年の残高に決めた割合を掛けた額を取り崩すため、年間生活費と取り崩し期の収入は結果に影響しません。</span
+                ></span
+              ></label
+            ><select id="wdMode">
+              <option value="fixed">定額（実質）</option>
+              <option value="rate">定率（残高の％）</option>
+            </select>
+          </div>
+          <div class="row" id="rowWithdraw">
+            <label for="withdraw"
+              >年間生活費<span
+                class="help"
+                tabindex="0"
+                aria-label="年間生活費について"
+                aria-describedby="tipWithdraw"
+                >？<span class="tipbox" id="tipWithdraw" role="tooltip"
+                  ><strong>取り崩し開始の年齢から</strong
+                  >、毎年かかる生活費です（積立期には使いません）。ここから「取り崩し期の収入」の給与・年金などを差し引いた不足分だけを、資産から取り崩します。現在の物価で入力し、毎年インフレ率で増やして計算します。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="withdraw"
+              value="360"
+              min="0"
+              max="10000"
+              step="12"
+            /><span class="unit">万円</span>
+          </div>
+          <div class="row" id="rowRate" style="display: none">
+            <label for="wdRate"
+              >取り崩し率<span
+                class="help"
+                tabindex="0"
+                aria-label="取り崩し率について"
+                aria-describedby="tipWdRate"
+                >？<span class="tipbox" id="tipWdRate" role="tooltip"
+                  >取り崩し開始の年齢から、毎年その年の残高に掛けて取り崩す割合です。残高に連動するので資産は尽きにくくなりますが、相場が悪い年は取り崩せる額も減ります。この方式では、年間生活費と取り崩し期の収入は使いません。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="wdRate"
+              value="4.0"
+              min="0.1"
+              max="20"
+              step="0.1"
+            /><span class="unit">%/年</span>
+          </div>
+          <p class="hint">
+            積立額・生活費・収入は<strong>現在の物価</strong>で入力します（毎年インフレ率で自動的に増額）。
+          </p>
 
-	<h2>キャッシュフロー</h2>
-	<div class="row"><label for="assetNow">現在の運用資産<span class="help" tabindex="0" aria-label="現在の運用資産について" aria-describedby="tipAssetNow">？<span class="tipbox" id="tipAssetNow" role="tooltip">すでに運用に回している資産の時価です。含み益はゼロ（簿価＝時価）の課税口座として計算を始めるため、この分の値上がり益には取り崩すときに課税されます。NISA枠は、ここから先に積み立てる分にだけ使います。</span></span></label><input type="number" id="assetNow" value="1000" min="0" max="200000" step="50"><span class="unit">万円</span></div>
-	<div class="row"><label for="contribution">年間積立額<span class="help" tabindex="0" aria-label="年間積立額について" aria-describedby="tipContribution">？<span class="tipbox" id="tipContribution" role="tooltip"><strong>取り崩し開始の年齢になるまで</strong>、毎年の年初に積み立てる金額です（取り崩し開始が65歳なら、64歳までの各年）。取り崩し期に入ると積立はしません。現在の物価で入力し、毎年インフレ率で増やして計算します。</span></span></label><input type="number" id="contribution" value="120" min="0" max="10000" step="6"><span class="unit">万円</span></div>
-	<div class="row"><label for="lumpSum">退職金（手取り）<span class="help" tabindex="0" aria-label="退職金（手取り）について" aria-describedby="tipLumpSum">？<span class="tipbox" id="tipLumpSum" role="tooltip">税金を引いた後の、実際に手にする金額を入力します。下の年齢の年初に一度だけ、全額が課税口座に加わります。払い込んだ元本（簿価）として扱うので、この金額そのものに売却益の課税はかかりません。</span></span></label><input type="number" id="lumpSum" value="0" min="0" max="50000" step="100"><span class="unit">万円</span></div>
-	<div class="row sub-row"><label for="lumpAge">└ 受け取る年齢</label><input type="number" id="lumpAge" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-	<div class="row sub-row"><label for="lumpBase">└ 金額の扱い<span class="help" tabindex="0" aria-label="金額の扱いについて" aria-describedby="tipLumpBase">？<span class="tipbox" id="tipLumpBase" role="tooltip"><strong>名目のまま</strong>は、入力した額をそのまま受け取るものとして扱います（物価が上がっても増えません）。<strong>現在の物価</strong>は、他の金額欄と同じく毎年インフレ率で増やします。<br><br>退職金の元になる給料月額は物価に連動して上がるとは限らず、退職所得控除も名目で固定された金額のため、初期値は「名目のまま」にしています。給与水準が物価に合わせて上がると見込むなら切り替えてください。</span></span></label><select id="lumpBase">
-		<option value="nominal">名目のまま</option>
-		<option value="real">現在の物価</option>
-	</select></div>
-	<div id="lumpNotes"></div>
-	<div class="row"><label for="wdMode">取り崩し方式<span class="help" tabindex="0" aria-label="取り崩し方式について" aria-describedby="tipWdMode">？<span class="tipbox" id="tipWdMode" role="tooltip"><strong>定額（実質）</strong>は、年間生活費から取り崩し期の収入を差し引いた不足分を、毎年取り崩します。<strong>定率</strong>は、その年の残高に決めた割合を掛けた額を取り崩すため、年間生活費と取り崩し期の収入は結果に影響しません。</span></span></label><select id="wdMode">
-		<option value="fixed">定額（実質）</option>
-		<option value="rate">定率（残高の％）</option>
-	</select></div>
-	<div class="row" id="rowWithdraw"><label for="withdraw">年間生活費<span class="help" tabindex="0" aria-label="年間生活費について" aria-describedby="tipWithdraw">？<span class="tipbox" id="tipWithdraw" role="tooltip"><strong>取り崩し開始の年齢から</strong>、毎年かかる生活費です（積立期には使いません）。ここから「取り崩し期の収入」の給与・年金などを差し引いた不足分だけを、資産から取り崩します。現在の物価で入力し、毎年インフレ率で増やして計算します。</span></span></label><input type="number" id="withdraw" value="360" min="0" max="10000" step="12"><span class="unit">万円</span></div>
-	<div class="row" id="rowRate" style="display:none"><label for="wdRate">取り崩し率<span class="help" tabindex="0" aria-label="取り崩し率について" aria-describedby="tipWdRate">？<span class="tipbox" id="tipWdRate" role="tooltip">取り崩し開始の年齢から、毎年その年の残高に掛けて取り崩す割合です。残高に連動するので資産は尽きにくくなりますが、相場が悪い年は取り崩せる額も減ります。この方式では、年間生活費と取り崩し期の収入は使いません。</span></span></label><input type="number" id="wdRate" value="4.0" min="0.1" max="20" step="0.1"><span class="unit">%/年</span></div>
-	<p class="hint">積立額・生活費・収入は<strong>現在の物価</strong>で入力します（毎年インフレ率で自動的に増額）。</p>
+          <div id="incomeSection">
+            <h2>取り崩し期の収入</h2>
+            <div class="row">
+              <label for="salary"
+                >給与など<span
+                  class="help"
+                  tabindex="0"
+                  aria-label="給与などについて"
+                  aria-describedby="tipSalary"
+                  >？<span class="tipbox" id="tipSalary" role="tooltip"
+                    >下の「何歳まで」で指定した年齢に<strong>なるまで</strong>受け取るものとして計算します（65歳までなら、64歳の1年間まで）。取り崩し開始より前の分は、年間積立額に反映済みとみなして使いません。</span
+                  ></span
+                ></label
+              ><input
+                type="number"
+                id="salary"
+                value="0"
+                min="0"
+                max="10000"
+                step="12"
+              /><span class="unit">万円</span>
+            </div>
+            <div class="row sub-row">
+              <label for="salaryUntil">└ 何歳まで</label
+              ><input
+                type="number"
+                id="salaryUntil"
+                value="65"
+                min="0"
+                max="120"
+                step="1"
+              /><span class="unit">歳</span>
+            </div>
+            <div class="row">
+              <label for="pension"
+                >年金など<span
+                  class="help"
+                  tabindex="0"
+                  aria-label="年金などについて"
+                  aria-describedby="tipPension"
+                  >？<span class="tipbox" id="tipPension" role="tooltip"
+                    >下の「何歳から」で指定した年齢に<strong>なった年から</strong>受け取るものとして計算します。取り崩し開始から年金が始まるまでの間は収入がないため、生活費の全額を資産から取り崩すことになります。</span
+                  ></span
+                ></label
+              ><input
+                type="number"
+                id="pension"
+                value="180"
+                min="0"
+                max="10000"
+                step="6"
+              /><span class="unit">万円</span>
+            </div>
+            <div class="row sub-row">
+              <label for="pensionFrom">└ 何歳から</label
+              ><input
+                type="number"
+                id="pensionFrom"
+                value="65"
+                min="0"
+                max="120"
+                step="1"
+              /><span class="unit">歳</span>
+            </div>
+            <p class="hint">
+              生活費から差し引く収入です。積立期の収入は年間積立額に反映済みとみなします。
+            </p>
+            <div id="incomeNotes"></div>
+          </div>
 
-	<div id="incomeSection">
-		<h2>取り崩し期の収入</h2>
-		<div class="row"><label for="salary">給与など<span class="help" tabindex="0" aria-label="給与などについて" aria-describedby="tipSalary">？<span class="tipbox" id="tipSalary" role="tooltip">下の「何歳まで」で指定した年齢に<strong>なるまで</strong>受け取るものとして計算します（65歳までなら、64歳の1年間まで）。取り崩し開始より前の分は、年間積立額に反映済みとみなして使いません。</span></span></label><input type="number" id="salary" value="0" min="0" max="10000" step="12"><span class="unit">万円</span></div>
-		<div class="row sub-row"><label for="salaryUntil">└ 何歳まで</label><input type="number" id="salaryUntil" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-		<div class="row"><label for="pension">年金など<span class="help" tabindex="0" aria-label="年金などについて" aria-describedby="tipPension">？<span class="tipbox" id="tipPension" role="tooltip">下の「何歳から」で指定した年齢に<strong>なった年から</strong>受け取るものとして計算します。取り崩し開始から年金が始まるまでの間は収入がないため、生活費の全額を資産から取り崩すことになります。</span></span></label><input type="number" id="pension" value="180" min="0" max="10000" step="6"><span class="unit">万円</span></div>
-		<div class="row sub-row"><label for="pensionFrom">└ 何歳から</label><input type="number" id="pensionFrom" value="65" min="0" max="120" step="1"><span class="unit">歳</span></div>
-		<p class="hint">生活費から差し引く収入です。積立期の収入は年間積立額に反映済みとみなします。</p>
-		<div id="incomeNotes"></div>
-	</div>
+          <h2>ポートフォリオ</h2>
+          <div class="row">
+            <label for="allocStock">株式</label
+            ><input
+              type="number"
+              id="allocStock"
+              value="70"
+              min="0"
+              max="100"
+              step="5"
+            /><span class="unit">%</span>
+          </div>
+          <div class="row">
+            <label for="allocBond">債券</label
+            ><input
+              type="number"
+              id="allocBond"
+              value="25"
+              min="0"
+              max="100"
+              step="5"
+            /><span class="unit">%</span>
+          </div>
+          <div class="row">
+            <label for="allocCash">現金</label
+            ><input
+              type="number"
+              id="allocCash"
+              value="5"
+              min="0"
+              max="100"
+              step="5"
+            /><span class="unit">%</span>
+          </div>
+          <p class="hint">
+            合計 <span id="allocSum">100</span>%　/　期待リターン
+            <span id="portRet">–</span>％・リスク
+            <span id="portRisk">–</span>％（年率・コスト控除前）
+          </p>
+          <div id="allocNotes"></div>
+          <button type="button" id="allocFix" class="fix-btn" hidden>
+            合計を100%に揃える
+          </button>
+          <div class="row">
+            <label for="fee">信託報酬など</label
+            ><input
+              type="number"
+              id="fee"
+              value="0.15"
+              min="0"
+              max="5"
+              step="0.05"
+            /><span class="unit">%/年</span>
+          </div>
 
-	<h2>ポートフォリオ</h2>
-	<div class="row"><label for="allocStock">株式</label><input type="number" id="allocStock" value="70" min="0" max="100" step="5"><span class="unit">%</span></div>
-	<div class="row"><label for="allocBond">債券</label><input type="number" id="allocBond" value="25" min="0" max="100" step="5"><span class="unit">%</span></div>
-	<div class="row"><label for="allocCash">現金</label><input type="number" id="allocCash" value="5" min="0" max="100" step="5"><span class="unit">%</span></div>
-	<p class="hint">合計 <span id="allocSum">100</span>%　/　期待リターン <span id="portRet">–</span>％・リスク <span id="portRisk">–</span>％（年率・コスト控除前）</p>
-	<div id="allocNotes"></div>
-	<button type="button" id="allocFix" class="fix-btn" hidden>合計を100%に揃える</button>
-	<div class="row"><label for="fee">信託報酬など</label><input type="number" id="fee" value="0.15" min="0" max="5" step="0.05"><span class="unit">%/年</span></div>
+          <details class="sub">
+            <summary>各資産クラスの前提を編集</summary>
+            <div class="matrix">
+              <div class="row">
+                <label for="retStock">株式 期待リターン</label
+                ><input
+                  type="number"
+                  id="retStock"
+                  value="7.0"
+                  min="-10"
+                  max="20"
+                  step="0.1"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="riskStock">株式 リスク</label
+                ><input
+                  type="number"
+                  id="riskStock"
+                  value="18.0"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="retBond">債券 期待リターン</label
+                ><input
+                  type="number"
+                  id="retBond"
+                  value="2.5"
+                  min="-10"
+                  max="20"
+                  step="0.1"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="riskBond">債券 リスク</label
+                ><input
+                  type="number"
+                  id="riskBond"
+                  value="6.0"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="retCash">現金 期待リターン</label
+                ><input
+                  type="number"
+                  id="retCash"
+                  value="0.7"
+                  min="-5"
+                  max="20"
+                  step="0.1"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="riskCash">現金 リスク</label
+                ><input
+                  type="number"
+                  id="riskCash"
+                  value="0.5"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                /><span class="unit">%</span>
+              </div>
+              <div class="row">
+                <label for="corrSB">相関 株式–債券</label
+                ><input
+                  type="number"
+                  id="corrSB"
+                  value="0.15"
+                  min="-1"
+                  max="1"
+                  step="0.05"
+                /><span class="unit"></span>
+              </div>
+              <div class="row">
+                <label for="corrSC">相関 株式–現金</label
+                ><input
+                  type="number"
+                  id="corrSC"
+                  value="0"
+                  min="-1"
+                  max="1"
+                  step="0.05"
+                /><span class="unit"></span>
+              </div>
+              <div class="row">
+                <label for="corrBC">相関 債券–現金</label
+                ><input
+                  type="number"
+                  id="corrBC"
+                  value="0.10"
+                  min="-1"
+                  max="1"
+                  step="0.05"
+                /><span class="unit"></span>
+              </div>
+            </div>
+            <p class="hint">
+              名目リターン（インフレ込み）で入力します。毎年末に元の配分へリバランスする前提です。
+            </p>
+          </details>
 
-	<details class="sub">
-		<summary>各資産クラスの前提を編集</summary>
-		<div class="matrix">
-			<div class="row"><label for="retStock">株式 期待リターン</label><input type="number" id="retStock" value="7.0" min="-10" max="20" step="0.1"><span class="unit">%</span></div>
-			<div class="row"><label for="riskStock">株式 リスク</label><input type="number" id="riskStock" value="18.0" min="0" max="50" step="0.5"><span class="unit">%</span></div>
-			<div class="row"><label for="retBond">債券 期待リターン</label><input type="number" id="retBond" value="2.5" min="-10" max="20" step="0.1"><span class="unit">%</span></div>
-			<div class="row"><label for="riskBond">債券 リスク</label><input type="number" id="riskBond" value="6.0" min="0" max="50" step="0.5"><span class="unit">%</span></div>
-			<div class="row"><label for="retCash">現金 期待リターン</label><input type="number" id="retCash" value="0.7" min="-5" max="20" step="0.1"><span class="unit">%</span></div>
-			<div class="row"><label for="riskCash">現金 リスク</label><input type="number" id="riskCash" value="0.5" min="0" max="10" step="0.1"><span class="unit">%</span></div>
-			<div class="row"><label for="corrSB">相関 株式–債券</label><input type="number" id="corrSB" value="0.15" min="-1" max="1" step="0.05"><span class="unit"></span></div>
-			<div class="row"><label for="corrSC">相関 株式–現金</label><input type="number" id="corrSC" value="0" min="-1" max="1" step="0.05"><span class="unit"></span></div>
-			<div class="row"><label for="corrBC">相関 債券–現金</label><input type="number" id="corrBC" value="0.10" min="-1" max="1" step="0.05"><span class="unit"></span></div>
-		</div>
-		<p class="hint">名目リターン（インフレ込み）で入力します。毎年末に元の配分へリバランスする前提です。</p>
-	</details>
+          <h2>インフレ・税金</h2>
+          <div class="row">
+            <label for="inflation">インフレ率</label
+            ><input
+              type="number"
+              id="inflation"
+              value="2.0"
+              min="-2"
+              max="10"
+              step="0.1"
+            /><span class="unit">%/年</span>
+          </div>
+          <p class="hint">
+            初期値は日本銀行の<a
+              href="https://www.boj.or.jp/mopo/outline/target.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >物価安定の目標（2%）</a
+            >に合わせています。変える場合は、資産クラスの期待リターンが<strong>名目</strong>であることに注意してください（インフレ率だけを上げると、その分だけ実質の結果が厳しくなります）。
+          </p>
+          <label class="check"
+            ><input
+              type="checkbox"
+              id="taxOn"
+              checked
+            />売却益に課税する（20.315%）</label
+          >
+          <label class="check"
+            ><input
+              type="checkbox"
+              id="nisaOn"
+              checked
+            />NISA枠を優先して使う</label
+          >
+          <div class="row sub-row" id="rowNisaUsed">
+            <label for="nisaUsed"
+              >└ 生涯枠の使用済み<span
+                class="help"
+                tabindex="0"
+                aria-label="生涯枠の使用済みについて"
+                aria-describedby="tipNisaUsed"
+                >？<span class="tipbox" id="tipNisaUsed" role="tooltip"
+                  >これまでにNISAで買った金額の累計（簿価）です。運用して増えた<strong>いまの評価額ではありません</strong>。生涯枠1800万円の残りがこの分だけ少ない状態で、これからの積立を始めます。<br /><br />「現在の運用資産」にNISAで持っている分が含まれていても、残高そのものは課税口座として計算します（ここに入れるのは使った枠だけです）。</span
+                ></span
+              ></label
+            ><input
+              type="number"
+              id="nisaUsed"
+              class="narrow"
+              value="0"
+              min="0"
+              max="1800"
+              step="60"
+            /><span class="unit">万円</span>
+          </div>
+          <p class="hint">
+            NISAは年間360万円・生涯1800万円（簿価）まで。超過分は課税口座で運用し、取り崩し時に売却益へ課税します。
+          </p>
 
-	<h2>インフレ・税金</h2>
-	<div class="row"><label for="inflation">インフレ率</label><input type="number" id="inflation" value="2.0" min="-2" max="10" step="0.1"><span class="unit">%/年</span></div>
-	<p class="hint">初期値は日本銀行の<a href="https://www.boj.or.jp/mopo/outline/target.htm" target="_blank" rel="noopener noreferrer">物価安定の目標（2%）</a>に合わせています。変える場合は、資産クラスの期待リターンが<strong>名目</strong>であることに注意してください（インフレ率だけを上げると、その分だけ実質の結果が厳しくなります）。</p>
-	<label class="check"><input type="checkbox" id="taxOn" checked>売却益に課税する（20.315%）</label>
-	<label class="check"><input type="checkbox" id="nisaOn" checked>NISA枠を優先して使う</label>
-	<div class="row sub-row" id="rowNisaUsed"><label for="nisaUsed">└ 生涯枠の使用済み<span class="help" tabindex="0" aria-label="生涯枠の使用済みについて" aria-describedby="tipNisaUsed">？<span class="tipbox" id="tipNisaUsed" role="tooltip">これまでにNISAで買った金額の累計（簿価）です。運用して増えた<strong>いまの評価額ではありません</strong>。生涯枠1800万円の残りがこの分だけ少ない状態で、これからの積立を始めます。<br><br>「現在の運用資産」にNISAで持っている分が含まれていても、残高そのものは課税口座として計算します（ここに入れるのは使った枠だけです）。</span></span></label><input type="number" id="nisaUsed" class="narrow" value="0" min="0" max="1800" step="60"><span class="unit">万円</span></div>
-	<p class="hint">NISAは年間360万円・生涯1800万円（簿価）まで。超過分は課税口座で運用し、取り崩し時に売却益へ課税します。</p>
+          <h2>試行設定</h2>
+          <div class="row">
+            <label for="trials">試行回数</label
+            ><input
+              type="number"
+              id="trials"
+              value="2000"
+              min="100"
+              max="20000"
+              step="100"
+            /><span class="unit">回</span>
+          </div>
+          <div class="row">
+            <label for="viewMode">金額の表示</label
+            ><select id="viewMode">
+              <option value="real">実質（現在の物価）</option>
+              <option value="nominal">名目（将来の金額）</option>
+            </select>
+          </div>
+          <label class="check"
+            ><input
+              type="checkbox"
+              id="seedFixed"
+              checked
+            />乱数を固定して比較しやすくする</label
+          >
+          <label class="check"
+            ><input
+              type="checkbox"
+              id="showPaths"
+              checked
+            />個別の試行を重ねて表示する</label
+          >
+          <button class="reset" id="resetBtn" type="button">
+            入力をリセット
+          </button>
+        </aside>
 
-	<h2>試行設定</h2>
-	<div class="row"><label for="trials">試行回数</label><input type="number" id="trials" value="2000" min="100" max="20000" step="100"><span class="unit">回</span></div>
-	<div class="row"><label for="viewMode">金額の表示</label><select id="viewMode">
-		<option value="real">実質（現在の物価）</option>
-		<option value="nominal">名目（将来の金額）</option>
-	</select></div>
-	<label class="check"><input type="checkbox" id="seedFixed" checked>乱数を固定して比較しやすくする</label>
-	<label class="check"><input type="checkbox" id="showPaths" checked>個別の試行を重ねて表示する</label>
-	<button class="reset" id="resetBtn" type="button">入力をリセット</button>
-</aside>
+        <section class="results">
+          <div id="alert" role="alert"></div>
 
-<section class="results">
+          <div class="tiles" id="tiles"></div>
 
-	<div id="alert" role="alert"></div>
+          <figure>
+            <figcaption>
+              <div class="fig-title">資産残高の推移</div>
+              <div class="fig-sub" id="fanSub">–</div>
+            </figcaption>
+            <div class="legend">
+              <span
+                ><i class="key box" style="background: var(--band-outer)"></i
+                >下位5%〜上位5%</span
+              >
+              <span
+                ><i class="key box" style="background: var(--band-inner)"></i
+                >下位25%〜上位25%</span
+              >
+              <span
+                ><i class="key" style="background: var(--series-1)"></i
+                >中央値</span
+              >
+              <span><i class="key dash"></i>運用しなかった場合</span>
+              <span id="legendPaths"
+                ><i class="key" style="background: var(--path)"></i
+                >個別の試行（20本）</span
+              >
+            </div>
+            <div class="canvas-wrap" id="fanWrap">
+              <canvas
+                id="fanChart"
+                height="400"
+                role="img"
+                aria-label="資産残高の推移と、下位5%から上位5%までのばらつきを示すグラフ"
+              ></canvas>
+              <div class="tooltip" id="fanTip"></div>
+            </div>
+            <div class="range-bar" id="rangeBar">
+              <div
+                class="range-wrap"
+                id="rangeWrap"
+                tabindex="0"
+                role="slider"
+                aria-label="上のグラフに表示する期間"
+                aria-valuemin="0"
+                aria-valuemax="0"
+                aria-valuenow="0"
+                aria-valuetext="全期間"
+              >
+                <canvas id="rangeChart" height="56" aria-hidden="true"></canvas>
+              </div>
+              <div class="range-foot">
+                <button
+                  type="button"
+                  class="range-reset"
+                  id="rangeReset"
+                  hidden
+                >
+                  全期間に戻す
+                </button>
+              </div>
+            </div>
+          </figure>
 
-	<div class="tiles" id="tiles"></div>
+          <figure>
+            <figcaption>
+              <div class="fig-title">最終年の資産の分布</div>
+              <div class="fig-sub" id="histSub">–</div>
+            </figcaption>
+            <div class="canvas-wrap" id="histWrap">
+              <canvas
+                id="histChart"
+                height="230"
+                role="img"
+                aria-label="最終資産のヒストグラム"
+              ></canvas>
+              <div class="tooltip" id="histTip"></div>
+            </div>
+          </figure>
 
-	<figure>
-		<figcaption>
-			<div class="fig-title">資産残高の推移</div>
-			<div class="fig-sub" id="fanSub">–</div>
-		</figcaption>
-		<div class="legend">
-			<span><i class="key box" style="background:var(--band-outer)"></i>下位5%〜上位5%</span>
-			<span><i class="key box" style="background:var(--band-inner)"></i>下位25%〜上位25%</span>
-			<span><i class="key" style="background:var(--series-1)"></i>中央値</span>
-			<span><i class="key dash"></i>運用しなかった場合</span>
-			<span id="legendPaths"><i class="key" style="background:var(--path)"></i>個別の試行（20本）</span>
-		</div>
-		<div class="canvas-wrap" id="fanWrap">
-			<canvas id="fanChart" height="400" role="img" aria-label="資産残高の推移と、下位5%から上位5%までのばらつきを示すグラフ"></canvas>
-			<div class="tooltip" id="fanTip"></div>
-		</div>
-		<div class="range-bar" id="rangeBar">
-			<div class="range-wrap" id="rangeWrap" tabindex="0" role="slider"
-				aria-label="上のグラフに表示する期間" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="全期間">
-				<canvas id="rangeChart" height="56" aria-hidden="true"></canvas>
-			</div>
-			<div class="range-foot">
-				<button type="button" class="range-reset" id="rangeReset" hidden>全期間に戻す</button>
-			</div>
-		</div>
-	</figure>
+          <figure>
+            <details class="tablebox" open>
+              <summary>年次の詳細</summary>
+              <div class="fig-sub" id="tableSub" style="margin: 4px 0 8px">
+                –
+              </div>
+              <div class="table-wrap">
+                <table class="data" id="dataTable">
+                  <thead></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <label class="check" style="margin-top: 10px"
+                ><input
+                  type="checkbox"
+                  id="allYears"
+                />すべての年を表示する</label
+              >
+            </details>
+          </figure>
 
-	<figure>
-		<figcaption>
-			<div class="fig-title">最終年の資産の分布</div>
-			<div class="fig-sub" id="histSub">–</div>
-		</figcaption>
-		<div class="canvas-wrap" id="histWrap">
-			<canvas id="histChart" height="230" role="img" aria-label="最終資産のヒストグラム"></canvas>
-			<div class="tooltip" id="histTip"></div>
-		</div>
-	</figure>
+          <figure>
+            <div class="foot-note">
+              <h3>計算の前提</h3>
+              <ul>
+                <li>
+                  各資産クラスの年次リターンは対数正規分布に従い、指定した相関で同時に発生させています（幾何ブラウン運動の年次離散版）。入力した期待リターンは<strong>算術平均</strong>として扱います。
+                </li>
+                <li>
+                  キャッシュフロー（積立・取り崩し）は年初、運用リターンはその後の1年間に適用します。毎年末に指定した配分へリバランスします。
+                </li>
+                <li>
+                  退職金は受け取る年齢の年初に、その年の取り崩しより先に全額を課税口座へ加えます。「名目のまま」は入力額をそのままの金額として扱い、「現在の物価」は他の金額欄と同じくインフレ率で増額します。
+                </li>
+                <li>
+                  取り崩し期は、生活費から収入を差し引いた不足分だけを資産から取り崩します。定率方式では残高の一定率を取り崩すため、収入は結果に影響しません。
+                </li>
+                <li>
+                  積立はNISA枠を優先し、枠を超えた分と現在の資産は課税口座として簿価を追跡します（現在の資産は簿価＝時価、つまり含み益ゼロとして開始）。取り崩しは課税口座を先に取り崩し、売却額のうち含み益に相当する部分へ課税します。
+                </li>
+                <li>
+                  実質表示は、各年の金額をインフレ率で現在価値に割り戻したものです。NISAの投資枠だけは名目の金額（年360万円・生涯1800万円）で固定しています。
+                </li>
+                <li>
+                  条件を変えたときに結果がどう変わるかを見るためのツールとしてご使用ください。
+                </li>
+                <li>
+                  入力内容はこのブラウザに自動保存され、次に開いたときに復元されます（「入力をリセット」で消去）。「試算結果を共有」からは、同じ条件の試算をそのまま他の人に渡せます。
+                </li>
+              </ul>
+            </div>
+            <p class="foot-disclaimer">
+              ・
+              試算は概算で、将来の運用成果を示すものではありません。NISAの枠や税率など制度の詳細は公的機関の情報をご確認ください。投資の判断はご自身の責任でお願いします。
+            </p>
+            <p class="foot-privacy">
+              ・ 入力内容やアクセス解析の扱いについては<a href="../privacy/"
+                >プライバシーポリシー</a
+              >をご覧ください。
+            </p>
+          </figure>
 
-	<figure>
-		<details class="tablebox" open>
-			<summary>年次の詳細</summary>
-			<div class="fig-sub" id="tableSub" style="margin:4px 0 8px">–</div>
-			<div class="table-wrap"><table class="data" id="dataTable"><thead></thead><tbody></tbody></table></div>
-			<label class="check" style="margin-top:10px"><input type="checkbox" id="allYears">すべての年を表示する</label>
-		</details>
-	</figure>
-
-	<figure>
-		<div class="foot-note">
-			<h3>計算の前提</h3>
-			<ul>
-				<li>各資産クラスの年次リターンは対数正規分布に従い、指定した相関で同時に発生させています（幾何ブラウン運動の年次離散版）。入力した期待リターンは<strong>算術平均</strong>として扱います。</li>
-				<li>キャッシュフロー（積立・取り崩し）は年初、運用リターンはその後の1年間に適用します。毎年末に指定した配分へリバランスします。</li>
-				<li>退職金は受け取る年齢の年初に、その年の取り崩しより先に全額を課税口座へ加えます。「名目のまま」は入力額をそのままの金額として扱い、「現在の物価」は他の金額欄と同じくインフレ率で増額します。</li>
-				<li>取り崩し期は、生活費から収入を差し引いた不足分だけを資産から取り崩します。定率方式では残高の一定率を取り崩すため、収入は結果に影響しません。</li>
-				<li>積立はNISA枠を優先し、枠を超えた分と現在の資産は課税口座として簿価を追跡します（現在の資産は簿価＝時価、つまり含み益ゼロとして開始）。取り崩しは課税口座を先に取り崩し、売却額のうち含み益に相当する部分へ課税します。</li>
-				<li>実質表示は、各年の金額をインフレ率で現在価値に割り戻したものです。NISAの投資枠だけは名目の金額（年360万円・生涯1800万円）で固定しています。</li>
-				<li>条件を変えたときに結果がどう変わるかを見るためのツールとしてご使用ください。</li>
-				<li>入力内容はこのブラウザに自動保存され、次に開いたときに復元されます（「入力をリセット」で消去）。「試算結果を共有」からは、同じ条件の試算をそのまま他の人に渡せます。</li>
-			</ul>
-		</div>
-		<p class="foot-disclaimer">・ 試算は概算で、将来の運用成果を示すものではありません。NISAの枠や税率など制度の詳細は公的機関の情報をご確認ください。投資の判断はご自身の責任でお願いします。</p>
-		<p class="foot-privacy">・ 入力内容やアクセス解析の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
-	</figure>
-
-	<!-- この導線だけは、他のページのように本文の外へは出さず、結果の列の最後
+          <!-- この導線だけは、他のページのように本文の外へは出さず、結果の列の最後
 	     （「計算の前提」の下）に置く。このページは左の入力欄が縦に長く、
 	     レイアウトの外に出すと注記からずっと下へ離れてしまうため -->
-	<nav data-tool-nav="../"></nav>
+          <nav data-tool-nav="../"></nav>
+        </section>
+      </div>
+    </main>
 
-</section>
-</div>
-</main>
-
-<!-- 共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+    <!-- 共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、これらが届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
-<script src="../common/tool-nav.js?v=20260814a"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260823a"></script>
-<script src="../common/state.js?v=20260823b"></script>
-<script src="./js/asset-core.js?v=20260814a"></script>
-<script src="./js/asset-simulator.js?v=20260823a"></script>
-</body>
+    <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/qrcode.js?v=20260805a"></script>
+    <script src="../common/share.js?v=20260823a"></script>
+    <script src="../common/state.js?v=20260823b"></script>
+    <script src="./js/asset-core.js?v=20260814a"></script>
+    <script src="./js/asset-simulator.js?v=20260823a"></script>
+  </body>
 </html>

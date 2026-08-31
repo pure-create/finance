@@ -2,107 +2,118 @@
    ここには印刷用のレイアウトと、このページ固有の打ち消しだけを置く。 */
 
 body {
-	font-size: 77%;
-	background: none;
-	color: black; /* ダークテーマのまま印刷しても白文字にならないようにする */
+  font-size: 77%;
+  background: none;
+  color: black; /* ダークテーマのまま印刷しても白文字にならないようにする */
 }
 
 table {
-	background: none;
-	box-shadow: none;
+  background: none;
+  box-shadow: none;
 }
 
 td {
-	color: black;
+  color: black;
 }
 
 .page-head h1 {
-	color: black;
-	background: none;
-	box-shadow: none;
-	border: none;
-	padding: 0;
+  color: black;
+  background: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
 }
 
 h2 {
-	border: none;
-	font-weight: normal;
-	color: black;
-	background: white;
-	box-shadow: none;
+  border: none;
+  font-weight: normal;
+  color: black;
+  background: white;
+  box-shadow: none;
 }
 
-th, td {
-	border: 1px solid black;
+th,
+td {
+  border: 1px solid black;
 }
 
-th, th.own, th.mandatory {
-	background: white;
-	color: black;
+th,
+th.own,
+th.mandatory {
+  background: white;
+  color: black;
 }
 
-input, select {
-	color: black;
-	background: white;
-	border: none;
-	border-bottom: 1px solid gray;
+input,
+select {
+  color: black;
+  background: white;
+  border: none;
+  border-bottom: 1px solid gray;
 }
 
 div#tyosei_result {
-	background: white;
-	border: 1px solid black;
+  background: white;
+  border: 1px solid black;
 }
 
-input#tyosei_price, span.numeric {
-	background: none;
-	border: none;
-	color: black;
-	font-weight: normal;
+input#tyosei_price,
+span.numeric {
+  background: none;
+  border: none;
+  color: black;
+  font-weight: normal;
 }
 
-span.warning, span.tyosei-hint {
-	background: none;
-	color: black;
+span.warning,
+span.tyosei-hint {
+  background: none;
+  color: black;
 }
 
 div.noscript-warning {
-	display: none;
+  display: none;
 }
 
 /* ページ間の移動リンクは画面を操作するための導線なので紙には出さない */
 a.switch-link {
-	display: none;
+  display: none;
 }
 
 .foot-note,
 .foot-disclaimer {
-	color: black;
+  color: black;
 }
 
 /* 「？」は押して読むための印なので、中身ごと紙には出さない
    （入力欄側の吹き出し .tipbox は common/site.css が消す） */
-div.explain, tr.calc_memo, .help, div.question {
-	display: none !important;
+div.explain,
+tr.calc_memo,
+.help,
+div.question {
+  display: none !important;
 }
 
 .table-scroll {
-	overflow: visible;
+  overflow: visible;
 }
 
 table.result-table {
-	font-size: 85%;
+  font-size: 85%;
 }
 
-table.result-table th, table.result-table td {
-	padding: 3px 4px;
+table.result-table th,
+table.result-table td {
+  padding: 3px 4px;
 }
 
-h2, div.section-header {
-	page-break-after: avoid;
-	break-after: avoid;
+h2,
+div.section-header {
+  page-break-after: avoid;
+  break-after: avoid;
 }
 
 /* 紙にはリンク先が残らないので、URLを文字として書き出す */
 .site-foot a[href]::after {
-	content: " (" attr(href) ")";
+  content: " (" attr(href) ")";
 }

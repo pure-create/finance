@@ -2,21 +2,37 @@
    ここには印刷用のレイアウトと、このページ固有の打ち消しだけを置く。
    高さ・余白は css/main.css の html.printing と同じ値にする（描き直しを間に合わせるため） */
 
-@page{margin:12mm}
+@page {
+  margin: 12mm;
+}
 
-body{padding:0;font-size:10pt}
+body {
+  padding: 0;
+  font-size: 10pt;
+}
 
-.card{
-  background:none;
-  border:1px solid var(--border);
-  box-shadow:none;
-  break-inside:avoid;
+.card {
+  background: none;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  break-inside: avoid;
 }
 
 /* スライダーの説明や課税切替は紙面では意味を持たないので非表示 */
-.help,.switch{display:none !important}
+.help,
+.switch {
+  display: none !important;
+}
 
-.chart-wrap{height:280px;break-inside:avoid}
+.chart-wrap {
+  height: 280px;
+  break-inside: avoid;
+}
 
-.timeline,.period{break-inside:avoid}
-.period .age-col{background:none}
+.timeline,
+.period {
+  break-inside: avoid;
+}
+.period .age-col {
+  background: none;
+}

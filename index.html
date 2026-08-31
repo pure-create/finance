@@ -1,223 +1,289 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="資産運用・NISA利用状況・公務員の退職手当・年金・iDeCo・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="資産運用・NISA利用状況・iDeCo・公務員の退職手当・年金・贈与税・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/">
-<meta property="og:title" content="資産運用・金融シミュレーター">
-<meta property="og:description" content="資産運用・NISA利用状況・公務員の退職手当・年金・iDeCo・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/site.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="資産運用・金融シミュレーター">
-<meta name="twitter:card" content="summary_large_image">
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <link rel="canonical" href="https://pure-create.github.io/finance/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:url" content="https://pure-create.github.io/finance/" />
+    <meta property="og:title" content="資産運用・金融シミュレーター" />
+    <meta
+      property="og:description"
+      content="資産運用・NISA利用状況・iDeCo・公務員の退職手当・年金・贈与税・相続税を試算できる無料シミュレーター集。計算はすべてブラウザ内で行い、試算結果はURLでそのまま共有できます。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/site.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="資産運用・金融シミュレーター" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="favicon.ico" sizes="32x32">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="favicon.ico" sizes="32x32" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="manifest.json">
-<title>資産運用・金融シミュレーター</title>
-<script src="common/analytics.js?v=20260805a" async></script>
-<script src="common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="common/theme.css?v=20260815a">
-<link rel="stylesheet" href="common/site.css?v=20260823b">
-<style>
-  /* 各ツールの識別色。データと結び付いた色なのでテーマ共通トークンには含めない */
-  :root {
-    --tint: 6%;
-    --edge-asset: #0d9488;
-    --edge-nisa: #16a34a;
-    --edge-retire: #d97706;
-    --edge-pension: #2563eb;
-    --edge-ideco:   #db2777;
-    --edge-inherit: #8b5cf6;
-  }
-  /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
-  :root[data-theme="dark"] {
-    --tint: 12%;
-    --edge-asset: #2dd4bf;
-    --edge-nisa: #4ade80;
-    --edge-retire: #fbbf24;
-    --edge-pension: #60a5fa;
-    --edge-ideco:   #f472b6;
-    --edge-inherit: #a78bfa;
-  }
+    <link rel="manifest" href="manifest.json" />
+    <title>資産運用・金融シミュレーター</title>
+    <script src="common/analytics.js?v=20260805a" async></script>
+    <script src="common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="common/site.css?v=20260823b" />
+    <style>
+      /* 各ツールの識別色。データと結び付いた色なのでテーマ共通トークンには含めない */
+      :root {
+        --tint: 6%;
+        --edge-asset: #0d9488;
+        --edge-nisa: #16a34a;
+        --edge-retire: #d97706;
+        --edge-pension: #2563eb;
+        --edge-ideco: #db2777;
+        --edge-gift: #7c3aed;
+        --edge-inherit: #4f46e5;
+      }
+      /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
+      :root[data-theme="dark"] {
+        --tint: 12%;
+        --edge-asset: #2dd4bf;
+        --edge-nisa: #4ade80;
+        --edge-retire: #fbbf24;
+        --edge-pension: #60a5fa;
+        --edge-ideco: #f472b6;
+        --edge-gift: #a78bfa;
+        --edge-inherit: #818cf8;
+      }
 
-  body {
-    padding: 1rem 1rem 1.25rem;
-    font-size: 16px;
-    line-height: 1.5;
-  }
+      body {
+        padding: 1rem 1rem 1.25rem;
+        font-size: 16px;
+        line-height: 1.5;
+      }
 
-  /* 本文の幅は年金・相続・NISAと揃えて840px */
-  main { max-width: 840px; margin: 0 auto; }
+      /* 本文の幅は年金・相続・NISAと揃えて840px */
+      main {
+        max-width: 840px;
+        margin: 0 auto;
+      }
 
-  /* ツールが増えて縦に長くなったので、見出し行の余白も他のページより詰める。
+      /* ツールが増えて縦に長くなったので、見出し行の余白も他のページより詰める。
      このページは見出しの下に説明文が無く、すぐ一覧が始まるため狭くても窮屈にならない */
-  .page-head {
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-  }
+      .page-head {
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+      }
 
-  .item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--edge, var(--border));
-    border-radius: 10px;
-    padding: .6rem .95rem;
-    margin-bottom: .45rem;
-  }
+      .item {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--edge, var(--border));
+        border-radius: 10px;
+        padding: 0.6rem 0.95rem;
+        margin-bottom: 0.45rem;
+      }
 
-  /* 対応ブラウザだけ、枠線の色をごく薄く背景に敷く */
-  @supports (background: color-mix(in srgb, red 5%, white)) {
-    .item { background: color-mix(in srgb, var(--edge, var(--surface)) var(--tint), var(--surface)); }
-  }
+      /* 対応ブラウザだけ、枠線の色をごく薄く背景に敷く */
+      @supports (background: color-mix(in srgb, red 5%, white)) {
+        .item {
+          background: color-mix(
+            in srgb,
+            var(--edge, var(--surface)) var(--tint),
+            var(--surface)
+          );
+        }
+      }
 
-  .item-asset   { --edge: var(--edge-asset); }
-  .item-nisa    { --edge: var(--edge-nisa); }
-  .item-retire  { --edge: var(--edge-retire); }
-  .item-pension { --edge: var(--edge-pension); }
-  .item-ideco   { --edge: var(--edge-ideco); }
-  .item-inherit { --edge: var(--edge-inherit); }
+      .item-asset {
+        --edge: var(--edge-asset);
+      }
+      .item-nisa {
+        --edge: var(--edge-nisa);
+      }
+      .item-retire {
+        --edge: var(--edge-retire);
+      }
+      .item-pension {
+        --edge: var(--edge-pension);
+      }
+      .item-ideco {
+        --edge: var(--edge-ideco);
+      }
+      .item-gift {
+        --edge: var(--edge-gift);
+      }
+      .item-inherit {
+        --edge: var(--edge-inherit);
+      }
 
-  .item h2 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    line-height: 1.35;
-    margin: 0 0 .15rem;
-  }
+      .item h2 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        line-height: 1.35;
+        margin: 0 0 0.15rem;
+      }
 
-  /* その分類に入口ページがあるものは、見出し自体をそこへのリンクにする
+      /* その分類に入口ページがあるものは、見出し自体をそこへのリンクにする
      （404ページの一覧と同じ形）。見出しの見た目は他と揃えたいので、
      色は継がせ、下線はホバーのときだけ出す */
-  .item h2 a {
-    color: inherit;
-    text-decoration: none;
-  }
-  .item h2 a:hover { text-decoration: underline; }
+      .item h2 a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .item h2 a:hover {
+        text-decoration: underline;
+      }
 
-  /* 同じ分類の入口は横に並べる。NISAは年末ごとに増えていくので、
+      /* 同じ分類の入口は横に並べる。NISAは年末ごとに増えていくので、
      入りきらない分は折り返す */
-  .links {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: .1rem 1.4rem;
-    margin: 0;
-    padding: 0;
-    line-height: 1.45;
-  }
+      .links {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.1rem 1.4rem;
+        margin: 0;
+        padding: 0;
+        line-height: 1.45;
+      }
 
-  .links a {
-    display: inline-block;
-    text-decoration: none;
-    /* 指で押す的の高さは、行の高さと上下の余白で 32px 前後を保つ */
-    padding: .15rem 0;
-  }
+      .links a {
+        display: inline-block;
+        text-decoration: none;
+        /* 指で押す的の高さは、行の高さと上下の余白で 32px 前後を保つ */
+        padding: 0.15rem 0;
+      }
 
-  .links a::before {
-    content: "→";
-    color: var(--edge, var(--accent));
-    margin-right: .45em;
-  }
+      .links a::before {
+        content: "→";
+        color: var(--edge, var(--accent));
+        margin-right: 0.45em;
+      }
 
-  .links a:hover { text-decoration: underline; }
+      .links a:hover {
+        text-decoration: underline;
+      }
 
-  .desc {
-    color: var(--muted);
-    font-size: .875rem;
-    line-height: 1.5;
-    margin: .2rem 0 0;
-  }
+      .desc {
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        margin: 0.2rem 0 0;
+      }
 
-  /* 断り書きの前の間隔も詰める（共通の指定は 24px） */
-  .site-privacy { margin-top: 16px; }
+      /* 断り書きの前の間隔も詰める（共通の指定は 24px） */
+      .site-privacy {
+        margin-top: 16px;
+      }
 
-  /* 共有ボタン・QRの見た目と開け閉めは common/site.css に集約している。
+      /* 共有ボタン・QRの見た目と開け閉めは common/site.css に集約している。
      このページは戻る導線が無く、操作ボタン群を見出し行に置いている点だけが他と違う */
-</style>
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<main id="main" tabindex="-1">
-  <div class="page-head">
-    <div class="page-title">
-      <h1>資産運用・金融シミュレーター</h1>
-    </div>
-    <div class="page-tools">
-      <div class="share-wrap">
-        <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
-        <div class="share-pop" id="sharePop">
-          <span id="shareQr" class="share-qr" aria-hidden="true"></span>
-          <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <main id="main" tabindex="-1">
+      <div class="page-head">
+        <div class="page-title">
+          <h1>資産運用・金融シミュレーター</h1>
+        </div>
+        <div class="page-tools">
+          <div class="share-wrap">
+            <button
+              class="share-btn"
+              id="shareBtn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="sharePop"
+            >
+              URLを共有
+            </button>
+            <div class="share-pop" id="sharePop">
+              <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+              <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+            </div>
+          </div>
+          <span data-theme-toggle></span>
         </div>
       </div>
-      <span data-theme-toggle></span>
-    </div>
-  </div>
 
-  <section class="item item-asset">
-    <h2>資産運用</h2>
-    <ul class="links">
-      <li><a href="assetSimulator/">資産運用シミュレーター</a></li>
-    </ul>
-    <p class="desc">積立と取り崩しをモンテカルロ法でシミュレーションし、将来の資産推移を試算</p>
-  </section>
+      <section class="item item-asset">
+        <h2>資産運用</h2>
+        <ul class="links">
+          <li><a href="assetSimulator/">資産運用シミュレーター</a></li>
+        </ul>
+        <p class="desc">
+          積立と取り崩しをモンテカルロ法でシミュレーションし、将来の資産推移を試算
+        </p>
+      </section>
 
-  <section class="item item-nisa">
-    <h2>NISA利用状況</h2>
-    <ul class="links">
-      <li><a href="nisa/nisa2025.html">2025年末</a></li>
-      <li><a href="nisa/nisa2024.html">2024年末</a></li>
-    </ul>
-    <p class="desc">金融庁のNISA利用状況データと人口データから作成</p>
-  </section>
+      <section class="item item-nisa">
+        <h2>NISA利用状況</h2>
+        <ul class="links">
+          <li><a href="nisa/nisa2025.html">2025年末</a></li>
+          <li><a href="nisa/nisa2024.html">2024年末</a></li>
+        </ul>
+        <p class="desc">金融庁のNISA利用状況データと人口データから作成</p>
+      </section>
 
-  <section class="item item-retire">
-    <h2><a href="retirement/">公務員退職手当計算</a></h2>
-    <ul class="links">
-      <li><a href="retirement/local/">地方公務員</a></li>
-      <li><a href="retirement/national/">国家公務員</a></li>
-    </ul>
-    <p class="desc">基本給や採用年度等から退職手当、税金や手取額を計算</p>
-  </section>
+      <section class="item item-ideco">
+        <h2>iDeCo</h2>
+        <ul class="links">
+          <li><a href="ideco/">iDeCoシミュレーター</a></li>
+        </ul>
+        <p class="desc">
+          掛金の節税額と、受け取るときの税金を試算。退職金との受取順序による差も比較
+        </p>
+      </section>
 
-  <section class="item item-pension">
-    <h2>年金</h2>
-    <ul class="links">
-      <li><a href="pension/">年金の損益分岐点シミュレーター</a></li>
-    </ul>
-    <p class="desc">受給開始年齢ごとの累積受取総額を、運用利回りを考慮して比較</p>
-  </section>
+      <section class="item item-retire">
+        <h2><a href="retirement/">公務員退職手当計算</a></h2>
+        <ul class="links">
+          <li><a href="retirement/local/">地方公務員</a></li>
+          <li><a href="retirement/national/">国家公務員</a></li>
+        </ul>
+        <p class="desc">基本給や採用年度等から退職手当、税金や手取額を計算</p>
+      </section>
 
-  <section class="item item-ideco">
-    <h2>iDeCo</h2>
-    <ul class="links">
-      <li><a href="ideco/">iDeCoシミュレーター</a></li>
-    </ul>
-    <p class="desc">掛金の節税額と、受け取るときの税金を試算。退職金との受取順序による差も比較</p>
-  </section>
+      <section class="item item-pension">
+        <h2>年金</h2>
+        <ul class="links">
+          <li><a href="pension/">年金の損益分岐点シミュレーター</a></li>
+        </ul>
+        <p class="desc">
+          受給開始年齢ごとの累積受取総額を、運用利回りを考慮して比較
+        </p>
+      </section>
 
-  <section class="item item-inherit">
-    <h2>相続</h2>
-    <ul class="links">
-      <li><a href="inheritance/">二次相続シミュレーター</a></li>
-      <li><a href="gift/">贈与税・相続対策シミュレーター</a></li>
-    </ul>
-    <p class="desc">二次相続の比較に加え、毎年の贈与・資産成長・相続税まで含めた贈与対策を試算</p>
-  </section>
-  <!-- データの扱いについての断り書き。詳しい話はプライバシーポリシーに移したが、
+      <section class="item item-gift">
+        <h2>贈与</h2>
+        <ul class="links">
+          <li><a href="gift/">贈与税・相続対策シミュレーター</a></li>
+        </ul>
+        <p class="desc">
+          年間贈与額ごとの贈与税と、資産成長・将来の相続まで含めた最終手残りを比較
+        </p>
+      </section>
+
+      <section class="item item-inherit">
+        <h2>相続</h2>
+        <ul class="links">
+          <li><a href="inheritance/">二次相続シミュレーター</a></li>
+        </ul>
+        <p class="desc">
+          一次相続と二次相続を通した相続税と、家族全体の最終手残りを比較
+        </p>
+      </section>
+      <!-- データの扱いについての断り書き。詳しい話はプライバシーポリシーに移したが、
        「入力内容が外に出ない」ことだけはサイトの入口で伝える。使う前に知りたい話で、
        別のページを開かせるとほとんどの人は読まないため。
 
@@ -225,22 +291,30 @@
        断り書きを1行に保つのと、その話が要るのは共有の操作をした人だけで、
        そのときは共有の窓自身が「URLの「?」以降に試算条件が含まれています」と
        知らせる（common/share.js）ため。 -->
-  <div class="site-privacy">
-    <p>・ 各ツールの計算はすべてお使いのブラウザの中で行われ、入力した内容がサーバーへ送られることはありません。詳しくは<a href="privacy/">プライバシーポリシー</a>をご覧ください。</p>
-  </div>
-  </main>
-<!-- 共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+      <div class="site-privacy">
+        <p>
+          ・
+          各ツールの計算はすべてお使いのブラウザの中で行われ、入力した内容がサーバーへ送られることはありません。詳しくは<a
+            href="privacy/"
+            >プライバシーポリシー</a
+          >をご覧ください。
+        </p>
+      </div>
+    </main>
+    <!-- 共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、この2つが届くまで本文が出ない）。
      下のインラインの Share.init より前であればよい -->
-<script src="common/qrcode.js?v=20260805a"></script>
-<script src="common/share.js?v=20260823a"></script>
-<script>
-  /* QRの描画とURLコピーは他のページと同じ共通処理（common/share.js）に任せる。
+    <script src="common/qrcode.js?v=20260805a"></script>
+    <script src="common/share.js?v=20260823a"></script>
+    <script>
+      /* QRの描画とURLコピーは他のページと同じ共通処理（common/share.js）に任せる。
      このページには試算の入力が無いので、URLはクエリを付けないトップのURLそのもの */
-  Share.init({
-    buildUrl: function () { return Share.urlWithParams(null); },
-    okMsg:    'このサイトのURLをコピーしました。'
-  });
-</script>
-</body>
+      Share.init({
+        buildUrl: function () {
+          return Share.urlWithParams(null);
+        },
+        okMsg: "このサイトのURLをコピーしました。",
+      });
+    </script>
+  </body>
 </html>

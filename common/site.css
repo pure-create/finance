@@ -7,22 +7,33 @@
    ============================================================= */
 
 :root {
-	--font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
-	             "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP",
+    "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
-	margin: 0;
-	background: var(--bg);
-	color: var(--text);
-	font-family: var(--font-sans);
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
 }
 
-a { color: var(--accent); }
-a:hover { color: var(--accent-hover); }
-a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+a {
+  color: var(--accent);
+}
+a:hover {
+  color: var(--accent-hover);
+}
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
 
 /* 横に長い表を入れる箱（.table-scroll）。箱そのものの見た目は、NISAと退職手当の
    それぞれのCSSが持っている。ここに置くのはキーボードで操作するときの枠だけ。
@@ -31,7 +42,10 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    中身の右側を読めない。HTML側で tabindex="0" を付けて焦点を受けられるようにし、
    矢印キーで動かせるようにしてある。焦点が当たったことが見えないと押せる場所が
    分からないので、リンクやボタンと同じ枠をここで描く。 */
-.table-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* =============================================================
    本文へのスキップリンク
@@ -46,24 +60,28 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-
    focus が当たったときだけ左上に呼び戻す。
    ============================================================= */
 .skip-link {
-	position: absolute;
-	top: 8px;
-	left: -9999px;
-	z-index: 100;
-	padding: 8px 14px;
-	background: var(--surface);
-	border: 1px solid var(--accent);
-	border-radius: 8px;
-	box-shadow: var(--shadow-md);
-	font-size: 13px;
-	text-decoration: none;
+  position: absolute;
+  top: 8px;
+  left: -9999px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+  text-decoration: none;
 }
-.skip-link:focus { left: 8px; }
+.skip-link:focus {
+  left: 8px;
+}
 
 /* 飛んだ先の <main> は tabindex="-1" で focus を受けられるようにしてある。
    ここに枠が出ると、押した覚えのない囲みが本文全体に付いたように見えるので消す
    （移動したことは画面が動くことで伝わる） */
-main:focus { outline: none; }
+main:focus {
+  outline: none;
+}
 
 /* =============================================================
    サイト内ヘッダー（戻る導線＋制度データの時点＋操作ボタン群）
@@ -80,21 +98,23 @@ main:focus { outline: none; }
    上下に余白を持たせたリンクを足しても行は高くならない）。
    ============================================================= */
 .site-head {
-	display: flex;
-	align-items: center;
-	/* 振り分けに justify-content は使わず、下の margin-left: auto に余白を吸わせる。
+  display: flex;
+  align-items: center;
+  /* 振り分けに justify-content は使わず、下の margin-left: auto に余白を吸わせる。
 	   space-between だと、狭い画面で .page-tools が次の行へ折り返したときに、
 	   その行は要素が1つなので左端へ寄ってしまう。すると右端を基準に開く
 	   テーマ切替のメニューが画面の外へはみ出す（実測で26〜51px）。
 	   auto マージンなら折り返した行でも .page-tools が右端に着く */
-	justify-content: flex-start;
-	flex-wrap: wrap;
-	gap: 10px 12px;
-	margin-bottom: 14px;
-	font-size: 13px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-bottom: 14px;
+  font-size: 13px;
 }
 /* 戻る導線・制度データの時点と、操作ボタン群との間の余白をここで全部吸う */
-.site-head > .page-tools { margin-left: auto; }
+.site-head > .page-tools {
+  margin-left: auto;
+}
 
 /* トップへ戻る導線。以前は枠付きの錠剤（ボタンの形）にしていたが、
    右の共有・テーマ切替と同じ強さになり、操作ボタンが並んでいるように見えた。
@@ -104,13 +124,15 @@ main:focus { outline: none; }
    上下の余白は、指で押す的を32px程度にするためのもの。文字の高さ（約20px）
    のままだと、隣の制度データの時点と的が重なるほど狭くなる。 */
 .home-link {
-	display: inline-block;
-	padding: 6px 0;
-	line-height: 1.5;
-	text-decoration: none;
-	white-space: nowrap;
+  display: inline-block;
+  padding: 6px 0;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.home-link:hover { text-decoration: underline; }
+.home-link:hover {
+  text-decoration: underline;
+}
 
 /* 狭い画面では、戻る導線・制度データの時点・操作ボタン群が横に並びきらず、
    行が2つになる。何も指定しないと最後の操作ボタン群が下へ落ちるが、その行は
@@ -127,10 +149,10 @@ main:focus { outline: none; }
    幅はここに書いた文言と釣り合っている。ボタンの文言や導線の文字数を変えたら、
    400pxのままでよいか測り直すこと。 */
 @media screen and (max-width: 400px) {
-	.site-head > .data-asof {
-		order: 1;
-		flex-basis: 100%;
-	}
+  .site-head > .data-asof {
+    order: 1;
+    flex-basis: 100%;
+  }
 }
 
 /* 使っている制度データがいつ時点のものかを示す。
@@ -147,14 +169,14 @@ main:focus { outline: none; }
    日付は各ページのHTMLに直接書いてある。ツールごとに見直した時期が違うため、
    1箇所にまとめず、そのページの制度データを直したときに一緒に更新する。 */
 .data-asof {
-	/* 以前はここに margin-right: auto があり、この文字と操作ボタン群の間の余白を
+  /* 以前はここに margin-right: auto があり、この文字と操作ボタン群の間の余白を
 	   吸わせていた。その役目は .site-head > .page-tools の margin-left: auto へ移した
 	   （折り返した行も右端に着くようにするため）。両方に持たせると余白を取り合って
 	   この文字が中央へ寄るので、ここには戻さないこと */
-	color: var(--muted);
-	font-size: 12px;
-	line-height: 1.6;
-	white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
 /* =============================================================
@@ -165,42 +187,50 @@ main:focus { outline: none; }
    操作ボタン群もこの行に置くため、左右に振り分けられる形を残している。
    ============================================================= */
 .page-head {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
-	flex-wrap: wrap;
-	margin-bottom: 18px;
-	padding-bottom: 12px;
-	border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
-.page-title { flex: 1 1 320px; min-width: 0; }
+.page-title {
+  flex: 1 1 320px;
+  min-width: 0;
+}
 .page-head h1 {
-	margin: 0;
-	font-size: 19px;
-	font-weight: 650;
-	letter-spacing: .01em;
-	line-height: 1.4;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
 }
 .page-head .sub {
-	margin: 3px 0 0;
-	color: var(--text-sub);
-	font-size: 13px;
-	line-height: 1.6;
+  margin: 3px 0 0;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.6;
 }
 .page-tools {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-	flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
 }
 
 /* 見出しと同じ行に操作ボタン群があるトップページ用。狭いときは行を分ける。
    ツールのページでは .site-head の中にあるので、この指定は当たらない */
 @media screen and (max-width: 600px) {
-	.page-head { align-items: stretch; }
-	.page-head > .page-tools { width: 100%; justify-content: flex-end; }
+  .page-head {
+    align-items: stretch;
+  }
+  .page-head > .page-tools {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* =============================================================
@@ -208,27 +238,33 @@ main:focus { outline: none; }
    ============================================================= */
 .btn,
 .share-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	background: var(--surface);
-	/* 枠線にわずかな青み。灰色の枠だけだと、ただの囲みに見えて押せることが伝わらない */
-	border: 1px solid var(--border-action);
-	border-radius: 8px;
-	color: var(--text-sub);
-	min-height: 34px; /* テーマ切替ボタンと高さを揃える */
-	padding: 6px 12px;
-	font-family: inherit;
-	font-size: 13px;
-	line-height: 1.5;
-	cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  /* 枠線にわずかな青み。灰色の枠だけだと、ただの囲みに見えて押せることが伝わらない */
+  border: 1px solid var(--border-action);
+  border-radius: 8px;
+  color: var(--text-sub);
+  min-height: 34px; /* テーマ切替ボタンと高さを揃える */
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
 }
 /* 既定の枠線が青みを帯びたので、ホバーは灰色（--muted）ではなくアクセント色へ寄せる。
    灰色に戻ると、触ったときに青みが薄れて逆向きの変化に見えてしまう */
 .btn:hover,
-.share-btn:hover { color: var(--text); border-color: var(--accent); }
+.share-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
 .btn:focus-visible,
-.share-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.share-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* =============================================================
    入力部品（セレクトボックス・チェックボックス）
@@ -241,99 +277,122 @@ main:focus { outline: none; }
    ページ固有のCSSはこの後に読み込まれるので、必要なら上書きできる。
    ============================================================= */
 .field-select {
-	font-family: inherit;
-	font-size: 14px;
-	color: var(--text);
-	background: var(--field);
-	border: 1px solid var(--field-border);
-	border-radius: 6px;
-	box-shadow: var(--shadow-sm);
-	padding: 5px 8px;
-	cursor: pointer;
-	transition: border-color .15s ease;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
 }
-.field-select:hover { border-color: var(--muted); }
-.field-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field-select:hover {
+  border-color: var(--muted);
+}
+.field-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 .field-check {
-	width: 16px;
-	height: 16px;
-	margin: 0;
-	accent-color: var(--accent);
-	cursor: pointer;
-	flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* =============================================================
    共有リンク（コピー結果の吹き出し／QRコード）
    ============================================================= */
-.share-wrap { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.share-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .share-msg {
-	position: absolute;
-	top: 100%;
-	left: 50%;
-	margin-top: 8px;
-	z-index: 30;
-	padding: 6px 10px;
-	background: var(--tooltip-bg);
-	color: var(--tooltip-text);
-	border: 1px solid var(--tooltip-border);
-	font-size: 12px;
-	line-height: 1.5;
-	width: max-content;
-	max-width: 240px;
-	text-align: center;
-	border-radius: 8px;
-	box-shadow: var(--shadow-pop);
-	pointer-events: none;
-	opacity: 0;
-	transform: translate(-50%, -4px);
-	transition: opacity .3s ease, transform .3s ease;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: 8px;
+  z-index: 30;
+  padding: 6px 10px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border: 1px solid var(--tooltip-border);
+  font-size: 12px;
+  line-height: 1.5;
+  width: max-content;
+  max-width: 240px;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: var(--shadow-pop);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -4px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
-.share-msg.show { opacity: 1; transform: translate(-50%, 0); }
+.share-msg.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 
 /* 共有ボタンの直下に開く窓。QRとコピー結果をここに入れる。
    本文の上に重ねて浮かせるので、開いても下の内容がずれない。
    （QRを行の中に置くと、100px前後ある高さがヘッダーの行の高さを決めてしまう）
    枠・影・角丸は .tipbox と同じトークンを使い、浮きものの見た目を揃える */
 .share-pop {
-	position: absolute;
-	top: calc(100% + 8px);
-	right: 0;
-	z-index: 30;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 8px;
-	width: max-content;
-	max-width: min(260px, calc(100vw - 24px));
-	padding: 10px;
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	box-shadow: var(--shadow-pop);
-	/* 中のどこを押しても閉じるので、押せることが分かるようにしておく（share.js） */
-	cursor: pointer;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(260px, calc(100vw - 24px));
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pop);
+  /* 中のどこを押しても閉じるので、押せることが分かるようにしておく（share.js） */
+  cursor: pointer;
 
-	/* 開け閉めは display ではなく opacity で行う（display は途中の値を持てず、
+  /* 開け閉めは display ではなく opacity で行う（display は途中の値を持てず、
 	   切り替えた瞬間に出入りしてしまうため）。visibility も一緒に変えることで、
 	   閉じている間はクリックもフォーカスも読み上げも当たらない状態にする。
 	   visibility は段階的には変化しないが、両端のどちらかが visible の間は
 	   visible のままなので、消えるときも最後まで見えたままフェードできる */
-	opacity: 0;
-	visibility: hidden;
-	transform: translateY(-4px);
-	transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s;
 }
 .share-pop.show {
-	opacity: 1;
-	visibility: visible;
-	transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 @media (prefers-reduced-motion: reduce) {
-	.share-pop { transition: none; transform: none; }
-	.share-pop.show { transform: none; }
+  .share-pop {
+    transition: none;
+    transform: none;
+  }
+  .share-pop.show {
+    transform: none;
+  }
 }
 
 /* ポップオーバーの中では、消える吹き出しではなく静的な説明行として置く。
@@ -341,20 +400,20 @@ main:focus { outline: none; }
    下にコピーしたURLを載せるので、途中で折り返せるようにする
    （区切りの無い長いURLだと、折り返せずに窓からはみ出す） */
 .share-pop .share-msg {
-	position: static;
-	width: 100%;
-	max-width: 100%;
-	overflow-wrap: anywhere;
-	margin: 0;
-	padding: 0;
-	background: none;
-	color: var(--text-sub);
-	border: none;
-	box-shadow: none;
-	font-size: 11px;
-	opacity: 1;
-	transform: none;
-	transition: none;
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-sub);
+  border: none;
+  box-shadow: none;
+  font-size: 11px;
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 /* コピーしたURLの現物（share.js が説明の下に差し込む）。
@@ -362,73 +421,82 @@ main:focus { outline: none; }
    説明とは別のものだと分かるように枠で囲み、地色も一段落とす。
    URLは区切りの無い長い文字列になりうるので、語の途中でも折り返す */
 .share-url {
-	display: block;
-	margin-top: 6px;
-	padding: 4px 6px;
-	background: var(--bg);
-	color: var(--text);
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	font-size: 10px;
-	line-height: 1.45;
-	text-align: left;
-	overflow-wrap: anywhere;
+  display: block;
+  margin-top: 6px;
+  padding: 4px 6px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
 /* QRコードは常に白地・黒モジュール。読み取り精度が落ちるのでテーマで反転させない。
    共有QRの大きさは share.js が --qr-size で調整する（URLが長いほど大きくなる）。
    既定値を変えるときは share.js の QR_MIN_SIZE も合わせること。 */
 .share-qr {
-	display: inline-block;
-	width: var(--qr-size, 72px);
-	height: var(--qr-size, 72px);
-	line-height: 0;
-	background: var(--qr-bg);
-	border-radius: 6px;
-	/* 静穏帯はQRの画像自体が4モジュール分持っているので、ここの余白は白地を少し広げる分だけでよい。
+  display: inline-block;
+  width: var(--qr-size, 72px);
+  height: var(--qr-size, 72px);
+  line-height: 0;
+  background: var(--qr-bg);
+  border-radius: 6px;
+  /* 静穏帯はQRの画像自体が4モジュール分持っているので、ここの余白は白地を少し広げる分だけでよい。
 	   余白は箱の内側に入るため、share.js の QR_PLATE_PX と一致させること */
-	padding: 3px;
-	-webkit-print-color-adjust: exact;
-	print-color-adjust: exact;
+  padding: 3px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-.share-qr svg { display: block; width: 100%; height: 100%; }
-.share-qr:empty { display: none; }
+.share-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.share-qr:empty {
+  display: none;
+}
 
 /* =============================================================
    補足の吹き出し（ボタンやヘルプに添えるツールチップ）
    ============================================================= */
 .tipbox {
-	position: absolute;
-	top: calc(100% + 8px);
-	right: 0;
-	z-index: 40;
-	width: max-content;
-	max-width: min(280px, calc(100vw - 24px));
-	padding: 8px 11px;
-	background: var(--tooltip-bg);
-	color: var(--tooltip-text);
-	border: 1px solid var(--tooltip-border);
-	border-radius: 8px;
-	box-shadow: var(--shadow-pop);
-	font-size: 12px;
-	font-weight: 400;
-	line-height: 1.6;
-	text-align: left;
-	white-space: normal;
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity .15s ease;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 11px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border: 1px solid var(--tooltip-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-pop);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
 }
 .tipbox::before {
-	content: "";
-	position: absolute;
-	bottom: 100%;
-	right: 14px;
-	border: 6px solid transparent;
-	border-bottom-color: var(--tooltip-border);
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  right: 14px;
+  border: 6px solid transparent;
+  border-bottom-color: var(--tooltip-border);
 }
 :hover > .tipbox,
-:focus-visible > .tipbox { opacity: 1; visibility: visible; }
+:focus-visible > .tipbox {
+  opacity: 1;
+  visibility: visible;
+}
 
 /* =============================================================
    ページ末尾の注記
@@ -449,9 +517,9 @@ main:focus { outline: none; }
    ページ末尾の .site-foot を使えないため。
    ============================================================= */
 .site-foot {
-	margin-top: 28px;
-	padding-top: 12px;
-	border-top: 1px solid var(--border);
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 /* =============================================================
@@ -483,77 +551,97 @@ main:focus { outline: none; }
 /* この帯だけで使う地色。共通のトークン（theme.css）は場所を選ばない淡さで
    作られていて、白いカードの上に置くと差が出ないため、ここで2値を持つ。
    系列色と同じやり方で、ライトを :root、ダークを data-theme="dark" に書く */
-:root { --tool-nav-bg: #e2ecfb; }
-:root[data-theme="dark"] { --tool-nav-bg: #1e2d44; }
+:root {
+  --tool-nav-bg: #e2ecfb;
+}
+:root[data-theme="dark"] {
+  --tool-nav-bg: #1e2d44;
+}
 
 .tool-nav {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	margin-top: 20px;
-	padding: 3px 16px 5px;
-	background: var(--tool-nav-bg);
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 20px;
+  padding: 3px 16px 5px;
+  background: var(--tool-nav-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
 }
 .tool-nav a,
 .tool-nav .current {
-	display: inline-block;
-	padding: 6px 0;
-	line-height: 1.5;
+  display: inline-block;
+  padding: 6px 0;
+  line-height: 1.5;
 }
-.tool-nav a { text-decoration: none; }
-.tool-nav a:hover { text-decoration: underline; }
+.tool-nav a {
+  text-decoration: none;
+}
+.tool-nav a:hover {
+  text-decoration: underline;
+}
 /* 今いるツール。リンクの青に対して色みの無い文字にして、押せないことを色でも示す。
    説明文と同じ --muted まで淡くすると、青みのある地色の上では読みにくい */
-.tool-nav .current { color: var(--text-sub); }
+.tool-nav .current {
+  color: var(--text-sub);
+}
 /* 区切りの縦棒。「｜」の文字は書体によって細さも高さもまちまちで、
    薄い色にすると地に沈んで見えなくなるため、CSSで1本の線として描く。
    色は説明文と同じ濃さ（--muted）。名前より淡いことは変わらない */
 .tool-nav-sep {
-	flex: 0 0 auto;
-	width: 1px;
-	height: 1.05em;
-	margin: 0 .9em;
-	background: var(--muted);
+  flex: 0 0 auto;
+  width: 1px;
+  height: 1.05em;
+  margin: 0 0.9em;
+  background: var(--muted);
 }
 
 /* 注記（.site-foot）のすぐ後に続くときは、注記の区切り線から見て
    28px も空けると帯だけが取り残されて見えるので詰める */
 .site-foot + .tool-nav {
-	margin-top: 14px;
+  margin-top: 14px;
 }
 
 .foot-note,
 .foot-disclaimer {
-	color: var(--muted);
-	font-size: 12px;
-	line-height: 1.7;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
 }
 
-.foot-note { margin: 0; }
-.foot-note > * { margin: 0; }
-.foot-note > * + * { margin-top: .6em; }
-.foot-note h3 {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--text-sub);
+.foot-note {
+  margin: 0;
 }
-.foot-note ul { padding-left: 1.15em; }
-.foot-note li + li { margin-top: .3em; }
+.foot-note > * {
+  margin: 0;
+}
+.foot-note > * + * {
+  margin-top: 0.6em;
+}
+.foot-note h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+.foot-note ul {
+  padding-left: 1.15em;
+}
+.foot-note li + li {
+  margin-top: 0.3em;
+}
 
 /* 注記の続きに置くので、区切りは実線ではなく点線にして段差を小さくする */
 .foot-disclaimer {
-	margin: .9em 0 0;
-	padding-top: .9em;
-	border-top: 1px dotted var(--border);
+  margin: 0.9em 0 0;
+  padding-top: 0.9em;
+  border-top: 1px dotted var(--border);
 }
 /* 注記が無いページでは、上の .site-foot の実線とすぐ重なるので区切りは要らない */
 .site-foot > .foot-disclaimer:first-child {
-	margin-top: 0;
-	padding-top: 0;
-	border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 /* アクセス解析の断り書き。免責（それが無いページでは注記）のすぐ下に、
@@ -563,16 +651,18 @@ main:focus { outline: none; }
    入れ物を持たないページ（トップ・退職手当の入口）では、代わりに
    下の .site-privacy を単独で使う。 */
 .foot-privacy {
-	margin: 0;
-	color: var(--muted);
-	font-size: 12px;
-	line-height: 1.7;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
 }
 
 /* 出典などのリンク。本文中のリンクより控えめだが、押せることは分かるようにする */
 .foot-note a,
 .foot-disclaimer a,
-.foot-privacy a { text-decoration: underline; }
+.foot-privacy a {
+  text-decoration: underline;
+}
 
 /* =============================================================
    ページ最下部の断り書き（データの扱い・アクセス解析）
@@ -591,16 +681,22 @@ main:focus { outline: none; }
    違うので、共通の外枠は作らず、それぞれの中に入れて幅を合わせている。
    ============================================================= */
 .site-privacy {
-	margin: 24px 0 0;
-	padding-top: 10px;
-	border-top: 1px solid var(--border);
-	color: var(--muted);
-	font-size: 11px;
-	line-height: 1.7;
+  margin: 24px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
 }
-.site-privacy > p { margin: 0; }
-.site-privacy > p + p { margin-top: .5em; }
-.site-privacy a { text-decoration: underline; }
+.site-privacy > p {
+  margin: 0;
+}
+.site-privacy > p + p {
+  margin-top: 0.5em;
+}
+.site-privacy a {
+  text-decoration: underline;
+}
 
 /* =============================================================
    印刷の直前だけ、レイアウトを紙の幅にそろえる
@@ -613,8 +709,8 @@ main:focus { outline: none; }
    幅は A4縦・上下左右12mm 余白のときの本文幅（約186mm＝約703px）に合わせている。
    ============================================================= */
 html.printing {
-	width: var(--print-width, 700px);
-	min-width: var(--print-width, 700px);
+  width: var(--print-width, 700px);
+  min-width: var(--print-width, 700px);
 }
 
 /* 画面を操作するための要素は、印刷レイアウトの確定を待たずにこの時点で消しておく。
@@ -635,35 +731,45 @@ html.printing .foot-privacy,
    下の「中身を全部消してQRだけ戻す」では消えない。ここに挙げておく */
 html.printing .home-link,
 html.printing .tool-nav {
-	display: none !important;
+  display: none !important;
 }
 
-html.printing .page-tools { display: block; }
-html.printing .page-tools > * { display: none; }
-html.printing .page-tools > .share-wrap { display: block; }
-html.printing .share-wrap > * { display: none; }
+html.printing .page-tools {
+  display: block;
+}
+html.printing .page-tools > * {
+  display: none;
+}
+html.printing .page-tools > .share-wrap {
+  display: block;
+}
+html.printing .share-wrap > * {
+  display: none;
+}
 /* 画面で閉じていても紙には出す。開け閉めに使っている opacity / visibility も戻す */
 html.printing .share-wrap > .share-pop {
-	display: block;
-	position: static;
-	max-width: none;
-	padding: 0;
-	background: none;
-	border: none;
-	box-shadow: none;
-	opacity: 1;
-	visibility: visible;
-	transform: none;
-	transition: none;
+  display: block;
+  position: static;
+  max-width: none;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
 }
-html.printing .share-pop > .share-qr { display: block; }
+html.printing .share-pop > .share-qr {
+  display: block;
+}
 
 /* =============================================================
    印刷
    ============================================================= */
 @media print {
-	/* 画面を操作するための要素は紙では意味を持たないので出さない */
-	.btn,
+  /* 画面を操作するための要素は紙では意味を持たないので出さない */
+  .btn,
 	.share-btn,
 	.share-msg,
 	.tipbox,
@@ -675,10 +781,10 @@ html.printing .share-pop > .share-qr { display: block; }
 	   下の「中身を全部消してQRだけ戻す」では消えない。ここに挙げておく */
 	.home-link,
 	.tool-nav {
-		display: none !important;
-	}
+    display: none !important;
+  }
 
-	/* ヘッダーの行は、共有QRの入れ物（.page-tools）も兼ねている。
+  /* ヘッダーの行は、共有QRの入れ物（.page-tools）も兼ねている。
 	   行ごと消すとQRまで消えるので、中身を選んで消す。
 
 	   QRコードは印刷する。紙から同じ条件の試算をそのまま開き直せるようにするため。
@@ -686,54 +792,65 @@ html.printing .share-pop > .share-qr { display: block; }
 	   ページごとに増えるので、消したいものを列挙するのではなく、
 	   いったん中身を全部消してからQRだけを戻す。
 	   個別に消す方式だと、部品を足すたびに紙へ載ってしまう。 */
-	.page-tools {
-		display: block;
-		flex: 0 0 auto;
-	}
-	.page-tools > * {
-		display: none;
-	}
-	/* QRの入れ物は .share-wrap の中の .share-pop（画面では押したときだけ開く窓）。
+  .page-tools {
+    display: block;
+    flex: 0 0 auto;
+  }
+  .page-tools > * {
+    display: none;
+  }
+  /* QRの入れ物は .share-wrap の中の .share-pop（画面では押したときだけ開く窓）。
 	   トップページも含め全ページ同じ形なので、これだけを紙に残す */
-	.page-tools > .share-wrap {
-		display: block;
-	}
-	.share-wrap > * {
-		display: none;
-	}
-	/* 画面で開いていなくても紙には開いた状態で載せる。
+  .page-tools > .share-wrap {
+    display: block;
+  }
+  .share-wrap > * {
+    display: none;
+  }
+  /* 画面で開いていなくても紙には開いた状態で載せる。
 	   浮かせるための枠・影・重ね順と、開け閉めの opacity / visibility を外す */
-	.share-wrap > .share-pop {
-		display: block;
-		position: static;
-		max-width: none;
-		padding: 0;
-		background: none;
-		border: none;
-		box-shadow: none;
-		opacity: 1;
-		visibility: visible;
-		transform: none;
-		transition: none;
-	}
-	.share-pop > .share-qr,
-	.share-qr {
-		display: block;
-		/* 台紙の白と黒モジュールは、ブラウザの「背景を印刷しない」設定でも出す必要がある */
-		-webkit-print-color-adjust: exact;
-		print-color-adjust: exact;
-	}
+  .share-wrap > .share-pop {
+    display: block;
+    position: static;
+    max-width: none;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: none;
+  }
+  .share-pop > .share-qr,
+  .share-qr {
+    display: block;
+    /* 台紙の白と黒モジュールは、ブラウザの「背景を印刷しない」設定でも出す必要がある */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
-	.page-head {
-		margin-bottom: 12px;
-		padding-bottom: 8px;
-		break-after: avoid;
-	}
-	.page-head h1 { font-size: 15pt; }
-	.page-head .sub { font-size: 9pt; }
-	/* 紙に残った試算がいつの制度によるものかは、後から見返すときに要る */
-	.data-asof { font-size: 8pt; }
-	.foot-note,
-	.foot-disclaimer { font-size: 8.5pt; line-height: 1.6; }
-	.foot-note h3 { font-size: 9.5pt; }
+  .page-head {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    break-after: avoid;
+  }
+  .page-head h1 {
+    font-size: 15pt;
+  }
+  .page-head .sub {
+    font-size: 9pt;
+  }
+  /* 紙に残った試算がいつの制度によるものかは、後から見返すときに要る */
+  .data-asof {
+    font-size: 8pt;
+  }
+  .foot-note,
+  .foot-disclaimer {
+    font-size: 8.5pt;
+    line-height: 1.6;
+  }
+  .foot-note h3 {
+    font-size: 9.5pt;
+  }
 }

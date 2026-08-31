@@ -6,13 +6,16 @@
 # このリポジトリのファイルをスクリプトから書き換えるときは
 # [System.IO.File]::WriteAllText などBOMを付けない方法を使うこと。
 #
-# インデントはファイルによってタブと半角スペースが混在しているため、あえて指定しない。
+# HTML・CSS・JavaScriptを含め、インデントは半角スペース2個で統一する。
 
 root = true
 
 [*]
 charset = utf-8
 end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
 
 # PowerShell スクリプトだけはBOMを付ける。Windows PowerShell 5.1 は、BOMの無い .ps1 を
 # UTF-8ではなくANSI（日本語環境ではCP932）として読むため、日本語のコメントや
@@ -27,3 +30,13 @@ charset = utf-8-bom
 [common/vendor/**]
 charset = unset
 end_of_line = unset
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+
+[common/qrcode.js]
+charset = unset
+end_of_line = unset
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset

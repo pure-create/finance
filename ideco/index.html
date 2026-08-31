@@ -1,363 +1,739 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/ideco/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/ideco/">
-<meta property="og:title" content="iDeCoシミュレーター">
-<meta property="og:description" content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/ideco.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="iDeCoシミュレーター">
-<meta name="twitter:card" content="summary_large_image">
-<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+    <link rel="canonical" href="https://pure-create.github.io/finance/ideco/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta
+      property="og:url"
+      content="https://pure-create.github.io/finance/ideco/"
+    />
+    <meta property="og:title" content="iDeCoシミュレーター" />
+    <meta
+      property="og:description"
+      content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/ideco.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="iDeCoシミュレーター" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
      名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
-<script type="application/ld+json">
-{
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
-		{"@type": "ListItem", "position": 2, "name": "iDeCoシミュレーター", "item": "https://pure-create.github.io/finance/ideco/"}
-	]
-}
-</script>
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "資産運用・金融シミュレーター",
+            "item": "https://pure-create.github.io/finance/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "iDeCoシミュレーター",
+            "item": "https://pure-create.github.io/finance/ideco/"
+          }
+        ]
+      }
+    </script>
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="../favicon.ico" sizes="32x32">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="../manifest.json">
-<title>iDeCoシミュレーター</title>
-<script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260815a">
-<link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="../common/card-page.css?v=20260823b">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b">
-<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260816b" media="print">
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<div class="wrap">
-  <div class="site-head">
-    <a class="home-link" href="../">トップページ</a>
-    <!-- 制度データの時点。拠出限度額・加入年齢・重複期間のルールを直したら、ここも更新すること -->
-    <span class="data-asof">制度データ: 2026年8月時点</span>
-    <div class="page-tools">
-      <div class="share-wrap">
-        <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">試算結果を共有</button>
-        <div class="share-pop" id="sharePop">
-          <span id="shareQr" class="share-qr" aria-hidden="true"></span>
-          <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+    <link rel="manifest" href="../manifest.json" />
+    <title>iDeCoシミュレーター</title>
+    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
+    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="./css/print.css?v=20260816b"
+      media="print"
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <div class="wrap">
+      <div class="site-head">
+        <a class="home-link" href="../">トップページ</a>
+        <!-- 制度データの時点。拠出限度額・加入年齢・重複期間のルールを直したら、ここも更新すること -->
+        <span class="data-asof">制度データ: 2026年8月時点</span>
+        <div class="page-tools">
+          <div class="share-wrap">
+            <button
+              class="share-btn"
+              id="shareBtn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="sharePop"
+            >
+              試算結果を共有
+            </button>
+            <div class="share-pop" id="sharePop">
+              <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+              <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+            </div>
+          </div>
+          <span data-theme-toggle></span>
         </div>
       </div>
-      <span data-theme-toggle></span>
-    </div>
-  </div>
-  <main id="main" tabindex="-1">
-  <div class="page-head">
-    <div class="page-title">
-      <h1>iDeCoシミュレーター</h1>
-      <p class="sub">掛金の節税額と、受け取るときの税金を通して試算。退職金との受取順序で手取りがどう変わるかを比較します</p>
-    </div>
-    <div class="page-tools">
-      <button class="btn" id="resetAllBtn" type="button">入力をリセット</button>
-    </div>
-  </div>
+      <main id="main" tabindex="-1">
+        <div class="page-head">
+          <div class="page-title">
+            <h1>iDeCoシミュレーター</h1>
+            <p class="sub">
+              掛金の節税額と、受け取るときの税金を通して試算。退職金との受取順序で手取りがどう変わるかを比較します
+            </p>
+          </div>
+          <div class="page-tools">
+            <button class="btn" id="resetAllBtn" type="button">
+              入力をリセット
+            </button>
+          </div>
+        </div>
 
-  <!-- 入力は上に2枚続けて置く。分け方は「iDeCoの話かどうか」。
+        <!-- 入力は上に2枚続けて置く。分け方は「iDeCoの話かどうか」。
        iDeCoの枠・掛金・いつ受け取るかを1枚目に、勤め先や所得や老齢年金といった
        iDeCo以外の事情を2枚目にまとめる。
        「入口」「出口」は結果カードの見出しにだけ付ける（入力カードに付けると、
        結果を出す欄なのか条件を入れる欄なのかが読み取れなくなる） -->
-  <div class="card">
-    <h2 class="sec-title">iDeCoの条件</h2>
-    <div class="grid2">
-      <div class="fld">
-        <label for="category">加入区分</label>
-        <select id="category">
-          <option value="self">第1号（自営業者など）</option>
-          <!-- 初期値は js/ideco.js の DEFAULTS と合わせること。
+        <div class="card">
+          <h2 class="sec-title">iDeCoの条件</h2>
+          <div class="grid2">
+            <div class="fld">
+              <label for="category">加入区分</label>
+              <select id="category">
+                <option value="self">第1号（自営業者など）</option>
+                <!-- 初期値は js/ideco.js の DEFAULTS と合わせること。
                selected を付けないと先頭の第1号で開いてしまう -->
-          <option value="employee" selected>第2号（会社員・企業年金なし）</option>
-          <option value="corporate">第2号（会社員・企業年金あり）</option>
-          <option value="publicSv">第2号（公務員）</option>
-          <option value="spouse">第3号（専業主婦・主夫）</option>
-        </select>
-        <p class="limit-note" id="limitNote"></p>
-      </div>
-      <div class="fld" id="otherPlanField">
-        <label for="otherPlan">企業年金の掛金相当額
-          <span class="help" tabindex="0" aria-label="掛金相当額について" aria-describedby="otherPlanTip">？<span class="tipbox" id="otherPlanTip" role="tooltip">2026年12月の改正後、第2号被保険者の枠は「月6.2万円 −（企業型確定拠出年金の事業主掛金 ＋ 確定給付企業年金の他制度掛金相当額）」になります。勤め先から通知される額を入れてください。分からなければ0のままで構いません。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="otherPlan" value="0" min="0" step="1000" inputmode="numeric"><span class="unit">円/月</span></span>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="fld">
-        <label for="monthly">毎月の掛金
-          <span class="help" tabindex="0" aria-label="毎月の掛金について" aria-describedby="monthlyTip">？<span class="tipbox" id="monthlyTip" role="tooltip">今年から「iDeCoを受け取る年齢」になるまで、毎月この額を払い続ける前提で計算します。<br><br>加入区分ごとの<strong>上限を超える額を入れた場合は、その年の上限まで自動で切り詰めて</strong>計算します（上限は上の「加入区分」の下に出ます）。<br><br>加入できる年齢の上限を過ぎた年は拠出が止まり、そこから受け取るまでは運用だけが続きます。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="monthly" value="23000" min="0" step="1000" inputmode="numeric"><span class="unit">円</span></span>
-      </div>
-      <div class="fld">
-        <label for="nowAge">現在の年齢</label>
-        <span class="num-in"><input type="number" id="nowAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-      </div>
-    </div>
-    <!-- 残高と、そのうちの元本。差が今までの含み益になる。
+                <option value="employee" selected>
+                  第2号（会社員・企業年金なし）
+                </option>
+                <option value="corporate">第2号（会社員・企業年金あり）</option>
+                <option value="publicSv">第2号（公務員）</option>
+                <option value="spouse">第3号（専業主婦・主夫）</option>
+              </select>
+              <p class="limit-note" id="limitNote"></p>
+            </div>
+            <div class="fld" id="otherPlanField">
+              <label for="otherPlan"
+                >企業年金の掛金相当額
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="掛金相当額について"
+                  aria-describedby="otherPlanTip"
+                  >？<span class="tipbox" id="otherPlanTip" role="tooltip"
+                    >2026年12月の改正後、第2号被保険者の枠は「月6.2万円
+                    −（企業型確定拠出年金の事業主掛金 ＋
+                    確定給付企業年金の他制度掛金相当額）」になります。勤め先から通知される額を入れてください。分からなければ0のままで構いません。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="otherPlan"
+                  value="0"
+                  min="0"
+                  step="1000"
+                  inputmode="numeric"
+                /><span class="unit">円/月</span></span
+              >
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="fld">
+              <label for="monthly"
+                >毎月の掛金
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="毎月の掛金について"
+                  aria-describedby="monthlyTip"
+                  >？<span class="tipbox" id="monthlyTip" role="tooltip"
+                    >今年から「iDeCoを受け取る年齢」になるまで、毎月この額を払い続ける前提で計算します。<br /><br />加入区分ごとの<strong>上限を超える額を入れた場合は、その年の上限まで自動で切り詰めて</strong>計算します（上限は上の「加入区分」の下に出ます）。<br /><br />加入できる年齢の上限を過ぎた年は拠出が止まり、そこから受け取るまでは運用だけが続きます。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="monthly"
+                  value="23000"
+                  min="0"
+                  step="1000"
+                  inputmode="numeric"
+                /><span class="unit">円</span></span
+              >
+            </div>
+            <div class="fld">
+              <label for="nowAge">現在の年齢</label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="nowAge"
+                  value="40"
+                  min="18"
+                  max="75"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+            </div>
+          </div>
+          <!-- 残高と、そのうちの元本。差が今までの含み益になる。
          課税口座と比べるときの運用益に効くので、隣どうしに並べる -->
-    <div class="grid2">
-      <div class="fld">
-        <label for="balance">現在のiDeCo残高
-          <span class="help" tabindex="0" aria-label="現在のiDeCo残高について" aria-describedby="balanceTip">？<span class="tipbox" id="balanceTip" role="tooltip">運営管理機関から届く「お取引状況のお知らせ」などに載っている、<strong>今の資産の時価評価額</strong>（これまでの運用益を含んだ額）をそのまま入れてください。<br><br>これまでに軽くなった税金を入力する必要はありません。すでに済んだ分なので、下の節税額は<strong>これから拠出する分だけ</strong>のものです。<br><br>まだ加入していなければ0のままにしてください。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="balance" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
-      </div>
-      <div class="fld" id="balancePaidField">
-        <label for="balancePaid">うち掛金の元本
-          <span class="help" tabindex="0" aria-label="掛金の元本について" aria-describedby="balancePaidTip">？<span class="tipbox" id="balancePaidTip" role="tooltip">今の残高のうち、<strong>これまでに払い込んだ掛金の累計</strong>（拠出金累計額）を入れてください。残高との差が、すでに出ている<strong>含み益</strong>になります。<br><br>使うのは「課税口座で同じように運用して売った場合」と比べるところだけです。課税口座なら含み益にも売却時に課税されるためで、iDeCoの税額そのものは元本と運用益を区別しないので変わりません。<br><br>0のままなら、残高すべてを元本（含み益なし）として扱います。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="balancePaid" value="0" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
-        <p class="note" id="balancePaidNote"></p>
-      </div>
-    </div>
-    <div class="ctrl">
-      <label for="yieldRate">想定利回り
-        <span class="help" tabindex="0" aria-label="想定利回りについて" aria-describedby="yieldTip">？<span class="tipbox" id="yieldTip" role="tooltip">名目の年率です。毎年この率で一定に増えるものとして計算します。<br><br>効くのは積立中だけではありません。<strong>年金で受け取っている間の残高にも掛かります</strong>（年金の受取総額が、受給開始時の残高より多くなるのはこのためです）。<br><br>信託報酬・口座管理手数料・給付事務手数料は引いていないので、実際の手取りはこれより少なくなります。</span></span>
-      </label>
-      <div class="srow">
-        <input type="range" id="yieldRate" min="0" max="8" step="0.1" value="3">
-        <span class="sval"><span id="yieldVal">3.0</span>%</span>
-      </div>
-    </div>
-    <!-- iDeCoの「いつ」。加入した年齢は受取開始年齢と退職所得控除の年数を決める -->
-    <div class="grid3">
-      <div class="fld">
-        <label for="joinAge">iDeCoに加入した年齢
-          <span class="help" tabindex="0" aria-label="加入した年齢について" aria-describedby="joinTip">？<span class="tipbox" id="joinTip" role="tooltip">一時金で受け取るときの退職所得控除は、iDeCoの<strong>加入期間の年数</strong>で決まります（勤続年数と同じ扱い）。すでに加入しているなら、実際に始めた年齢を入れてください。上の「現在の年齢」より前でかまいません。<br><br>この年数は、退職金との勤続期間の重なりを出すのにも使います。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="joinAge" value="40" min="18" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-        <p class="note" id="joinAgeWarn"></p>
-      </div>
-      <div class="fld">
-        <label for="payAge">iDeCoを受け取る年齢
-          <span class="help" tabindex="0" aria-label="受け取る年齢について" aria-describedby="payAgeTip">？<span class="tipbox" id="payAgeTip" role="tooltip">60歳から受け取るには、60歳になるまでの通算加入者等期間が10年以上必要です。足りない場合は受け取れる年齢が2年ごとに繰り下がり、最も遅くて65歳からになります。60歳以降に初めて加入した場合は、加入から5年経過後です。<br><br>入力した加入年齢で何歳から受け取れるかは、この欄の下に出ます。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="payAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-        <p class="note" id="payAgeWarn"></p>
-      </div>
-      <div class="fld">
-        <label for="annuityYears">年金で受け取る場合の年数
-          <span class="help" tabindex="0" aria-label="年金で受け取る場合の年数について" aria-describedby="annYearsTip">？<span class="tipbox" id="annYearsTip" role="tooltip">受け取り始めてから何年かけて分割するかです。ここでは5年から20年まで動かせますが、<strong>実際に指定できる年数や単位は運営管理機関の規約によります</strong>。<br><br>長くするほど1年あたりの額が小さくなり、公的年金等控除の枠に収まりやすくなります。ただし受け取り終わるまでの期間が延び、給付事務手数料も受け取るたびにかかります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="annuityYears" value="10" min="5" max="20" step="1" inputmode="numeric"><span class="unit">年</span></span>
-      </div>
-    </div>
-    <p class="note" id="limitWarn"></p>
-  </div>
+          <div class="grid2">
+            <div class="fld">
+              <label for="balance"
+                >現在のiDeCo残高
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="現在のiDeCo残高について"
+                  aria-describedby="balanceTip"
+                  >？<span class="tipbox" id="balanceTip" role="tooltip"
+                    >運営管理機関から届く「お取引状況のお知らせ」などに載っている、<strong>今の資産の時価評価額</strong>（これまでの運用益を含んだ額）をそのまま入れてください。<br /><br />これまでに軽くなった税金を入力する必要はありません。すでに済んだ分なので、下の節税額は<strong>これから拠出する分だけ</strong>のものです。<br /><br />まだ加入していなければ0のままにしてください。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="balance"
+                  value="0"
+                  min="0"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+            </div>
+            <div class="fld" id="balancePaidField">
+              <label for="balancePaid"
+                >うち掛金の元本
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="掛金の元本について"
+                  aria-describedby="balancePaidTip"
+                  >？<span class="tipbox" id="balancePaidTip" role="tooltip"
+                    >今の残高のうち、<strong>これまでに払い込んだ掛金の累計</strong>（拠出金累計額）を入れてください。残高との差が、すでに出ている<strong>含み益</strong>になります。<br /><br />使うのは「課税口座で同じように運用して売った場合」と比べるところだけです。課税口座なら含み益にも売却時に課税されるためで、iDeCoの税額そのものは元本と運用益を区別しないので変わりません。<br /><br />0のままなら、残高すべてを元本（含み益なし）として扱います。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="balancePaid"
+                  value="0"
+                  min="0"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+              <p class="note" id="balancePaidNote"></p>
+            </div>
+          </div>
+          <div class="ctrl">
+            <label for="yieldRate"
+              >想定利回り
+              <span
+                class="help"
+                tabindex="0"
+                aria-label="想定利回りについて"
+                aria-describedby="yieldTip"
+                >？<span class="tipbox" id="yieldTip" role="tooltip"
+                  >名目の年率です。毎年この率で一定に増えるものとして計算します。<br /><br />効くのは積立中だけではありません。<strong>年金で受け取っている間の残高にも掛かります</strong>（年金の受取総額が、受給開始時の残高より多くなるのはこのためです）。<br /><br />信託報酬・口座管理手数料・給付事務手数料は引いていないので、実際の手取りはこれより少なくなります。</span
+                ></span
+              >
+            </label>
+            <div class="srow">
+              <input
+                type="range"
+                id="yieldRate"
+                min="0"
+                max="8"
+                step="0.1"
+                value="3"
+              />
+              <span class="sval"><span id="yieldVal">3.0</span>%</span>
+            </div>
+          </div>
+          <!-- iDeCoの「いつ」。加入した年齢は受取開始年齢と退職所得控除の年数を決める -->
+          <div class="grid3">
+            <div class="fld">
+              <label for="joinAge"
+                >iDeCoに加入した年齢
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="加入した年齢について"
+                  aria-describedby="joinTip"
+                  >？<span class="tipbox" id="joinTip" role="tooltip"
+                    >一時金で受け取るときの退職所得控除は、iDeCoの<strong>加入期間の年数</strong>で決まります（勤続年数と同じ扱い）。すでに加入しているなら、実際に始めた年齢を入れてください。上の「現在の年齢」より前でかまいません。<br /><br />この年数は、退職金との勤続期間の重なりを出すのにも使います。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="joinAge"
+                  value="40"
+                  min="18"
+                  max="75"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+              <p class="note" id="joinAgeWarn"></p>
+            </div>
+            <div class="fld">
+              <label for="payAge"
+                >iDeCoを受け取る年齢
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="受け取る年齢について"
+                  aria-describedby="payAgeTip"
+                  >？<span class="tipbox" id="payAgeTip" role="tooltip"
+                    >60歳から受け取るには、60歳になるまでの通算加入者等期間が10年以上必要です。足りない場合は受け取れる年齢が2年ごとに繰り下がり、最も遅くて65歳からになります。60歳以降に初めて加入した場合は、加入から5年経過後です。<br /><br />入力した加入年齢で何歳から受け取れるかは、この欄の下に出ます。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="payAge"
+                  value="65"
+                  min="60"
+                  max="75"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+              <p class="note" id="payAgeWarn"></p>
+            </div>
+            <div class="fld">
+              <label for="annuityYears"
+                >年金で受け取る場合の年数
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="年金で受け取る場合の年数について"
+                  aria-describedby="annYearsTip"
+                  >？<span class="tipbox" id="annYearsTip" role="tooltip"
+                    >受け取り始めてから何年かけて分割するかです。ここでは5年から20年まで動かせますが、<strong>実際に指定できる年数や単位は運営管理機関の規約によります</strong>。<br /><br />長くするほど1年あたりの額が小さくなり、公的年金等控除の枠に収まりやすくなります。ただし受け取り終わるまでの期間が延び、給付事務手数料も受け取るたびにかかります。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="annuityYears"
+                  value="10"
+                  min="5"
+                  max="20"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">年</span></span
+              >
+            </div>
+          </div>
+          <p class="note" id="limitWarn"></p>
+        </div>
 
-  <!-- iDeCo以外の事情。どれも税額に効く（課税所得は掛金の節税額、
+        <!-- iDeCo以外の事情。どれも税額に効く（課税所得は掛金の節税額、
        退職金は退職所得控除の重なり、老齢年金は公的年金等控除の分け合い） -->
-  <div class="card">
-    <h2 class="sec-title">退職金・所得・老齢年金</h2>
-    <div class="grid3">
-      <div class="fld">
-        <label for="retireAmount">退職金（額面）
-          <span class="help" tabindex="0" aria-label="退職金（額面）について" aria-describedby="retireAmtTip">？<span class="tipbox" id="retireAmtTip" role="tooltip"><strong>税金を引く前</strong>の支給額を入れてください。退職所得控除や税額はこのツールが計算します（資産運用シミュレーターの「退職金（手取り）」とは逆なので、値を持ち込むときは注意してください）。<br><br>iDeCoと同じ年に受け取る場合、この額が大きいほど一時金が不利になります。別の年でも、控除の重複調整に当たる場合はこの額が税額に効きます。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="retireAmount" value="2000" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
-      </div>
-      <div class="fld">
-        <label for="retireAge">退職金を受け取る年齢
-          <span class="help" tabindex="0" aria-label="退職金を受け取る年齢について" aria-describedby="retireAgeTip">？<span class="tipbox" id="retireAgeTip" role="tooltip">「iDeCoを受け取る年齢」との<strong>間隔</strong>で税額が大きく変わる欄です。<br><br><strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されます。<br><br><strong>別の年</strong>なら、iDeCoは自分の加入年数の控除を使って単独で課税されます。ただしiDeCoが先で9年内、退職金が先で19年内に当たると、勤続期間と加入期間の重なりの分だけ控除が削られます。対象の年数を外せば、どちらの控除も削られません。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="retireAge" value="60" min="15" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-      </div>
-      <div class="fld">
-        <label for="hireAge">就職した年齢
-          <span class="help" tabindex="0" aria-label="就職した年齢について" aria-describedby="hireTip">？<span class="tipbox" id="hireTip" role="tooltip">退職金の退職所得控除は、就職から退職までの<strong>勤続年数</strong>で決まります。転職している場合は、退職金の計算のもとになる勤続期間が始まった年齢を入れてください。<br><br>この期間がiDeCoの加入期間と重なると、その分だけ一時金の控除が削られます。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="hireAge" value="22" min="15" max="70" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-      </div>
-    </div>
-    <div class="grid3">
-      <div class="fld">
-        <label for="taxableIncome">課税所得
-          <span class="help" tabindex="0" aria-label="課税所得について" aria-describedby="tiTip">？<span class="tipbox" id="tiTip" role="tooltip">年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="taxableIncome" value="400" min="0" step="10" inputmode="numeric"><span class="unit">万円</span></span>
-      </div>
-      <!-- 老齢年金は見込額と受給開始年齢が一組。見込額は65歳時点の額として受け取り、
+        <div class="card">
+          <h2 class="sec-title">退職金・所得・老齢年金</h2>
+          <div class="grid3">
+            <div class="fld">
+              <label for="retireAmount"
+                >退職金（額面）
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="退職金（額面）について"
+                  aria-describedby="retireAmtTip"
+                  >？<span class="tipbox" id="retireAmtTip" role="tooltip"
+                    ><strong>税金を引く前</strong
+                    >の支給額を入れてください。退職所得控除や税額はこのツールが計算します（資産運用シミュレーターの「退職金（手取り）」とは逆なので、値を持ち込むときは注意してください）。<br /><br />iDeCoと同じ年に受け取る場合、この額が大きいほど一時金が不利になります。別の年でも、控除の重複調整に当たる場合はこの額が税額に効きます。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="retireAmount"
+                  value="2000"
+                  min="0"
+                  step="100"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+            </div>
+            <div class="fld">
+              <label for="retireAge"
+                >退職金を受け取る年齢
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="退職金を受け取る年齢について"
+                  aria-describedby="retireAgeTip"
+                  >？<span class="tipbox" id="retireAgeTip" role="tooltip"
+                    >「iDeCoを受け取る年齢」との<strong>間隔</strong>で税額が大きく変わる欄です。<br /><br /><strong
+                      >同じ年</strong
+                    >に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されます。<br /><br /><strong
+                      >別の年</strong
+                    >なら、iDeCoは自分の加入年数の控除を使って単独で課税されます。ただしiDeCoが先で9年内、退職金が先で19年内に当たると、勤続期間と加入期間の重なりの分だけ控除が削られます。対象の年数を外せば、どちらの控除も削られません。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="retireAge"
+                  value="60"
+                  min="15"
+                  max="75"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+            </div>
+            <div class="fld">
+              <label for="hireAge"
+                >就職した年齢
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="就職した年齢について"
+                  aria-describedby="hireTip"
+                  >？<span class="tipbox" id="hireTip" role="tooltip"
+                    >退職金の退職所得控除は、就職から退職までの<strong>勤続年数</strong>で決まります。転職している場合は、退職金の計算のもとになる勤続期間が始まった年齢を入れてください。<br /><br />この期間がiDeCoの加入期間と重なると、その分だけ一時金の控除が削られます。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="hireAge"
+                  value="22"
+                  min="15"
+                  max="70"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+            </div>
+          </div>
+          <div class="grid3">
+            <div class="fld">
+              <label for="taxableIncome"
+                >課税所得
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="課税所得について"
+                  aria-describedby="tiTip"
+                  >？<span class="tipbox" id="tiTip" role="tooltip"
+                    >年収ではなく、給与所得控除・社会保険料控除・基礎控除などをすべて差し引いた後の金額です。源泉徴収票では「給与所得控除後の金額」から「所得控除の額の合計額」を引いた額にあたります。ここから所得税の税率が決まります。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="taxableIncome"
+                  value="400"
+                  min="0"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+            </div>
+            <!-- 老齢年金は見込額と受給開始年齢が一組。見込額は65歳時点の額として受け取り、
            繰上げ・繰下げの増減は年齢から計算する -->
-      <div class="fld">
-        <label for="publicPension">老齢年金の見込額
-          <span class="help" tabindex="0" aria-label="老齢年金の見込額について" aria-describedby="ppTip">？<span class="tipbox" id="ppTip" role="tooltip">ねんきん定期便に載っている年額の見込みです。<strong>65歳から受け取る場合の額</strong>を入れてください。右で受給開始年齢を変えると、繰上げ・繰下げによる増減はこちらで計算します。<br><br>iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="publicPension" value="180" min="0" step="10" inputmode="numeric"><span class="unit">万円/年</span></span>
-      </div>
-      <div class="fld">
-        <label for="publicPensionAge">老齢年金の受給開始年齢
-          <span class="help" tabindex="0" aria-label="受給開始年齢について" aria-describedby="ppAgeTip">？<span class="tipbox" id="ppAgeTip" role="tooltip">原則は65歳ですが、60歳から75歳の間で選べます。早めると1か月あたり0.4%減り（60歳で24%減）、遅らせると1か月あたり0.7%増えます（75歳で84%増）。この減額率は昭和37年4月2日以後生まれのもので、それ以前の生まれは1か月あたり0.5%（60歳で30%減）です。<br><br>iDeCoを年金で受け取る場合、老齢年金が出るまでは公的年金等控除をiDeCoが単独で使えるので、ここを遅らせるとiDeCo側の税金は軽くなります。</span></span>
-        </label>
-        <span class="num-in"><input type="number" id="publicPensionAge" value="65" min="60" max="75" step="1" inputmode="numeric"><span class="unit">歳</span></span>
-        <p class="limit-note" id="pensionAgeNote"></p>
-      </div>
-    </div>
-  </div>
+            <div class="fld">
+              <label for="publicPension"
+                >老齢年金の見込額
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="老齢年金の見込額について"
+                  aria-describedby="ppTip"
+                  >？<span class="tipbox" id="ppTip" role="tooltip"
+                    >ねんきん定期便に載っている年額の見込みです。<strong>65歳から受け取る場合の額</strong>を入れてください。右で受給開始年齢を変えると、繰上げ・繰下げによる増減はこちらで計算します。<br /><br />iDeCoを年金で受け取ると、老齢年金と合わせて公的年金等控除を分け合うことになるため、この額が大きいほどiDeCo側の税負担が重くなります。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="publicPension"
+                  value="180"
+                  min="0"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">万円/年</span></span
+              >
+            </div>
+            <div class="fld">
+              <label for="publicPensionAge"
+                >老齢年金の受給開始年齢
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="受給開始年齢について"
+                  aria-describedby="ppAgeTip"
+                  >？<span class="tipbox" id="ppAgeTip" role="tooltip"
+                    >原則は65歳ですが、60歳から75歳の間で選べます。早めると1か月あたり0.4%減り（60歳で24%減）、遅らせると1か月あたり0.7%増えます（75歳で84%増）。この減額率は昭和37年4月2日以後生まれのもので、それ以前の生まれは1か月あたり0.5%（60歳で30%減）です。<br /><br />iDeCoを年金で受け取る場合、老齢年金が出るまでは公的年金等控除をiDeCoが単独で使えるので、ここを遅らせるとiDeCo側の税金は軽くなります。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="publicPensionAge"
+                  value="65"
+                  min="60"
+                  max="75"
+                  step="1"
+                  inputmode="numeric"
+                /><span class="unit">歳</span></span
+              >
+              <p class="limit-note" id="pensionAgeNote"></p>
+            </div>
+          </div>
+        </div>
 
-  <!-- 入口：掛金の節税と、受け取る残高の内訳 -->
-  <div class="card">
-    <h2 class="sec-title">掛金による節税（入口）</h2>
-    <p class="saving-line" id="savingLine"></p>
-    <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
+        <!-- 入口：掛金の節税と、受け取る残高の内訳 -->
+        <div class="card">
+          <h2 class="sec-title">掛金による節税（入口）</h2>
+          <p class="saving-line" id="savingLine"></p>
+          <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
          払った掛金のうち税金が軽くなって戻ってくる分なので、
          掛金を「実質の負担」と「節税で戻る分」に割って見せる。
          3つ（＋元の残高）を足すと、そのまま受け取る残高になる -->
-    <div class="stack">
-      <div class="stack-bar" aria-hidden="true">
-        <div class="seg seg-initial" id="segInitial"></div>
-        <div class="seg seg-cost" id="segCost"></div>
-        <div class="seg seg-save" id="segSave"></div>
-        <div class="seg seg-gain" id="segGain"></div>
-      </div>
-      <div class="stack-legend">
-        <span class="lg lg-initial" id="lgInitial" hidden>元の残高</span>
-        <span class="lg lg-cost" id="lgCost">実質の負担</span>
-        <span class="lg lg-save" id="lgSave">節税で戻る分</span>
-        <span class="lg lg-gain" id="lgGain">運用益</span>
-      </div>
-      <p class="stack-note" id="stackNote"></p>
-    </div>
-  </div>
+          <div class="stack">
+            <div class="stack-bar" aria-hidden="true">
+              <div class="seg seg-initial" id="segInitial"></div>
+              <div class="seg seg-cost" id="segCost"></div>
+              <div class="seg seg-save" id="segSave"></div>
+              <div class="seg seg-gain" id="segGain"></div>
+            </div>
+            <div class="stack-legend">
+              <span class="lg lg-initial" id="lgInitial" hidden>元の残高</span>
+              <span class="lg lg-cost" id="lgCost">実質の負担</span>
+              <span class="lg lg-save" id="lgSave">節税で戻る分</span>
+              <span class="lg lg-gain" id="lgGain">運用益</span>
+            </div>
+            <p class="stack-note" id="stackNote"></p>
+          </div>
+        </div>
 
-  <!-- 出口：受け取り方ごとの税額。
+        <!-- 出口：受け取り方ごとの税額。
        一時金・年金・その併用は、どれも「受け取るときの税金」の中の選択肢なので、
        1枚のカードに入れて、見出しの高さでも並びが分かるようにする -->
-  <div class="card" id="exitCard">
-    <h2 class="sec-title">受け取るときの税金（出口）</h2>
-    <!-- 今の受取順で、どちらの控除がどれだけ削られるか。下の数字の前提になる -->
-    <p class="note rule-note" id="ruleNote"></p>
+        <div class="card" id="exitCard">
+          <h2 class="sec-title">受け取るときの税金（出口）</h2>
+          <!-- 今の受取順で、どちらの控除がどれだけ削られるか。下の数字の前提になる -->
+          <p class="note rule-note" id="ruleNote"></p>
 
-    <h3 class="sub-title">一時金と年金を比べる</h3>
-    <div class="results">
-      <div class="res-box lump">
-        <h4><span class="badge">一時金</span>まとめて受け取る</h4>
-        <div id="lumpDetail"></div>
-      </div>
-      <div class="res-box annuity">
-        <h4><span class="badge">年金</span>分割で受け取る</h4>
-        <div id="annuityDetail"></div>
-      </div>
-    </div>
-    <!-- 比べるのは手取りではなく税額。手取りは年金のほうが多くなるが、
+          <h3 class="sub-title">一時金と年金を比べる</h3>
+          <div class="results">
+            <div class="res-box lump">
+              <h4><span class="badge">一時金</span>まとめて受け取る</h4>
+              <div id="lumpDetail"></div>
+            </div>
+            <div class="res-box annuity">
+              <h4><span class="badge">年金</span>分割で受け取る</h4>
+              <div id="annuityDetail"></div>
+            </div>
+          </div>
+          <!-- 比べるのは手取りではなく税額。手取りは年金のほうが多くなるが、
          それは受け取り終わるまで運用が続くという前提の差でほぼ決まってしまい、
          受け取り方の判断には使えない（下の netNote で断っている） -->
-    <div class="grand" aria-live="polite">
-      <span class="glabel" id="grandLabel">増える税金が少ないのは</span>
-      <span class="gval" id="grandVal">0<small>万円</small></span>
-    </div>
-    <div class="grand net" aria-live="polite">
-      <span class="glabel" id="totalLabel">掛金の節税額との差引</span>
-      <span class="gval" id="totalVal">0<small>万円</small></span>
-    </div>
-    <!-- 併用のほうが少ないときに、下の併用の欄へ橋渡しする -->
-    <p class="note" id="mixPointer"></p>
-    <p class="note" id="netNote"></p>
+          <div class="grand" aria-live="polite">
+            <span class="glabel" id="grandLabel">増える税金が少ないのは</span>
+            <span class="gval" id="grandVal">0<small>万円</small></span>
+          </div>
+          <div class="grand net" aria-live="polite">
+            <span class="glabel" id="totalLabel">掛金の節税額との差引</span>
+            <span class="gval" id="totalVal">0<small>万円</small></span>
+          </div>
+          <!-- 併用のほうが少ないときに、下の併用の欄へ橋渡しする -->
+          <p class="note" id="mixPointer"></p>
+          <p class="note" id="netNote"></p>
 
-    <!-- 一時金と年金を組み合わせる（併用）。
+          <!-- 一時金と年金を組み合わせる（併用）。
          一時金部分は退職所得、年金部分は雑所得になるので、退職所得控除と
          公的年金等控除を両方使える。どちらの控除も枠を超えた先が重くなるため、
          割りかたによっては一方だけで受け取るより税金が少なくなる -->
-    <div class="mix-sec">
-      <h3 class="sub-title">一時金と年金の併用</h3>
-      <p class="note mix-lead" id="mixLead"></p>
-      <!-- 割合の帯。スライダーの上に置いて、いま何対何なのかを一目で分かるようにする -->
-      <div class="mix-bar" aria-hidden="true">
-        <div class="seg seg-lump" id="segLump"></div>
-        <div class="seg seg-annuity" id="segAnnuity"></div>
-      </div>
-      <div class="ctrl">
-        <label for="mixRatio">一時金にする割合</label>
-        <div class="srow">
-          <input type="range" id="mixRatio" min="0" max="100" step="1" value="50">
-          <span class="sval"><span id="mixVal">50</span>%</span>
-        </div>
-      </div>
-      <div class="best-hint" id="mixBestHint"></div>
-      <div class="results">
-        <div class="res-box lump">
-          <h4><span class="badge">一時金</span>まとめて受け取る分</h4>
-          <div id="mixLumpDetail"></div>
-        </div>
-        <div class="res-box annuity">
-          <h4><span class="badge">年金</span>分割で受け取る分</h4>
-          <div id="mixAnnuityDetail"></div>
-        </div>
-      </div>
-      <!-- この割合での合計。2行目に、それを課税口座と比べた差を入れる
+          <div class="mix-sec">
+            <h3 class="sub-title">一時金と年金の併用</h3>
+            <p class="note mix-lead" id="mixLead"></p>
+            <!-- 割合の帯。スライダーの上に置いて、いま何対何なのかを一目で分かるようにする -->
+            <div class="mix-bar" aria-hidden="true">
+              <div class="seg seg-lump" id="segLump"></div>
+              <div class="seg seg-annuity" id="segAnnuity"></div>
+            </div>
+            <div class="ctrl">
+              <label for="mixRatio">一時金にする割合</label>
+              <div class="srow">
+                <input
+                  type="range"
+                  id="mixRatio"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                />
+                <span class="sval"><span id="mixVal">50</span>%</span>
+              </div>
+            </div>
+            <div class="best-hint" id="mixBestHint"></div>
+            <div class="results">
+              <div class="res-box lump">
+                <h4><span class="badge">一時金</span>まとめて受け取る分</h4>
+                <div id="mixLumpDetail"></div>
+              </div>
+              <div class="res-box annuity">
+                <h4><span class="badge">年金</span>分割で受け取る分</h4>
+                <div id="mixAnnuityDetail"></div>
+              </div>
+            </div>
+            <!-- この割合での合計。2行目に、それを課税口座と比べた差を入れる
            （上の2つの欄と同じ出し方で、割り振り全体の損得を最後に出す） -->
-      <div class="mix-sum" id="mixSum" aria-live="polite">
-        <span class="glabel" id="mixSumLabel">この割合でiDeCoによって増える税金</span>
-        <span class="gval" id="mixSumVal">0<small>万円</small></span>
-        <div class="ref-diff" id="mixRefDiff"></div>
-      </div>
-      <div class="chart-wrap"><canvas id="mixChart" role="img" aria-label="一時金にする割合を0%から100%まで振って、iDeCoによって増える税金を一時金部分・年金部分・合計の3本の折れ線で示したグラフ"></canvas></div>
-      <p class="note" id="mixChartNote"></p>
+            <div class="mix-sum" id="mixSum" aria-live="polite">
+              <span class="glabel" id="mixSumLabel"
+                >この割合でiDeCoによって増える税金</span
+              >
+              <span class="gval" id="mixSumVal">0<small>万円</small></span>
+              <div class="ref-diff" id="mixRefDiff"></div>
+            </div>
+            <div class="chart-wrap">
+              <canvas
+                id="mixChart"
+                role="img"
+                aria-label="一時金にする割合を0%から100%まで振って、iDeCoによって増える税金を一時金部分・年金部分・合計の3本の折れ線で示したグラフ"
+              ></canvas>
+            </div>
+            <p class="note" id="mixChartNote"></p>
+          </div>
+        </div>
+
+        <!-- グラフ -->
+        <div class="card" id="chartCard">
+          <h2 class="sec-title">受け取る年齢と受け取り方による税金の違い</h2>
+          <div class="chart-wrap">
+            <canvas
+              id="chart"
+              role="img"
+              aria-label="iDeCoの受け取り年齢ごとに、iDeCoによって増える税金を一時金・年金・併用（最適な割合）の3本の折れ線で比べたグラフ"
+            ></canvas>
+          </div>
+          <p class="note" id="chartNote"></p>
+        </div>
+
+        <footer class="site-foot">
+          <p class="foot-note">
+            ・ 掛金は全額が<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1135.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >小規模企業共済等掛金控除</a
+            >になります。節税額は「税率×掛金」ではなく、掛金を差し引く前後の税額の差で計算しています（税率の区分をまたぐ場合に前者では合わないため）。<br />
+            ・
+            拠出限度額と加入できる年齢の上限は、2026年12月の改正で広がります（適用は2027年1月拠出分から）。このツールは拠出する年で現行と改正後を切り替えます。金額は「加入区分」の下に、その区分の今年の上限と改正後の額を出しています。加入できる年齢の上限は65歳未満から70歳未満になり、改正後は60歳以上70歳未満で国民年金の被保険者でない人も「第5号加入者」として拠出できるようになります。厚生年金に入って働き続ける第2号は、現行制度でも60歳以降そのまま拠出できます。<br />
+            ・ 一時金で受け取ると<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >退職所得</a
+            >になり、控除を引いた残りの半分だけが課税されます。ただし加入期間が5年以下の場合は短期退職手当等にあたり、残りのうち300万円を超える部分は半分になりません（60歳以降に加入して5年で受け取る場合などが当てはまります）。<br />
+            ・
+            一時金の退職所得控除は加入年数に応じて決まります。ただし退職金を前後に受け取っていると、勤続期間と加入期間の重なり分だけ控除が削られます（<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2732.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >国税庁 No.2732</a
+            >）。対象になるのは、iDeCoを先に受け取った場合は前年以前9年内（令和8年1月1日以後の支給。従来は4年内）、退職金を先に受け取った場合は前年以前19年内です。<br />
+            ・ 年金で受け取ると雑所得になり、老齢年金と合わせて<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1600.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >公的年金等控除</a
+            >を分け合います。65歳以上なら合わせて110万円まで（65歳未満は60万円まで）は課税されないので、老齢年金が少なくiDeCoを長く分割すれば非課税に収まることもありますが、老齢年金が枠を使い切っていると受取額はそのまま雑所得になります。税額は「iDeCoによって増えた雑所得」に税率を当てた簡易計算で、給与など他の所得があると実際の税率は変わります。<br />
+            ・
+            年金受取で雑所得が増えると、国民健康保険料や介護保険料も上がりますが、自治体による差が大きいため考慮していません。<br />
+            ・
+            一時金と年金のどちらが税金が少ないかは、退職金を<strong>いつ</strong>受け取るかで大きく変わります。<strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されるため、退職金が大きいほど一時金が不利になります。<strong>別の年</strong>なら、iDeCoは自分の加入年数の控除を使って単独で課税されるので、退職金の額そのものはiDeCoの税額を動かしません。ただし上の重複調整の対象年数に入っていると控除が削られるため、<strong>間隔</strong>によって税額は変わります。また、iDeCoを先に受け取って9年内に退職金がある場合は、削られるのが退職金側の控除なので、その増税分が乗る「iDeCoで増えた税金」は退職金が大きいほど増えます。対象年数を外せば、どちらの控除も削られません。<br />
+            ・
+            一時金と年金は<strong>併用</strong>できます（残高の一部を一時金、残りを年金で受け取る）。このツールが探すのは、残高を割る<strong>割合</strong>だけです。一時金と年金を別の年に受け取る組み合わせ（60歳で一時金、65歳から年金など）は扱っていません。併用できるかどうかや指定できる単位（10%単位、金額での指定など）は運営管理機関によって違うので、実際の手続きの前にご確認ください。<br />
+            ・
+            各欄の下に出る<strong>「参考：同じ額を課税口座で運用して売った場合」</strong>は、同じ運用益を課税口座（特定口座）で出して売ったときにかかる税金です。<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >売却益</a
+            >に20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）がかかるものとして計算し、iDeCoで増える税金との差を出しています。iDeCoは運用中の利益が非課税なので、出口の税金がこの額より少なければ、税金の面では課税口座で運用するより軽く済んだことになります（掛金の所得控除による節税は入口の話なので、この比較には入れていません）。年金受取と併用の年金部分は、受け取り終わるまでの運用益も含みます。課税口座なら取り崩すたびに課税されて残りの運用が細りますが、ここでは運用益の総額に一度だけ率を掛けているので、実際の差はこれよりiDeCo寄りになります。今ある残高の含み益（「うち掛金の元本」との差）も、この運用益に含めます。<br />
+            ・
+            年金の受取総額が受給開始時の残高より多いのは、受け取り終わるまで残りの資産が運用を続けるためです（1年あたりの額が一定になるよう、期首払いの年金として計算しています）。一方の一時金は受け取った後の運用を見込んでいないので、両者の比較は「iDeCoから出てくるまで」の話になります。<br />
+            ・
+            運用は入力した利回りで一定に増えるものとして計算します。掛金は毎月に分けて拠出するのが普通なので、その年の掛金は年の真ん中でまとめて入るものとして扱います（すでにある残高には1年分、その年の掛金には半年分の利回りが付きます）。信託報酬・口座管理手数料・給付事務手数料は考慮していません（給付事務手数料は受け取りのたびにかかるため、年金や併用で受取回数が増えるほど効きます）。<br />
+            ・
+            入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
+          </p>
+          <p class="foot-disclaimer">
+            ・
+            試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。
+          </p>
+          <p class="foot-privacy">
+            ・ 入力内容やアクセス解析の扱いについては<a href="../privacy/"
+              >プライバシーポリシー</a
+            >をご覧ください。
+          </p>
+        </footer>
+        <nav data-tool-nav="../"></nav>
+      </main>
     </div>
-  </div>
 
-  <!-- グラフ -->
-  <div class="card" id="chartCard">
-    <h2 class="sec-title">受け取る年齢と受け取り方による税金の違い</h2>
-    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="iDeCoの受け取り年齢ごとに、iDeCoによって増える税金を一時金・年金・併用（最適な割合）の3本の折れ線で比べたグラフ"></canvas></div>
-    <p class="note" id="chartNote"></p>
-  </div>
-
-  <footer class="site-foot">
-    <p class="foot-note">
-      ・ 掛金は全額が<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1135.htm' target='_blank' rel='noopener noreferrer'>小規模企業共済等掛金控除</a>になります。節税額は「税率×掛金」ではなく、掛金を差し引く前後の税額の差で計算しています（税率の区分をまたぐ場合に前者では合わないため）。<br>
-      ・ 拠出限度額と加入できる年齢の上限は、2026年12月の改正で広がります（適用は2027年1月拠出分から）。このツールは拠出する年で現行と改正後を切り替えます。金額は「加入区分」の下に、その区分の今年の上限と改正後の額を出しています。加入できる年齢の上限は65歳未満から70歳未満になり、改正後は60歳以上70歳未満で国民年金の被保険者でない人も「第5号加入者」として拠出できるようになります。厚生年金に入って働き続ける第2号は、現行制度でも60歳以降そのまま拠出できます。<br>
-      ・ 一時金で受け取ると<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm' target='_blank' rel='noopener noreferrer'>退職所得</a>になり、控除を引いた残りの半分だけが課税されます。ただし加入期間が5年以下の場合は短期退職手当等にあたり、残りのうち300万円を超える部分は半分になりません（60歳以降に加入して5年で受け取る場合などが当てはまります）。<br>
-      ・ 一時金の退職所得控除は加入年数に応じて決まります。ただし退職金を前後に受け取っていると、勤続期間と加入期間の重なり分だけ控除が削られます（<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2732.htm' target='_blank' rel='noopener noreferrer'>国税庁 No.2732</a>）。対象になるのは、iDeCoを先に受け取った場合は前年以前9年内（令和8年1月1日以後の支給。従来は4年内）、退職金を先に受け取った場合は前年以前19年内です。<br>
-      ・ 年金で受け取ると雑所得になり、老齢年金と合わせて<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1600.htm' target='_blank' rel='noopener noreferrer'>公的年金等控除</a>を分け合います。65歳以上なら合わせて110万円まで（65歳未満は60万円まで）は課税されないので、老齢年金が少なくiDeCoを長く分割すれば非課税に収まることもありますが、老齢年金が枠を使い切っていると受取額はそのまま雑所得になります。税額は「iDeCoによって増えた雑所得」に税率を当てた簡易計算で、給与など他の所得があると実際の税率は変わります。<br>
-      ・ 年金受取で雑所得が増えると、国民健康保険料や介護保険料も上がりますが、自治体による差が大きいため考慮していません。<br>
-      ・ 一時金と年金のどちらが税金が少ないかは、退職金を<strong>いつ</strong>受け取るかで大きく変わります。<strong>同じ年</strong>に受け取ると合算して1つの退職所得になり、iDeCo分が退職金の上に乗って高い税率で課税されるため、退職金が大きいほど一時金が不利になります。<strong>別の年</strong>なら、iDeCoは自分の加入年数の控除を使って単独で課税されるので、退職金の額そのものはiDeCoの税額を動かしません。ただし上の重複調整の対象年数に入っていると控除が削られるため、<strong>間隔</strong>によって税額は変わります。また、iDeCoを先に受け取って9年内に退職金がある場合は、削られるのが退職金側の控除なので、その増税分が乗る「iDeCoで増えた税金」は退職金が大きいほど増えます。対象年数を外せば、どちらの控除も削られません。<br>
-      ・ 一時金と年金は<strong>併用</strong>できます（残高の一部を一時金、残りを年金で受け取る）。このツールが探すのは、残高を割る<strong>割合</strong>だけです。一時金と年金を別の年に受け取る組み合わせ（60歳で一時金、65歳から年金など）は扱っていません。併用できるかどうかや指定できる単位（10%単位、金額での指定など）は運営管理機関によって違うので、実際の手続きの前にご確認ください。<br>
-      ・ 各欄の下に出る<strong>「参考：同じ額を課税口座で運用して売った場合」</strong>は、同じ運用益を課税口座（特定口座）で出して売ったときにかかる税金です。<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm' target='_blank' rel='noopener noreferrer'>売却益</a>に20.315%（所得税15%＋復興特別所得税0.315%＋住民税5%）がかかるものとして計算し、iDeCoで増える税金との差を出しています。iDeCoは運用中の利益が非課税なので、出口の税金がこの額より少なければ、税金の面では課税口座で運用するより軽く済んだことになります（掛金の所得控除による節税は入口の話なので、この比較には入れていません）。年金受取と併用の年金部分は、受け取り終わるまでの運用益も含みます。課税口座なら取り崩すたびに課税されて残りの運用が細りますが、ここでは運用益の総額に一度だけ率を掛けているので、実際の差はこれよりiDeCo寄りになります。今ある残高の含み益（「うち掛金の元本」との差）も、この運用益に含めます。<br>
-      ・ 年金の受取総額が受給開始時の残高より多いのは、受け取り終わるまで残りの資産が運用を続けるためです（1年あたりの額が一定になるよう、期首払いの年金として計算しています）。一方の一時金は受け取った後の運用を見込んでいないので、両者の比較は「iDeCoから出てくるまで」の話になります。<br>
-      ・ 運用は入力した利回りで一定に増えるものとして計算します。掛金は毎月に分けて拠出するのが普通なので、その年の掛金は年の真ん中でまとめて入るものとして扱います（すでにある残高には1年分、その年の掛金には半年分の利回りが付きます）。信託報酬・口座管理手数料・給付事務手数料は考慮していません（給付事務手数料は受け取りのたびにかかるため、年金や併用で受取回数が増えるほど効きます）。<br>
-      ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
-    </p>
-    <p class="foot-disclaimer">・ 試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。</p>
-    <p class="foot-privacy">・ 入力内容やアクセス解析の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
-  </footer>
-  <nav data-tool-nav="../"></nav>
-  </main>
-</div>
-
-<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+    <!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
-<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
-<script src="../common/chart-print.js?v=20260815b"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260823a"></script>
-<script src="../common/state.js?v=20260823b"></script>
-<script src="../common/tool-nav.js?v=20260814a"></script>
-<script src="../common/tax-core.js?v=20260815a"></script>
-<script src="./js/ideco-core.js?v=20260816b"></script>
-<script src="./js/ideco.js?v=20260823a"></script>
-</body>
+    <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+    <script src="../common/chart-print.js?v=20260815b"></script>
+    <script src="../common/qrcode.js?v=20260805a"></script>
+    <script src="../common/share.js?v=20260823a"></script>
+    <script src="../common/state.js?v=20260823b"></script>
+    <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/tax-core.js?v=20260815a"></script>
+    <script src="./js/ideco-core.js?v=20260816b"></script>
+    <script src="./js/ideco.js?v=20260823a"></script>
+  </body>
 </html>

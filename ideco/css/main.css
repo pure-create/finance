@@ -1,281 +1,726 @@
 /* 地の色・文字・枠線などは common/theme.css の共通トークンを使う。
    ここで持つのは「入口（節税）＝青／出口（受取）＝オレンジ」のように
    データと結び付いた色だけ。ダークでは色味を保ったまま明度を上げる。 */
-:root{
-  --idc-in:#1d4ed8;          /* 入口：掛金・節税 */
-  --idc-in-soft:#eff6ff;
-  --idc-out:#c2410c;         /* 出口：受け取り */
-  --idc-out-soft:#fff7ed;
-  --idc-gain:#059669;        /* 運用益 */
-  --idc-gain-soft:#ecfdf5;
-  --idc-warn:#b45309;
-  --idc-band:rgba(5,150,105,.10);   /* 併用のグラフで「税金が最小になる割合」を塗る帯（JSから参照） */
+:root {
+  --idc-in: #1d4ed8; /* 入口：掛金・節税 */
+  --idc-in-soft: #eff6ff;
+  --idc-out: #c2410c; /* 出口：受け取り */
+  --idc-out-soft: #fff7ed;
+  --idc-gain: #059669; /* 運用益 */
+  --idc-gain-soft: #ecfdf5;
+  --idc-warn: #b45309;
+  --idc-band: rgba(
+    5,
+    150,
+    105,
+    0.1
+  ); /* 併用のグラフで「税金が最小になる割合」を塗る帯（JSから参照） */
 
   /* 受け取る残高の内訳を表す帯の塗り。太い面なので明度を上げず、
      白文字が載る濃さに保つ。実質の負担と節税で戻る分は
      「どちらも掛金」なので、同系色の濃淡で並べる */
-  --seg-initial:#64748b;
-  --seg-cost:#1d4ed8;
-  --seg-save:#60a5fa;
-  --seg-gain:#059669;
-  --grand-from:#1e3a8a;
-  --grand-to:#1d4ed8;
-  --grand-net-from:#065f46;
-  --grand-net-to:#059669;
-  --grand-text:#ffffff;
+  --seg-initial: #64748b;
+  --seg-cost: #1d4ed8;
+  --seg-save: #60a5fa;
+  --seg-gain: #059669;
+  --grand-from: #1e3a8a;
+  --grand-to: #1d4ed8;
+  --grand-net-from: #065f46;
+  --grand-net-to: #059669;
+  --grand-text: #ffffff;
 }
 /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
-:root[data-theme="dark"]{
-  --idc-in:#6ba3f5;
-  --idc-in-soft:#14253d;
-  --idc-out:#fb923c;
-  --idc-out-soft:#3a1f0d;
-  --idc-gain:#34d399;
-  --idc-gain-soft:#10291f;
-  --idc-warn:#fbbf24;
-  --idc-band:rgba(52,211,153,.14);
-  --seg-initial:#475569;
-  --seg-cost:#1f47a8;
-  --seg-save:#3b6fc7;
-  --seg-gain:#04795a;
-  --grand-from:#16305f;
-  --grand-to:#1f47a8;
-  --grand-net-from:#064e3b;
-  --grand-net-to:#047857;
+:root[data-theme="dark"] {
+  --idc-in: #6ba3f5;
+  --idc-in-soft: #14253d;
+  --idc-out: #fb923c;
+  --idc-out-soft: #3a1f0d;
+  --idc-gain: #34d399;
+  --idc-gain-soft: #10291f;
+  --idc-warn: #fbbf24;
+  --idc-band: rgba(52, 211, 153, 0.14);
+  --seg-initial: #475569;
+  --seg-cost: #1f47a8;
+  --seg-save: #3b6fc7;
+  --seg-gain: #04795a;
+  --grand-from: #16305f;
+  --grand-to: #1f47a8;
+  --grand-net-from: #064e3b;
+  --grand-net-to: #047857;
 }
 
 /* 余白の初期化・body の余白・.wrap の幅・.card の見た目・「？」の色の変化は、
    3ツールで同じなので common/card-page.css に移した。
    このファイルで上書きすれば、これまでどおりページ側が勝つ */
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 /* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
-.sec-title{font-size:14px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
+.sec-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin: 0 0 12px;
+}
 /* カードの中の小見出し（出口カードの「比べる」「併用」）。
    カードの見出しと同じ字の大きさにすると並びが同じ高さに見えるので、
    少し小さくし、左の縦線で「この見出しの下」だと分かるようにする */
-.sub-title{
-  font-size:13px;font-weight:700;color:var(--text);
-  margin:0 0 10px;padding-left:9px;border-left:3px solid var(--idc-out);
+.sub-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 10px;
+  padding-left: 9px;
+  border-left: 3px solid var(--idc-out);
 }
 /* 併用は前の結論のあとに続くので、区切りの線を入れて話の変わり目を見せる */
-.mix-sec{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.mix-sec {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
 
 /* ---- 入力欄 ---- */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:12px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;margin-bottom:12px}
-@media screen and (max-width:600px){
-  .grid2,.grid3{grid-template-columns:1fr}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+  margin-bottom: 12px;
 }
-.fld label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:6px}
-.num-in{display:flex;align-items:center;gap:5px}
-.num-in input{
-  width:112px;padding:6px 7px;font-size:19px;font-weight:700;text-align:right;
-  color:var(--text);background:var(--field);border:1px solid var(--field-border);border-radius:8px;
-  font-variant-numeric:tabular-nums;
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 18px;
+  margin-bottom: 12px;
 }
-.num-in input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
-.num-in input:disabled{opacity:.5;cursor:default}
-.num-in .unit{font-size:13px;color:var(--muted);font-weight:600}
-.fld select{
-  width:100%;max-width:280px;padding:7px 8px;font-size:14px;font-weight:600;
-  color:var(--text);background:var(--field);border:1px solid var(--field-border);border-radius:8px;
+@media screen and (max-width: 600px) {
+  .grid2,
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
 }
-.fld select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.fld label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+.num-in {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.num-in input {
+  width: 112px;
+  padding: 6px 7px;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.num-in input:focus {
+  outline: 2px solid var(--accent);
+  border-color: var(--accent);
+}
+.num-in input:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.num-in .unit {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.fld select {
+  width: 100%;
+  max-width: 280px;
+  padding: 7px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+}
+.fld select:focus {
+  outline: 2px solid var(--accent);
+  border-color: var(--accent);
+}
 
 /* 選んだ区分の限度額。掛金欄のすぐ横に出して、入れながら確かめられるようにする */
-.limit-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6}
-.limit-note b{color:var(--text);font-variant-numeric:tabular-nums}
+.limit-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.limit-note b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 /* 改正で変わる額は、現行と並べて出す */
-.limit-note .reformed{color:var(--idc-in);font-weight:700}
+.limit-note .reformed {
+  color: var(--idc-in);
+  font-weight: 700;
+}
 
-.note{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:8px}
-.note.warn{color:var(--idc-warn);font-weight:600}
-.note:empty{display:none}
+.note {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.note.warn {
+  color: var(--idc-warn);
+  font-weight: 600;
+}
+.note:empty {
+  display: none;
+}
 
 /* 利回りのスライダー。年金ツールと同じ形にそろえる。
    下にも入力欄が続くので、上下の余白は入力欄の行（.grid2 / .grid3）にそろえる */
-.ctrl{margin:4px 0 12px}
-.ctrl label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:6px}
-.srow{display:flex;align-items:center;gap:10px;height:34px}
-.srow input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
-.sval{font-size:15px;font-weight:700;color:var(--text);min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
+.ctrl {
+  margin: 4px 0 12px;
+}
+.ctrl label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+.srow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+}
+.srow input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sval {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---- 節税額 ---- */
 /* 節税額。入口カードの先頭に置くので、上の余白は見出しの分だけでよい
    （課税所得の入力欄と横に並べていたときは、高さを合わせるため空けていた） */
-.saving-line{font-size:13px;color:var(--text);line-height:1.9}
-.saving-line b{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}
+.saving-line {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.9;
+}
+.saving-line b {
+  font-size: 15px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 /* 累計が判断の主役。毎年の額より大きく、色を付けて先に目に入るようにする
    （毎年の額から色を外しているのは、両方を強めると主従が付かないため） */
-.saving-line b.total{font-size:23px;color:var(--idc-in)}
+.saving-line b.total {
+  font-size: 23px;
+  color: var(--idc-in);
+}
 
 /* 受け取る残高の内訳を表す帯：元の残高／実質の負担／節税で戻る分／運用益 */
-.stack{margin-top:6px}
-.stack-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;background:var(--surface-2)}
-.stack-bar .seg{
-  display:flex;align-items:center;justify-content:center;
-  font-size:11.5px;font-weight:700;color:var(--grand-text);white-space:nowrap;overflow:hidden;
-  transition:width .18s ease;
-  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+.stack {
+  margin-top: 6px;
 }
-.seg-initial{background:var(--seg-initial)}
-.seg-cost{background:var(--seg-cost)}
-.seg-save{background:var(--seg-save)}
-.seg-gain{background:var(--seg-gain)}
-.stack-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:11.5px;color:var(--text-sub)}
-.lg{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
-.lg[hidden]{display:none}
-.lg::before{content:"";width:10px;height:10px;border-radius:3px;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.lg-initial::before{background:var(--seg-initial)}
-.lg-cost::before{background:var(--seg-cost)}
-.lg-save::before{background:var(--seg-save)}
-.lg-gain::before{background:var(--seg-gain)}
+.stack-bar {
+  display: flex;
+  height: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.stack-bar .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--grand-text);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.18s ease;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.seg-initial {
+  background: var(--seg-initial);
+}
+.seg-cost {
+  background: var(--seg-cost);
+}
+.seg-save {
+  background: var(--seg-save);
+}
+.seg-gain {
+  background: var(--seg-gain);
+}
+.stack-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+}
+.lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.lg[hidden] {
+  display: none;
+}
+.lg::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.lg-initial::before {
+  background: var(--seg-initial);
+}
+.lg-cost::before {
+  background: var(--seg-cost);
+}
+.lg-save::before {
+  background: var(--seg-save);
+}
+.lg-gain::before {
+  background: var(--seg-gain);
+}
 /* 「掛金のうち何割が戻るか」を言葉でも添える。帯の割り方だけでは
    節税分が掛金の内訳だと読み取りにくいため */
-.stack-note{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:8px}
-.stack-note b{color:var(--text);font-variant-numeric:tabular-nums}
+.stack-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-top: 8px;
+}
+.stack-note b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---- 受け取り方 ---- */
 /* 今の受取順と、控除がどう調整されるかの説明。結果の直前に置く */
-.rule-note{font-size:12px;color:var(--text);background:var(--surface-2);border-radius:8px;padding:9px 11px;line-height:1.7}
-.rule-note b{color:var(--idc-out)}
-.rule-note.safe b{color:var(--idc-gain)}
+.rule-note {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 9px 11px;
+  line-height: 1.7;
+}
+.rule-note b {
+  color: var(--idc-out);
+}
+.rule-note.safe b {
+  color: var(--idc-gain);
+}
 
 /* ---- 結果 ---- */
-.results{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-@media screen and (max-width:600px){.results{grid-template-columns:1fr}}
-.res-box{border:2px solid var(--field-border);border-radius:10px;padding:12px 13px}
-.res-box.lump{border-color:var(--idc-out);background:var(--idc-out-soft)}
-.res-box.annuity{border-color:var(--idc-in);background:var(--idc-in-soft)}
-/* 選んでいない受け取り方は沈める（比較のために表示は残す） */
-.res-box.dim{opacity:.55}
-.res-box h4{font-size:13px;font-weight:700;color:var(--text-sub);margin-bottom:9px;display:flex;align-items:center;gap:7px}
-.badge{
-  font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;color:var(--grand-text);
-  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+.results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
 }
-.lump .badge{background:var(--idc-out)}
-.annuity .badge{background:var(--idc-in)}
-.rline{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;line-height:2;color:var(--text)}
-.rline.dim{color:var(--muted);font-size:11.5px}
-.rline .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media screen and (max-width: 600px) {
+  .results {
+    grid-template-columns: 1fr;
+  }
+}
+.res-box {
+  border: 2px solid var(--field-border);
+  border-radius: 10px;
+  padding: 12px 13px;
+}
+.res-box.lump {
+  border-color: var(--idc-out);
+  background: var(--idc-out-soft);
+}
+.res-box.annuity {
+  border-color: var(--idc-in);
+  background: var(--idc-in-soft);
+}
+/* 選んでいない受け取り方は沈める（比較のために表示は残す） */
+.res-box.dim {
+  opacity: 0.55;
+}
+.res-box h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: var(--grand-text);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.lump .badge {
+  background: var(--idc-out);
+}
+.annuity .badge {
+  background: var(--idc-in);
+}
+.rline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 2;
+  color: var(--text);
+}
+.rline.dim {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.rline .v {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 /* iDeCoと退職金それぞれの小計。最後の合計より一段弱く見せる */
-.rline.sub{border-top:1px solid var(--border);margin-top:4px;padding-top:4px;font-weight:600}
-.rline.sub + .rline.dim{margin-top:9px}
-.rline.total{border-top:2px solid var(--border);margin-top:5px;padding-top:5px;font-weight:700}
-.rline.total .v{font-size:15px}
+.rline.sub {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 4px;
+  font-weight: 600;
+}
+.rline.sub + .rline.dim {
+  margin-top: 9px;
+}
+.rline.total {
+  border-top: 2px solid var(--border);
+  margin-top: 5px;
+  padding-top: 5px;
+  font-weight: 700;
+}
+.rline.total .v {
+  font-size: 15px;
+}
 /* iDeCoによって増えた税金。受け取り方を比べるときの主役なので、
    手取りの合計より強く見せる。減る場合もあるので、その向きは色で分ける */
-.rline.headline{border-top:2px solid var(--border);margin-top:8px;padding-top:7px;font-weight:700}
-.rline.headline .v{font-size:17px}
-.res-box.lump .rline.headline{color:var(--idc-out)}
-.res-box.annuity .rline.headline{color:var(--idc-in)}
-.rline.headline.down,.res-box.lump .rline.headline.down,.res-box.annuity .rline.headline.down{color:var(--idc-gain)}
+.rline.headline {
+  border-top: 2px solid var(--border);
+  margin-top: 8px;
+  padding-top: 7px;
+  font-weight: 700;
+}
+.rline.headline .v {
+  font-size: 17px;
+}
+.res-box.lump .rline.headline {
+  color: var(--idc-out);
+}
+.res-box.annuity .rline.headline {
+  color: var(--idc-in);
+}
+.rline.headline.down,
+.res-box.lump .rline.headline.down,
+.res-box.annuity .rline.headline.down {
+  color: var(--idc-gain);
+}
 
 /* ---- 課税口座との比較（各欄の最後に置く参考） ----
    本題はiDeCoの税額なので、結論の行（.headline）より弱く見せる。
    破線で区切って「ここから先は別の話」だと分かるようにする */
-.ref{margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
-.ref-cap{font-size:11px;color:var(--muted);margin-bottom:2px}
+.ref {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.ref-cap {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
 /* 差し引きの一文。列に割らず文にするのは、「得」「損」がどちらに付くのかを
    数字と離さないため。iDeCoが軽ければ運用益非課税が効いている（緑）、
    重ければ出口の税金がそれを食っている（注意の色） */
-.ref-diff{font-size:12.5px;line-height:2;color:var(--idc-warn)}
+.ref-diff {
+  font-size: 12.5px;
+  line-height: 2;
+  color: var(--idc-warn);
+}
 /* 強めるのは「〇万円 得（損）」だけ。数字と得損が離れると読み違える */
-.ref-diff b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
-.ref-diff.safe{color:var(--idc-gain)}
+.ref-diff b {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ref-diff.safe {
+  color: var(--idc-gain);
+}
 
 /* 合算されて分けられない場合の断り */
-.split-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7}
-.split-note b{color:var(--text);font-variant-numeric:tabular-nums}
-.zero-note{font-size:11px;color:var(--idc-gain);font-weight:600;margin-top:5px}
-
-.grand{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:12px 15px;border-radius:10px;color:var(--grand-text);
-  background:linear-gradient(90deg,var(--grand-from),var(--grand-to));
-  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+.split-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.7;
 }
-.grand + .grand{margin-top:9px}
-.grand.net{background:linear-gradient(90deg,var(--grand-net-from),var(--grand-net-to))}
-.glabel{font-size:12.5px;font-weight:600}
+.split-note b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.zero-note {
+  font-size: 11px;
+  color: var(--idc-gain);
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.grand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 15px;
+  border-radius: 10px;
+  color: var(--grand-text);
+  background: linear-gradient(90deg, var(--grand-from), var(--grand-to));
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.grand + .grand {
+  margin-top: 9px;
+}
+.grand.net {
+  background: linear-gradient(
+    90deg,
+    var(--grand-net-from),
+    var(--grand-net-to)
+  );
+}
+.glabel {
+  font-size: 12.5px;
+  font-weight: 600;
+}
 /* 帯の中の補足（差額や、何の合計かの断り）。主役の数字より弱く見せる */
-.glabel .gsub{display:block;font-size:11px;font-weight:500;opacity:.85;margin-top:2px}
-.glabel b{font-size:14px}
-.gval{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
-.gval small{font-size:13px;font-weight:700;margin-left:2px}
+.glabel .gsub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.glabel b {
+  font-size: 14px;
+}
+.gval {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.gval small {
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 2px;
+}
 
 /* ---- 併用（一時金と年金の割り振り） ---- */
 /* ここだけ導入の一文を先に置く。割合を動かす欄なのだと分かるようにする */
-.mix-lead{margin-bottom:10px}
+.mix-lead {
+  margin-bottom: 10px;
+}
 /* 割合の帯。入口の .stack-bar と同じ作りだが、こちらは2区画で
    「一時金いくら／年金いくら」を出す。スライダーのすぐ上に置く */
-.mix-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;background:var(--surface-2);margin-bottom:10px}
-.mix-bar .seg{
-  display:flex;align-items:center;justify-content:center;
-  font-size:11.5px;font-weight:700;color:var(--grand-text);white-space:nowrap;overflow:hidden;
-  transition:width .1s ease;
-  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+.mix-bar {
+  display: flex;
+  height: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-bottom: 10px;
 }
-.seg-lump{background:var(--idc-out)}
-.seg-annuity{background:var(--idc-in)}
+.mix-bar .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--grand-text);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.1s ease;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.seg-lump {
+  background: var(--idc-out);
+}
+.seg-annuity {
+  background: var(--idc-in);
+}
 /* 最小になる割合の案内。相続シミュレーターの .best-hint と同じ役目 */
-.best-hint{
-  font-size:12px;color:var(--text-sub);margin:12px 0 14px;padding:8px 10px;
-  background:var(--surface-2);border-radius:8px;line-height:1.8;
+.best-hint {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin: 12px 0 14px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  line-height: 1.8;
 }
-.best-hint b{color:var(--text);font-variant-numeric:tabular-nums}
-.best-hint .tag{
-  display:inline-block;font-weight:700;font-size:11px;padding:1px 7px;border-radius:10px;margin-right:5px;
-  background:var(--idc-gain-soft);color:var(--idc-gain);
+.best-hint b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
-.best-hint button{
-  border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-size:12px;font-weight:600;
-  border-radius:6px;padding:2px 10px;cursor:pointer;margin-left:8px;
+.best-hint .tag {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-right: 5px;
+  background: var(--idc-gain-soft);
+  color: var(--idc-gain);
 }
-.best-hint button:hover{background:var(--accent-soft)}
-.best-hint button[disabled]{opacity:.45;cursor:default}
+.best-hint button {
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 10px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.best-hint button:hover {
+  background: var(--accent-soft);
+}
+.best-hint button[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
 /* この割合での合計。出口の .grand と同じ形だが、ページの主役はあちらなので
    塗らずに枠だけにして、順位が入れ替わって見えないようにする */
-.mix-sum{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:10px 15px;border-radius:10px;border:2px solid var(--idc-out);color:var(--text);
-  margin-bottom:14px;row-gap:4px;
+.mix-sum {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 2px solid var(--idc-out);
+  color: var(--text);
+  margin-bottom: 14px;
+  row-gap: 4px;
 }
 /* 課税口座との差は、この帯の2行目。幅いっぱいの区画にして折り返させる。
    運用益が無い条件では空になり、:empty で行ごと消える */
-.mix-sum .ref-diff{flex:0 0 100%;line-height:1.7}
-.ref-diff:empty{display:none}
-.mix-sum .gval{font-size:22px;color:var(--idc-out)}
-.mix-sum.down{border-color:var(--idc-gain)}
-.mix-sum.down .gval{color:var(--idc-gain)}
+.mix-sum .ref-diff {
+  flex: 0 0 100%;
+  line-height: 1.7;
+}
+.ref-diff:empty {
+  display: none;
+}
+.mix-sum .gval {
+  font-size: 22px;
+  color: var(--idc-out);
+}
+.mix-sum.down {
+  border-color: var(--idc-gain);
+}
+.mix-sum.down .gval {
+  color: var(--idc-gain);
+}
 
 /* ---- グラフ ---- */
-.chart-wrap{position:relative;height:260px}
-@media screen and (max-width:600px){.chart-wrap{height:220px}}
+.chart-wrap {
+  position: relative;
+  height: 260px;
+}
+@media screen and (max-width: 600px) {
+  .chart-wrap {
+    height: 220px;
+  }
+}
 
 /* ---- ヘルプの吹き出し ---- */
-.help{
-  position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:16px;height:16px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
-  color:var(--muted);font-size:11px;font-weight:700;cursor:help;flex-shrink:0;margin-left:2px;
+.help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--axis);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  flex-shrink: 0;
+  margin-left: 2px;
 }
 /* 吹き出しは site.css のものを、このページの配置（幅広）に合わせて上書きする。
 
    位置の基準は「？」の印ではなく入力欄そのものにする。印は16px角しかないので、
    それを基準にすると、広い画面では右へ、狭い画面では左へはみ出して切れてしまう。
    入力欄の端にそろえれば、どちらの幅でも欄の中に収まる。 */
-.fld{position:relative}
-.fld .help{position:static}
+.fld {
+  position: relative;
+}
+.fld .help {
+  position: static;
+}
 /* スライダーの行（想定利回りなど）も同じ扱いにする。
    .ctrl はカードの幅いっぱいなので、吹き出しは302pxのまま左端にそろう */
-.ctrl{position:relative}
-.ctrl .help{position:static}
-.tipbox{
-  top:calc(100% + 8px);left:0;right:auto;width:302px;max-width:100%;
-  line-height:1.7;padding:10px 12px;
-  pointer-events:none;
+.ctrl {
+  position: relative;
+}
+.ctrl .help {
+  position: static;
+}
+.tipbox {
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  width: 302px;
+  max-width: 100%;
+  line-height: 1.7;
+  padding: 10px 12px;
+  pointer-events: none;
 }
 /* 右端の列だけは右にそろえる（左のままだとカードからはみ出す） */
 .grid2 .fld:last-child .tipbox,
-.grid3 .fld:last-child .tipbox{left:auto;right:0}
+.grid3 .fld:last-child .tipbox {
+  left: auto;
+  right: 0;
+}

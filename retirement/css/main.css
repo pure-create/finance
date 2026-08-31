@@ -4,411 +4,426 @@
    ここで持つのは、このCSSが使っている名前への別名と、
    表の見出しの色分けのようにこのページ固有の意味を持つ色だけ。 */
 :root {
-	/* 共通トークンへの別名 */
-	--color-bg: var(--bg);
-	--color-bg-accent: var(--accent-soft);
-	--color-surface: var(--surface);
-	--color-border: var(--border);
-	--color-text: var(--text);
-	--color-muted: var(--muted);
-	--color-primary: var(--accent);
-	--color-primary-dark: var(--accent-hover);
-	--color-primary-soft: var(--accent-soft);
-	--color-success: var(--good);
-	--color-success-soft: var(--good-soft);
-	--color-danger: var(--danger);
-	--color-danger-soft: var(--danger-soft);
-	--color-warning-soft: var(--warn-soft);
+  /* 共通トークンへの別名 */
+  --color-bg: var(--bg);
+  --color-bg-accent: var(--accent-soft);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--accent);
+  --color-primary-dark: var(--accent-hover);
+  --color-primary-soft: var(--accent-soft);
+  --color-success: var(--good);
+  --color-success-soft: var(--good-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning-soft: var(--warn-soft);
 
-	/* このページ固有の色（表の見出しの色分け・注意枠の縁・フォーカスリング） */
-	--color-warning-border: #fde68a;
-	--th-own-bg: #bbf7d0;      /* 自己都合 */
-	--th-own-text: #14532d;
-	--th-must-bg: #bfdbfe;     /* 定年・勧奨 */
-	--th-must-text: #1e3a8a;
-	--focus-ring: rgba(29, 78, 216, 0.20);
+  /* このページ固有の色（表の見出しの色分け・注意枠の縁・フォーカスリング） */
+  --color-warning-border: #fde68a;
+  --th-own-bg: #bbf7d0; /* 自己都合 */
+  --th-own-text: #14532d;
+  --th-must-bg: #bfdbfe; /* 定年・勧奨 */
+  --th-must-text: #1e3a8a;
+  --focus-ring: rgba(29, 78, 216, 0.2);
 
-	--radius-sm: 6px;
-	--radius-md: 10px;
-	--radius-lg: 14px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
 /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"] {
-	--color-warning-border: #5c4708;
-	--th-own-bg: #10331f;
-	--th-own-text: #86efac;
-	--th-must-bg: #16294a;
-	--th-must-text: #a5c8fb;
-	--focus-ring: rgba(107, 163, 245, 0.28);
+  --color-warning-border: #5c4708;
+  --th-own-bg: #10331f;
+  --th-own-text: #86efac;
+  --th-must-bg: #16294a;
+  --th-must-text: #a5c8fb;
+  --focus-ring: rgba(107, 163, 245, 0.28);
 }
 
 body {
-	font-size: 14px;
-	/* 幅の広い画面では、見出しは左端・操作ボタンは右端と離れてしまって視線が飛ぶので、
+  font-size: 14px;
+  /* 幅の広い画面では、見出しは左端・操作ボタンは右端と離れてしまって視線が飛ぶので、
 	   中央にまとめる。上限は、このページで最も広い「計算の結果」の表（13列・実測990px）に
 	   左右のpadding（56px×2）を足した幅にしている。これより広げると、表の右端より
 	   さらに右に共有ボタンが出て浮いて見える。狭めるとこの表に横スクロールが出る */
-	max-width: 1120px;
-	margin: 0 auto;
-	padding: 24px clamp(16px, 4vw, 56px) 16px;
-	line-height: 1.7;
-	/* body に max-width を付けても、背景は画面全体に伸びる（body の背景はキャンバスに
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 56px) 16px;
+  line-height: 1.7;
+  /* body に max-width を付けても、背景は画面全体に伸びる（body の背景はキャンバスに
 	   引き継がれる仕様）。縦方向のグラデーションなので幅の指定とも干渉しない */
-	background: linear-gradient(180deg, var(--color-bg-accent) 0px, var(--color-bg) 260px);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-accent) 0px,
+    var(--color-bg) 260px
+  );
 }
 
 table {
-	border-collapse: collapse;
-	line-height: 130%;
-	background: var(--color-surface);
-	border: 1px solid var(--color-border);
-	box-shadow: var(--shadow-sm);
+  border-collapse: collapse;
+  line-height: 130%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .table-scroll {
-	max-width: 100%;
-	overflow-x: auto;
-	-webkit-overflow-scrolling: touch;
-	margin: 4px 0;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 4px 0;
 }
 /* 計算結果の表は、最終行のツールチップ（「クリックすると計算式を表示します」）が
    表の下にはみ出す。overflow-x を指定した箱は縦もはみ出しを拾うので、
    そのままだと縦スクロールバーが出てしまう。ツールチップの高さぶんの余白で受ける。
    実測で28.2px（文字18.2＋上下の余白8＋枠線2）なので、少し多めに取っている */
 .table-scroll.result-scroll {
-	padding-bottom: 30px;
+  padding-bottom: 30px;
 }
 
 /* 地方⇔国家の切り替えは h1 のすぐ右に置く。
    ページ見出しの一部なので、上の行の操作ボタン群（.page-tools）とは分けている。
    ベースラインで揃えると、文字の大きさが違っても行の中で浮いて見えない */
 .page-title {
-	display: flex;
-	align-items: baseline;
-	flex-wrap: wrap;
-	gap: 2px 10px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 10px;
 }
 /* 見出し行と最初のセクション見出しの間。共通の下余白（18px）と h2 の上余白（28px）が
    そのまま足し算になって空きすぎるので、この2つを詰める。
    h2 は色の付いた帯なので、区切り線との間はこの程度でも見出しとして読める */
 .page-head {
-	margin-bottom: 0;
-	padding-bottom: 0;
-	border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 .page-head + div.section-header h2 {
-	margin-top: 6px;
+  margin-top: 6px;
 }
 
 a.switch-link {
-	font-size: 13px;
-	color: var(--color-primary);
-	text-decoration: none;
-	white-space: nowrap;
+  font-size: 13px;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
 }
 a.switch-link:hover {
-	text-decoration: underline;
+  text-decoration: underline;
 }
 a.switch-link:focus-visible {
-	outline: 2px solid var(--color-primary);
-	outline-offset: 2px;
-	border-radius: 3px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 h2 {
-	display: block;
-	width: fit-content;
-	font-size: 18px;
-	font-weight: 700;
-	background: var(--color-primary-soft);
-	color: var(--color-primary-dark);
-	padding: 6px 14px;
-	border: none;
-	border-left: 4px solid var(--color-primary);
-	border-radius: var(--radius-sm);
-	box-shadow: none;
-	margin: 28px 0 12px;
+  display: block;
+  width: fit-content;
+  font-size: 18px;
+  font-weight: 700;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  padding: 6px 14px;
+  border: none;
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  margin: 28px 0 12px;
 }
 
 div.section-header {
-	display: flex;
-	align-items: flex-end;
-	flex-wrap: wrap;
-	gap: 10px;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 div.section-header h2 {
-	margin: 28px 0 12px;
+  margin: 28px 0 12px;
 }
 /* 「入力をリセット」は「計算の基準」の見出し行に置く。
    h2の下余白（12px）と同じだけ下に余白を取ると、見出しの箱と下端が揃う */
 div.section-header .btn {
-	margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 span.result-disclaimer {
-	color: var(--color-muted);
-	font-size: 13px;
-	margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+  margin-bottom: 8px;
 }
 
-th, td {
-	border: 1px solid var(--color-border);
-	margin: 0;
-	padding: 6px 8px;
+th,
+td {
+  border: 1px solid var(--color-border);
+  margin: 0;
+  padding: 6px 8px;
 }
 
 th {
-	background: var(--surface-2);
-	font-weight: 600;
-	color: var(--text-sub);
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--text-sub);
 }
 
 th.own {
-	background: var(--th-own-bg);
-	color: var(--th-own-text);
+  background: var(--th-own-bg);
+  color: var(--th-own-text);
 }
 
 th.mandatory {
-	background: var(--th-must-bg);
-	color: var(--th-must-text);
+  background: var(--th-must-bg);
+  color: var(--th-must-text);
 }
 
 /* 計算結果の表は列が13あり、既定の余白のままだと本文の幅(1120px)に収まらず
    横スクロールが出る。列数が多いぶん、左右の余白を1つ削るだけでも全体では効く */
 table.result-table th,
 table.result-table td {
-	padding: 6px 4px;
+  padding: 6px 4px;
 }
 /* 金額の列は入る桁数で幅を決める。ch は「0」1文字分の幅で、数字は tabular-nums なので
    どのフォントでもカンマ入りの表示がちょうど収まる。加える10pxは左右のpadding(4px×2)と枠線。
    退職手当・手取額は8桁（12,345,678＝10文字）、所得税・住民税は7桁（1,234,567＝9文字） */
 th.tax {
-	width: calc(9ch + 10px);
+  width: calc(9ch + 10px);
 }
 th.price {
-	width: calc(10ch + 10px);
+  width: calc(10ch + 10px);
 }
 td.price {
-	text-align: right;
-	white-space: nowrap;
-	font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 td.net {
-	font-weight: 700;
+  font-weight: 700;
 }
 
 th.small {
-	font-size: 10px;
+  font-size: 10px;
 }
 
 /* 区分・調整月額の見出し列。width:1px は「最小幅にせよ」の指示になり、
    折り返しを禁じてあるので中身（＝最も長い「直近5年のうちの月数」）の幅ちょうどに縮む */
 #tyosei-table th:first-child {
-	white-space: nowrap;
-	width: 1px;
+  white-space: nowrap;
+  width: 1px;
 }
 
 td {
-	text-align: center;
+  text-align: center;
 }
 
-input, select {
-	font-size: 16px;
-	font-family: inherit;
-	color: var(--color-text);
-	border: 1px solid var(--field-border);
-	background: var(--field);
-	text-align: center;
-	border-radius: var(--radius-sm);
-	box-shadow: var(--shadow-sm);
-	padding: 5px 8px;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+input,
+select {
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--color-text);
+  border: 1px solid var(--field-border);
+  background: var(--field);
+  text-align: center;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 5px 8px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-input:focus, select:focus {
-	outline: none;
-	border-color: var(--color-primary);
-	box-shadow: 0 0 0 3px var(--focus-ring);
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 input {
-	width: 74px;
+  width: 74px;
 }
 
 /* 月数の入力欄は2桁（最大60）しか入らないので、枠と余白を切り詰めて列幅を稼ぐ。
    区分の数だけ横に並ぶ列なので、1つ削るとそのぶん表全体が縮む */
 input.tyosei {
-	width: 41px;
-	margin: 8px 5px;
-	padding: 5px 6px;
+  width: 41px;
+  margin: 8px 5px;
+  padding: 5px 6px;
 }
 /* 区分の列。上の入力欄に合わせてセルの左右余白も詰める */
 #tyosei-table td {
-	padding: 6px 6px;
+  padding: 6px 6px;
 }
-input[type='checkbox']{
-	width: 18px;
-	height: 18px;
-	background: none;
-	box-shadow: none;
-	accent-color: var(--color-primary);
-	cursor: pointer;
-	vertical-align: middle;
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  background: none;
+  box-shadow: none;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  vertical-align: middle;
 }
 
 div#tyosei_result {
-	background: var(--color-warning-soft);
-	border-radius: var(--radius-md);
-	border: 1px solid var(--color-warning-border);
-	box-shadow: var(--shadow-sm);
-	width: auto;
-	max-width: 760px;
-	height: auto;
-	margin: 10px 0;
-	padding: 10px 14px;
-	font-size: 80%;
-	line-height: 140%;
+  background: var(--color-warning-soft);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-warning-border);
+  box-shadow: var(--shadow-sm);
+  width: auto;
+  max-width: 760px;
+  height: auto;
+  margin: 10px 0;
+  padding: 10px 14px;
+  font-size: 80%;
+  line-height: 140%;
 }
 
 span.warning {
-	color: var(--color-danger);
-	background: var(--color-danger-soft);
-	font-weight: 700;
-	font-size: 14px;
-	padding: 2px 8px;
-	border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
 }
 
 span.tyosei-hint {
-	color: var(--color-danger);
-	font-size: 12px;
+  color: var(--color-danger);
+  font-size: 12px;
 }
 
 input#tyosei_price {
-	width: 130px;
+  width: 130px;
 }
 
 input#salary {
-	width: 130px;
+  width: 130px;
 }
 
-input#tyosei_price, span.numeric {
-	font-size: 14px;
-	background: none;
-	border: none;
-	box-shadow: none;
-	color: var(--color-success);
-	font-weight: 700;
-	font-variant-numeric: tabular-nums;
-	text-align: right;
+input#tyosei_price,
+span.numeric {
+  font-size: 14px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--color-success);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 tr.calc_disp {
-	cursor: pointer;
-	transition: background-color 0.15s ease;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 tr.calc_disp:hover {
-	background: var(--color-primary-soft);
+  background: var(--color-primary-soft);
 }
 
 /* マウスホバー時に「クリックすると計算式を表示します」を知らせるCSSツールチップ */
 tr.calc_disp td:first-child {
-	position: relative;
-	/* 年度は「2025年度末(2026.3)」で1行。折り返すと行の高さが揃わなくなる。
+  position: relative;
+  /* 年度は「2025年度末(2026.3)」で1行。折り返すと行の高さが揃わなくなる。
 	   計算式の行（.calc_memo）は折り返させたいので、この行だけに指定する */
-	white-space: nowrap;
+  white-space: nowrap;
 }
 tr.calc_disp td:first-child::after {
-	content: 'クリックすると計算式を表示します';
-	position: absolute;
-	left: 8px;
-	top: 100%;
-	z-index: 20;
-	white-space: nowrap;
-	background: var(--tooltip-bg);
-	color: var(--tooltip-text);
-	border: 1px solid var(--tooltip-border);
-	font-size: 12px;
-	font-weight: normal;
-	padding: 4px 8px;
-	border-radius: var(--radius-sm);
-	box-shadow: var(--shadow-md);
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 0.2s ease;
+  content: "クリックすると計算式を表示します";
+  position: absolute;
+  left: 8px;
+  top: 100%;
+  z-index: 20;
+  white-space: nowrap;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border: 1px solid var(--tooltip-border);
+  font-size: 12px;
+  font-weight: normal;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 tr.calc_disp:hover td:first-child::after {
-	opacity: 1;
+  opacity: 1;
 }
 
 /* 各行をクリックすると計算式を徐々に展開表示する */
-tr.calc_memo td{
-	padding: 0;
-	border: 0;
+tr.calc_memo td {
+  padding: 0;
+  border: 0;
 }
 .calc_memo_inner {
-	max-height: 0;
-	opacity: 0;
-	overflow: hidden;
-	padding: 0 12px;
-	text-align: left;
-	color: var(--color-muted);
-	font-size: 13px;
-	background: var(--surface-2);
-	border-left: 3px solid var(--color-primary);
-	transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 12px;
+  text-align: left;
+  color: var(--color-muted);
+  font-size: 13px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--color-primary);
+  transition:
+    max-height 0.4s ease,
+    opacity 0.4s ease,
+    padding 0.4s ease;
 }
 tr.calc_memo.open .calc_memo_inner {
-	max-height: 500px;
-	opacity: 1;
-	padding: 10px 12px;
+  max-height: 500px;
+  opacity: 1;
+  padding: 10px 12px;
 }
 
 span.msg_input {
-	display: inline-block;
-	background: var(--color-danger-soft);
-	color: var(--color-danger);
-	border-radius: var(--radius-sm);
-	padding: 3px 10px;
-	margin-bottom: 3px;
-	transition: background-color 1s, color 1s;
-	line-height: 180%;
+  display: inline-block;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  margin-bottom: 3px;
+  transition:
+    background-color 1s,
+    color 1s;
+  line-height: 180%;
 }
 
 span.msg_input_ok {
-	background: var(--color-success-soft);
-	display: inline-block;
-	color: var(--good-text);
-	border-radius: var(--radius-sm);
-	padding: 3px 10px;
-	margin-bottom: 3px;
+  background: var(--color-success-soft);
+  display: inline-block;
+  color: var(--good-text);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  margin-bottom: 3px;
 }
 
 span.msg_input_ok::after {
-	content: 'OK';
-	font-size: 11px;
-	border: none;
-	background: var(--color-success);
-	color: var(--surface);
-	border-radius: 999px;
-	font-weight: 700;
-	padding: 1px 8px;
-	margin-left: 6px;
+  content: "OK";
+  font-size: 11px;
+  border: none;
+  background: var(--color-success);
+  color: var(--surface);
+  border-radius: 999px;
+  font-weight: 700;
+  padding: 1px 8px;
+  margin-left: 6px;
 }
 
 /* 「年度途中採用」のチェックと、その「？」を1つのまとまりにする箱 */
 div.container {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 div.basis-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 4px;
-	margin: 6px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 4px;
+  margin: 6px 0;
 }
 
 /* ===== ヘルプの「？」 =====
@@ -430,159 +445,165 @@ div.basis-row {
    .basis-item は「ラベル＋選択肢＋単位」をひとまとめにする箱。
    .basis-row の gap と同じ4pxを内側にも持たせるので、並びの見た目は変わらない。 */
 .basis-item {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
 }
 
 /* 名前・印・コロンは、間を空けずに1語として見せる */
 .basis-label {
-	display: inline-flex;
-	align-items: center;
-	gap: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
 }
 
 /* 吹き出しは common/site.css のものを上書きする。
    位置の基準は「？」の印ではなく、印を含むまとまりにする。印は16px角しかなく、
    それを基準にすると302pxの吹き出しが狭い画面で外へはみ出して切れてしまう */
 div#tyosei_result {
-	position: relative;
+  position: relative;
 }
 
 /* 印の見た目。表の中（div.question）も入力欄（.help）も同じ丸にする。
    vertical-align は、表の見出しのように文字の流れの中に置いたときのため */
-.help, div.question {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	position: static;
-	width: 16px;
-	height: 16px;
-	border-radius: 50%;
-	border: 1px solid var(--color-border);
-	background: var(--color-surface);
-	color: var(--color-muted);
-	font-size: 11px;
-	font-weight: 700;
-	line-height: 1;
-	cursor: help;
-	flex-shrink: 0;
-	vertical-align: middle;
+.help,
+div.question {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: static;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 /* 表の見出しの中だけは、印が文字の流れに直に並ぶので自前で間を空ける
    （入力欄側は .basis-label / .container の gap が間を持っている） */
 th div.question {
-	margin-left: 3px;
+  margin-left: 3px;
 }
 
-.help:hover, .help:focus-visible,
-div.question:hover, div.question:focus-visible {
-	border-color: var(--color-primary);
-	color: var(--color-primary);
+.help:hover,
+.help:focus-visible,
+div.question:hover,
+div.question:focus-visible {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 div.question:focus-visible {
-	outline: 2px solid var(--color-primary);
-	outline-offset: 2px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .help .tipbox {
-	top: calc(100% + 8px);
-	left: 0;
-	right: auto;
-	width: 302px;
-	max-width: min(302px, calc(100vw - 40px));
-	line-height: 1.7;
-	padding: 10px 12px;
-	pointer-events: none;
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  width: 302px;
+  max-width: min(302px, calc(100vw - 40px));
+  line-height: 1.7;
+  padding: 10px 12px;
+  pointer-events: none;
 }
 
 /* 三角は出さない。吹き出しはまとまり（.basis-item / #tyosei_result）の左端に
    そろうのに対し、印はその中で名前の長さぶん右にずれるので、三角を左端に置いても
    印を指さない。吹き出し自体が行のすぐ下に出るので、向きを示す必要もない */
 .help .tipbox::before {
-	display: none;
+  display: none;
 }
 
 div.noscript-warning {
-	background: var(--color-danger-soft);
-	color: var(--color-danger);
-	border: 1px solid var(--color-danger);
-	border-radius: var(--radius-md);
-	padding: 12px 16px;
-	margin-bottom: 20px;
-	font-weight: 700;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-weight: 700;
 }
 
 /* ボタン・共有リンク・QRコードの見た目は common/site.css に集約している */
 
 div.explain {
-	margin: 0;
-	line-height: 150%;
-	font-size: 13px;
-	text-align: left;
-	position: fixed;
-	min-width: 200px;
-	max-width: min(360px, 88vw);
-	/* 「直近5年のうちの月数」の説明は #tyosei-table th:first-child の中にあり、
+  margin: 0;
+  line-height: 150%;
+  font-size: 13px;
+  text-align: left;
+  position: fixed;
+  min-width: 200px;
+  max-width: min(360px, 88vw);
+  /* 「直近5年のうちの月数」の説明は #tyosei-table th:first-child の中にあり、
 	   そこで列幅を詰めるために掛けた white-space:nowrap を受け継いでしまう。
 	   受け継ぐと max-width が効かず、長い一文が箱からはみ出して切れる */
-	white-space: normal;
-	background: var(--tooltip-bg);
-	color: var(--tooltip-text);
-	padding: 14px 16px;
-	border: 1px solid var(--tooltip-border);
-	border-radius: var(--radius-md);
-	box-shadow: var(--shadow-md);
-	display: none;
-	z-index: 10;
-	opacity: 0.97;
+  white-space: normal;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  padding: 14px 16px;
+  border: 1px solid var(--tooltip-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: none;
+  z-index: 10;
+  opacity: 0.97;
 }
 /* 注記の見た目は common/site.css の .site-foot / .foot-note / .foot-disclaimer に
    集約した。ここでは間隔だけ詰める。結果の表の下にはツールチップ用に確保した
    28pxの余白が先にあるので、共通の28pxをそのまま足すと空きすぎるため */
-.site-foot { margin-top: 16px; }
+.site-foot {
+  margin-top: 16px;
+}
 
 @media screen and (max-width: 600px) {
-	body {
-		padding: 20px 14px 16px;
-		font-size: 13px;
-	}
+  body {
+    padding: 20px 14px 16px;
+    font-size: 13px;
+  }
 
-	.page-head h1 {
-		font-size: 17px;
-	}
+  .page-head h1 {
+    font-size: 17px;
+  }
 
-	h2 {
-		font-size: 16px;
-		margin: 22px 0 10px;
-	}
+  h2 {
+    font-size: 16px;
+    margin: 22px 0 10px;
+  }
 
-	input {
-		width: 64px;
-	}
+  input {
+    width: 64px;
+  }
 
-	input.tyosei {
-		width: 37px;
-		margin: 6px 3px;
-	}
+  input.tyosei {
+    width: 37px;
+    margin: 6px 3px;
+  }
 
-	div#tyosei_result {
-		max-width: 100%;
-	}
+  div#tyosei_result {
+    max-width: 100%;
+  }
 
-	input#tyosei_price {
-		width: 110px;
-	}
+  input#tyosei_price {
+    width: 110px;
+  }
 
-	input#salary {
-		width: 110px;
-	}
+  input#salary {
+    width: 110px;
+  }
 
-	th, td {
-		padding: 5px 6px;
-		font-size: 12px;
-	}
+  th,
+  td {
+    padding: 5px 6px;
+    font-size: 12px;
+  }
 }

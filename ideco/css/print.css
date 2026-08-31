@@ -1,52 +1,100 @@
 /* 白地・黒文字への切り替えは common/theme.css の @media print が行う。
    ここには印刷用のレイアウトと、このページ固有の打ち消しだけを置く。 */
 
-@page{margin:12mm}
+@page {
+  margin: 12mm;
+}
 
-body{padding:0;font-size:10pt}
+body {
+  padding: 0;
+  font-size: 10pt;
+}
 
-.wrap{max-width:100%}
+.wrap {
+  max-width: 100%;
+}
 
-.card{
-  background:none;
-  border:1px solid var(--border);
-  box-shadow:none;
-  break-inside:avoid;
-  page-break-inside:avoid;
+.card {
+  background: none;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 /* 説明の吹き出しと、入力を戻すボタンは紙面では意味を持たない。
    共有QRは印刷する（紙から同じ条件の試算を開き直せるようにするため） */
-.help,.share-btn,#resetAllBtn{display:none !important}
+.help,
+.share-btn,
+#resetAllBtn {
+  display: none !important;
+}
 
 /* 入力欄らしい装飾を落として、値だけが読めるようにする */
-.num-in input,.fld select{
-  border:none;background:none;padding:0;
-  font-size:10pt;font-weight:700;
-  -webkit-appearance:none;appearance:none;
+.num-in input,
+.fld select {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 10pt;
+  font-weight: 700;
+  -webkit-appearance: none;
+  appearance: none;
 }
 /* 利回りのスライダーは紙では読めないので、右の数値だけを残す */
-.srow input[type=range]{display:none}
-.srow{height:auto}
+.srow input[type="range"] {
+  display: none;
+}
+.srow {
+  height: auto;
+}
 
 /* 出口カードだけは一時金・年金・併用をまとめて持つので1ページに収まらない。
    ここは途中で改ページさせ、中の結果欄や帯・グラフの側で切れないようにする */
-#exitCard{break-inside:auto;page-break-inside:auto}
+#exitCard {
+  break-inside: auto;
+  page-break-inside: auto;
+}
 /* 小見出しがページの末尾に取り残されないようにする */
-.sub-title{break-after:avoid;page-break-after:avoid}
+.sub-title {
+  break-after: avoid;
+  page-break-after: avoid;
+}
 
-.results{break-inside:avoid;page-break-inside:avoid}
+.results {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 /* 課税口座との比較は、見出しの一行と2行の数字で1組。切り離さない */
-.ref{break-inside:avoid;page-break-inside:avoid}
+.ref {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 /* 淡い地色（.res-box.lump / .res-box.annuity）は、こちらより指定が強いので
    打ち消しを付ける。一時金か年金かは枠線の色と「一時金」「年金」の印で分かる */
-.res-box,.res-box.lump,.res-box.annuity{background:none !important;break-inside:avoid}
+.res-box,
+.res-box.lump,
+.res-box.annuity {
+  background: none !important;
+  break-inside: avoid;
+}
 /* 画面では選んでいないほうを沈めているが、紙では両方を同じ濃さで比べたい */
-.res-box.dim{opacity:1}
+.res-box.dim {
+  opacity: 1;
+}
 
-.chart-wrap{height:240px;break-inside:avoid;page-break-inside:avoid}
+.chart-wrap {
+  height: 240px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 
-.stack,.grand,.rule-note{break-inside:avoid;page-break-inside:avoid}
+.stack,
+.grand,
+.rule-note {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 
 /* ---- 内訳の帯：塗りをやめ、区切りの線で割合を見せる ----
 
@@ -57,42 +105,84 @@ body{padding:0;font-size:10pt}
 
    どの区画が何かは、下の凡例が帯と同じ左からの順で並んでいることと、
    その下の一文（掛金・節税・運用益の額を文章で書いている）で読み取れる */
-.stack-bar{border:1px solid #000;background:none}
-.stack-bar .seg{
-  background:none !important;
-  outline:.5pt solid #000;
-  outline-offset:-.25pt;
+.stack-bar {
+  border: 1px solid #000;
+  background: none;
+}
+.stack-bar .seg {
+  background: none !important;
+  outline: 0.5pt solid #000;
+  outline-offset: -0.25pt;
 }
 /* 凡例の色見本も塗らない。四角は残して、文字だけの行にならないようにする */
-.lg::before{background:none !important;border:1px solid #000}
+.lg::before {
+  background: none !important;
+  border: 1px solid #000;
+}
 
 /* ---- 併用 ---- */
 /* 割合の帯も内訳の帯と同じ扱い。区画に「一時金 ○万円」「年金 ○万円」と
    入っているので、塗らなくても何がどちらか読める */
-.mix-bar{border:1px solid #000;background:none}
-.mix-bar .seg{background:none !important;outline:.5pt solid #000;outline-offset:-.25pt;color:#000 !important}
-.best-hint,.mix-sum{break-inside:avoid;page-break-inside:avoid}
+.mix-bar {
+  border: 1px solid #000;
+  background: none;
+}
+.mix-bar .seg {
+  background: none !important;
+  outline: 0.5pt solid #000;
+  outline-offset: -0.25pt;
+  color: #000 !important;
+}
+.best-hint,
+.mix-sum {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 /* 紙の上では押せないので、割合を合わせるボタンは出さない */
-#mixJumpBest{display:none !important}
-.best-hint{background:none;border:1px solid var(--border)}
-.best-hint .tag{background:none !important;border:1px solid currentColor}
+#mixJumpBest {
+  display: none !important;
+}
+.best-hint {
+  background: none;
+  border: 1px solid var(--border);
+}
+.best-hint .tag {
+  background: none !important;
+  border: 1px solid currentColor;
+}
 
 /* ---- 白抜き文字（色付きの地に白文字）を、地の色を印刷しなくても読める配色にする ----
 
    色の指定はここで直に書く。ダークのまま印刷された場合、ページ側の
    :root[data-theme="dark"] が生きていて、--idc-in などが紙では薄すぎる色になるため
    （theme.js は beforeprint で light に戻すが、発火しないブラウザのために担保する） */
-.grand{
-  background:none !important;
-  color:#000 !important;
-  border:2px solid #1d4ed8;
+.grand {
+  background: none !important;
+  color: #000 !important;
+  border: 2px solid #1d4ed8;
 }
-.grand.net{border-color:#059669}
-.grand .glabel,.grand .glabel b,.grand .gval,.grand .gval small{color:#000 !important}
+.grand.net {
+  border-color: #059669;
+}
+.grand .glabel,
+.grand .glabel b,
+.grand .gval,
+.grand .gval small {
+  color: #000 !important;
+}
 /* 画面では地の色に沈めるための薄さだが、白地では読みにくいので戻す */
-.grand .gsub{opacity:1}
+.grand .gsub {
+  opacity: 1;
+}
 
 /* 「一時金」「年金」の印は、地を塗らず枠と文字色で見分ける */
-.badge{background:none !important;border:1px solid currentColor}
-.lump .badge{color:#c2410c !important}
-.annuity .badge{color:#1d4ed8 !important}
+.badge {
+  background: none !important;
+  border: 1px solid currentColor;
+}
+.lump .badge {
+  color: #c2410c !important;
+}
+.annuity .badge {
+  color: #1d4ed8 !important;
+}

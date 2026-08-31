@@ -1,305 +1,925 @@
 /* 地の色・文字・枠線などは common/theme.css の共通トークンを使う。
    ここで持つのは「一次相続＝青／二次相続＝ピンク／子＝緑」のように
    データと結び付いた色だけ。ダークでは色味を保ったまま明度を上げる。 */
-:root{
-  --inh-first:#1d4ed8;       /* 一次相続 */
-  --inh-first-soft:#eff6ff;
-  --inh-first-tag:#dbeafe;
-  --inh-second:#db2777;      /* 二次相続・配偶者 */
-  --inh-second-soft:#fdf2f8;
-  --inh-second-tag:#fce7f3;
-  --inh-keep:#059669;        /* 子 */
-  --inh-keep-soft:#ecfdf5;
-  --inh-keep-text:#047857;
-  --inh-band:rgba(5,150,105,.10);  /* グラフの「合計最小」の帯（JSから参照） */
+:root {
+  --inh-first: #1d4ed8; /* 一次相続 */
+  --inh-first-soft: #eff6ff;
+  --inh-first-tag: #dbeafe;
+  --inh-second: #db2777; /* 二次相続・配偶者 */
+  --inh-second-soft: #fdf2f8;
+  --inh-second-tag: #fce7f3;
+  --inh-keep: #059669; /* 子 */
+  --inh-keep-soft: #ecfdf5;
+  --inh-keep-text: #047857;
+  --inh-band: rgba(
+    5,
+    150,
+    105,
+    0.1
+  ); /* グラフの「合計最小」の帯（JSから参照） */
 
   /* 割合バーの塗り。太い面なので明度を上げず、常に白文字が載る濃さに保つ */
-  --seg-sp:#db2777;
-  --seg-ch:#059669;
-  --grand-from:#1e3a8a;
-  --grand-to:#1d4ed8;
-  --grand-keep-from:#065f46;
-  --grand-keep-to:#059669;
-  --grand-text:#ffffff;
+  --seg-sp: #db2777;
+  --seg-ch: #059669;
+  --grand-from: #1e3a8a;
+  --grand-to: #1d4ed8;
+  --grand-keep-from: #065f46;
+  --grand-keep-to: #059669;
+  --grand-text: #ffffff;
 
   /* スライダーのつまみ。色のついたバーの上に載るのでテーマで変えない */
-  --thumb-bg:#ffffff;
-  --thumb-border:#0f172a;
+  --thumb-bg: #ffffff;
+  --thumb-border: #0f172a;
 }
 /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
-:root[data-theme="dark"]{
-  --inh-first:#6ba3f5;
-  --inh-first-soft:#14253d;
-  --inh-first-tag:#1b3355;
-  --inh-second:#f472b6;
-  --inh-second-soft:#341624;
-  --inh-second-tag:#4a1e33;
-  --inh-keep:#34d399;
-  --inh-keep-soft:#10291f;
-  --inh-keep-text:#34d399;
-  --inh-band:rgba(52,211,153,.14);
-  --seg-sp:#be1e63;
-  --seg-ch:#04795a;
-  --grand-from:#16305f;
-  --grand-to:#1f47a8;
-  --grand-keep-from:#064e3b;
-  --grand-keep-to:#047857;
+:root[data-theme="dark"] {
+  --inh-first: #6ba3f5;
+  --inh-first-soft: #14253d;
+  --inh-first-tag: #1b3355;
+  --inh-second: #f472b6;
+  --inh-second-soft: #341624;
+  --inh-second-tag: #4a1e33;
+  --inh-keep: #34d399;
+  --inh-keep-soft: #10291f;
+  --inh-keep-text: #34d399;
+  --inh-band: rgba(52, 211, 153, 0.14);
+  --seg-sp: #be1e63;
+  --seg-ch: #04795a;
+  --grand-from: #16305f;
+  --grand-to: #1f47a8;
+  --grand-keep-from: #064e3b;
+  --grand-keep-to: #047857;
 }
 
 /* 余白の初期化・body の余白・.wrap の幅・.card の見た目・「？」の色の変化は、
    3ツールで同じなので common/card-page.css に移した。
    このファイルで上書きすれば、これまでどおりページ側が勝つ */
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 /* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
-.sec-title{font-size:14px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
+.sec-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin: 0 0 12px;
+}
 
 /* ---- 家族の図 ---- */
-.family{display:flex;flex-direction:column;align-items:center;position:relative}
-.tree-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.family .couple,.family .children-row{position:relative;z-index:1}
-.couple{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative}
-.person{
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:12px 14px;border-radius:12px;border:2px solid var(--field-border);background:var(--surface-2);
-  width:158px;position:relative;
+.family {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
 }
-.person.me{border-color:var(--inh-first);background:var(--inh-first-soft)}
-.person.sp{border-color:var(--inh-second);background:var(--inh-second-soft)}
-.person.child{border-color:var(--inh-keep);background:var(--inh-keep-soft);width:96px;padding:10px 8px}
-.person .plabel{font-size:13px;font-weight:700;color:var(--text-sub)}
-.person.me .plabel{color:var(--inh-first)}
-.person.sp .plabel{color:var(--inh-second)}
-.person.child .plabel{color:var(--inh-keep);font-size:12px}
+.tree-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.family .couple,
+.family .children-row {
+  position: relative;
+  z-index: 1;
+}
+.couple {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+}
+.person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid var(--field-border);
+  background: var(--surface-2);
+  width: 158px;
+  position: relative;
+}
+.person.me {
+  border-color: var(--inh-first);
+  background: var(--inh-first-soft);
+}
+.person.sp {
+  border-color: var(--inh-second);
+  background: var(--inh-second-soft);
+}
+.person.child {
+  border-color: var(--inh-keep);
+  background: var(--inh-keep-soft);
+  width: 96px;
+  padding: 10px 8px;
+}
+.person .plabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+.person.me .plabel {
+  color: var(--inh-first);
+}
+.person.sp .plabel {
+  color: var(--inh-second);
+}
+.person.child .plabel {
+  color: var(--inh-keep);
+  font-size: 12px;
+}
 /* 人物アイコンの色。HTML側の fill 属性より CSS が優先されるので、ここで統一する */
-.avatar{width:44px;height:44px;fill:var(--inh-first)}
-.person.sp .avatar{fill:var(--inh-second)}
-.person.child .avatar{width:34px;height:34px;fill:var(--inh-keep)}
-.asset-in{display:flex;align-items:center;gap:5px}
-.asset-in input{
-  width:104px;padding:6px 7px;font-size:19px;font-weight:700;text-align:right;
-  border:1px solid var(--field-border);border-radius:7px;font-variant-numeric:tabular-nums;
-  color:var(--text);background:var(--field);
+.avatar {
+  width: 44px;
+  height: 44px;
+  fill: var(--inh-first);
 }
-.asset-in input:focus{outline:2px solid var(--accent);border-color:var(--accent)}
-.asset-in .unit{font-size:13px;color:var(--muted);font-weight:600}
-.marriage{
-  width:56px;height:2px;background:var(--axis);margin-top:52px;flex-shrink:0;position:relative;
+.person.sp .avatar {
+  fill: var(--inh-second);
 }
-.marriage::after{content:'';position:absolute;top:4px;left:0;width:100%;height:2px;background:var(--axis)}
-.remove-btn{
-  position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;
-  border:none;background:var(--muted);color:var(--surface);font-size:13px;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
+.person.child .avatar {
+  width: 34px;
+  height: 34px;
+  fill: var(--inh-keep);
 }
-.remove-btn:hover{background:var(--danger)}
-.add-spouse{
-  width:158px;min-height:120px;border:2px dashed var(--field-border);border-radius:12px;background:none;
-  color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+.asset-in {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
-.add-spouse:hover{border-color:var(--inh-second);color:var(--inh-second);background:var(--inh-second-soft)}
-.add-spouse .plus{font-size:24px;line-height:1}
-.children-row{display:flex;justify-content:center;gap:12px;align-items:stretch;margin-top:28px;max-width:100%}
-.person.child,.add-child,.child-spacer{flex:0 1 auto;min-width:0}
-.child-spacer{width:96px;visibility:hidden}
-.add-child{
-  width:96px;border:2px dashed var(--field-border);border-radius:12px;background:none;
-  color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:92px;
+.asset-in input {
+  width: 104px;
+  padding: 6px 7px;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: right;
+  border: 1px solid var(--field-border);
+  border-radius: 7px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--field);
 }
-.add-child:hover{border-color:var(--inh-keep);color:var(--inh-keep);background:var(--inh-keep-soft)}
-.add-child .plus{font-size:20px;line-height:1}
-.fam-note{font-size:11px;color:var(--muted);margin-top:10px;text-align:center}
-@media screen and (max-width:600px){
-  .couple{align-self:stretch}
-  .couple>.person{width:auto;flex:1 1 0;min-width:0;max-width:158px;padding:12px 8px}
-  #spouseSlot{flex:1 1 0;min-width:0;max-width:158px;display:flex}
-  #spouseSlot .person,#spouseSlot .add-spouse{width:100%;max-width:none}
-  .marriage{width:28px}
-  .couple .asset-in{width:100%;justify-content:center}
-  .couple .asset-in input{width:auto;flex:1 1 50px;min-width:0;max-width:104px}
-  .children-row{gap:6px}
-  .person.child{padding:8px 2px;border-radius:10px}
-  .person.child .avatar{width:22px;height:22px}
-  .person.child .plabel{font-size:11px}
-  .person.child .remove-btn{width:17px;height:17px;font-size:10px;top:-7px;right:-6px}
-  .add-child{font-size:11px;min-height:64px;gap:3px;padding:0 2px}
-  .add-child .plus{font-size:16px}
+.asset-in input:focus {
+  outline: 2px solid var(--accent);
+  border-color: var(--accent);
 }
-.oku{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:13px}
+.asset-in .unit {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.marriage {
+  width: 56px;
+  height: 2px;
+  background: var(--axis);
+  margin-top: 52px;
+  flex-shrink: 0;
+  position: relative;
+}
+.marriage::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--axis);
+}
+.remove-btn {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--muted);
+  color: var(--surface);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.remove-btn:hover {
+  background: var(--danger);
+}
+.add-spouse {
+  width: 158px;
+  min-height: 120px;
+  border: 2px dashed var(--field-border);
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.add-spouse:hover {
+  border-color: var(--inh-second);
+  color: var(--inh-second);
+  background: var(--inh-second-soft);
+}
+.add-spouse .plus {
+  font-size: 24px;
+  line-height: 1;
+}
+.children-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 28px;
+  max-width: 100%;
+}
+.person.child,
+.add-child,
+.child-spacer {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.child-spacer {
+  width: 96px;
+  visibility: hidden;
+}
+.add-child {
+  width: 96px;
+  border: 2px dashed var(--field-border);
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 92px;
+}
+.add-child:hover {
+  border-color: var(--inh-keep);
+  color: var(--inh-keep);
+  background: var(--inh-keep-soft);
+}
+.add-child .plus {
+  font-size: 20px;
+  line-height: 1;
+}
+.fam-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
+  text-align: center;
+}
+@media screen and (max-width: 600px) {
+  .couple {
+    align-self: stretch;
+  }
+  .couple > .person {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 158px;
+    padding: 12px 8px;
+  }
+  #spouseSlot {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 158px;
+    display: flex;
+  }
+  #spouseSlot .person,
+  #spouseSlot .add-spouse {
+    width: 100%;
+    max-width: none;
+  }
+  .marriage {
+    width: 28px;
+  }
+  .couple .asset-in {
+    width: 100%;
+    justify-content: center;
+  }
+  .couple .asset-in input {
+    width: auto;
+    flex: 1 1 50px;
+    min-width: 0;
+    max-width: 104px;
+  }
+  .children-row {
+    gap: 6px;
+  }
+  .person.child {
+    padding: 8px 2px;
+    border-radius: 10px;
+  }
+  .person.child .avatar {
+    width: 22px;
+    height: 22px;
+  }
+  .person.child .plabel {
+    font-size: 11px;
+  }
+  .person.child .remove-btn {
+    width: 17px;
+    height: 17px;
+    font-size: 10px;
+    top: -7px;
+    right: -6px;
+  }
+  .add-child {
+    font-size: 11px;
+    min-height: 64px;
+    gap: 3px;
+    padding: 0 2px;
+  }
+  .add-child .plus {
+    font-size: 16px;
+  }
+}
+.oku {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 13px;
+}
 
 /* ---- ヘッダー ----
    見出し・共有ボタン・QRの見た目は common/site.css に集約している */
-@media screen and (max-width:600px){
-  .share-btn{white-space:normal}
+@media screen and (max-width: 600px) {
+  .share-btn {
+    white-space: normal;
+  }
 }
 
 /* ---- 二次相続の前提 ---- */
-.assume-row{display:grid;grid-template-columns:1fr 1.35fr;gap:18px}
-@media screen and (max-width:600px){.assume-row{grid-template-columns:1fr}}
-.assume label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:6px}
-.assume-note{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
-.year-row{display:flex;align-items:center;gap:10px;height:34px}
-.year-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
-.assume.off .year-row{opacity:.45}
-.assume.off input[type=range]{cursor:default}
-.assume.off .assume-note{color:var(--text-sub)}
-.assume-label-row{display:flex;align-items:center;gap:5px;margin-bottom:6px}
-.assume-label-row label{margin-bottom:0}
-.term{font-size:12px;font-weight:700;color:var(--text-sub)}
+.assume-row {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 18px;
+}
+@media screen and (max-width: 600px) {
+  .assume-row {
+    grid-template-columns: 1fr;
+  }
+}
+.assume label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+.assume-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.year-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+}
+.year-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.assume.off .year-row {
+  opacity: 0.45;
+}
+.assume.off input[type="range"] {
+  cursor: default;
+}
+.assume.off .assume-note {
+  color: var(--text-sub);
+}
+.assume-label-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.assume-label-row label {
+  margin-bottom: 0;
+}
+.term {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
 
 /* ---- 自宅の土地（小規模宅地等の特例） ---- */
-.land-checks{margin-top:10px;display:flex;flex-direction:column;gap:7px}
-/* .assume label の「1行まるごと・下に余白」を打ち消して、チェックの行に戻す */
-.assume .land-check{
-  display:flex;align-items:flex-start;gap:7px;margin-bottom:0;
-  font-size:12px;font-weight:500;color:var(--text);line-height:1.5;cursor:pointer;
+.land-checks {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-.land-check input{accent-color:var(--accent);margin-top:1px;flex-shrink:0;cursor:pointer}
+/* .assume label の「1行まるごと・下に余白」を打ち消して、チェックの行に戻す */
+.assume .land-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+  cursor: pointer;
+}
+.land-check input {
+  accent-color: var(--accent);
+  margin-top: 1px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
 /* 配偶者が取得するため要件を満たす場合など、選ぶ余地が無いときは操作させない */
-.land-check input:disabled{cursor:default}
-.land-check input:disabled + span{color:var(--muted)}
+.land-check input:disabled {
+  cursor: default;
+}
+.land-check input:disabled + span {
+  color: var(--muted);
+}
 /* 評価額が0のときは特例そのものが効かないので、面積とチェックを沈める */
-#landUse.off{opacity:.45}
-#landUse.off input{cursor:default}
+#landUse.off {
+  opacity: 0.45;
+}
+#landUse.off input {
+  cursor: default;
+}
 /* 入力の取り違えを知らせる注記。テーマの警告色を使う */
-.assume-note.warn{color:var(--warn-text);font-weight:600}
+.assume-note.warn {
+  color: var(--warn-text);
+  font-weight: 600;
+}
 
 /* ---- 生命保険の非課税枠 ---- */
 /* 枠は入力ではなく「今いくらか」を示すものなので、入力欄の高さに合わせて
    上に余白を置き、左の評価額欄と目線がそろうようにする */
-.ins-limit{font-size:12px;color:var(--text);line-height:1.6;margin:22px 0 0}
-.ins-limit b{font-variant-numeric:tabular-nums}
+.ins-limit {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 22px 0 0;
+}
+.ins-limit b {
+  font-variant-numeric: tabular-nums;
+}
 /* 枠の内訳と、実際に効いた額は別の行に落とす（1行に続けると読み取りにくい） */
-.ins-formula{color:var(--muted)}
-.ins-used{display:block}
-.help{
-  position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:16px;height:16px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
-  color:var(--muted);font-size:11px;font-weight:700;cursor:help;flex-shrink:0;margin-right:2px;
+.ins-formula {
+  color: var(--muted);
+}
+.ins-used {
+  display: block;
+}
+.help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--axis);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  flex-shrink: 0;
+  margin-right: 2px;
 }
 /* 吹き出しは site.css のものを、このページの配置（左寄せ・幅広）に合わせて上書きする */
-.tipbox{
-  top:calc(100% + 8px);left:-12px;right:auto;width:302px;max-width:74vw;
-  line-height:1.7;padding:10px 12px;
-  pointer-events:none;
+.tipbox {
+  top: calc(100% + 8px);
+  left: -12px;
+  right: auto;
+  width: 302px;
+  max-width: 74vw;
+  line-height: 1.7;
+  padding: 10px 12px;
+  pointer-events: none;
 }
-.tipbox::before{left:14px;right:auto;border-bottom-color:var(--tooltip-border)}
-.help:hover .tipbox,.help:focus-visible .tipbox{visibility:visible;opacity:1}
+.tipbox::before {
+  left: 14px;
+  right: auto;
+  border-bottom-color: var(--tooltip-border);
+}
+.help:hover .tipbox,
+.help:focus-visible .tipbox {
+  visibility: visible;
+  opacity: 1;
+}
 /* 家族の図の中だけは、位置の基準を「？」の印ではなく人の箱にする。
    印は16px角しかなく、それを基準にすると302pxの吹き出しが画面の外まで伸びて切れる。
    人の箱は幅158px（狭い画面ではさらに縮む）なので、自分は左端・配偶者は右端に
    そろえると、どちらの幅でも吹き出しが画面の内側に収まる。
    .person は既に position:relative（×ボタンの基準）なので、印を static に戻すだけでよい。
    自分は上の left:-12px がそのまま使えるので、右端にそろえる配偶者だけを書く */
-.person .help{position:static}
-.person .tipbox{max-width:min(302px,calc(100vw - 40px))}
-.person.sp .tipbox{left:auto;right:-12px}
+.person .help {
+  position: static;
+}
+.person .tipbox {
+  max-width: min(302px, calc(100vw - 40px));
+}
+.person.sp .tipbox {
+  left: auto;
+  right: -12px;
+}
 /* 三角は出さない。「？」は人の箱の右端（単位のうしろ）に付くのに対し、吹き出しは
    箱より広くて左右いっぱいに広がるので、三角を左右どちらに置いても印を指さない */
-.person .tipbox::before{display:none}
+.person .tipbox::before {
+  display: none;
+}
 /* 吹き出しは人の箱から下へはみ出して、子の行に重なる。.couple と .children-row は
    どちらも z-index:1（つながりの線より前に出すため）で、後に来る子の行が上に載って
    しまうので、夫婦の行だけをもう一段前に出す */
-.family .couple{z-index:2}
-.yval{font-size:15px;font-weight:700;color:var(--text);min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
+.family .couple {
+  z-index: 2;
+}
+.yval {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 66px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---- スライダー（割合バーと一体化） ---- */
-.srow{display:flex;align-items:flex-start;gap:10px}
-.sval{font-size:24px;font-weight:700;color:var(--inh-first);min-width:64px;text-align:left;flex-shrink:0;font-variant-numeric:tabular-nums}
-.slider-wrap{flex:1;min-width:0}
-.slider-combo{position:relative;height:30px;display:flex;align-items:center}
-.split-bar{
-  position:absolute;inset:0;display:flex;height:30px;border-radius:8px;overflow:hidden;
-  font-size:12px;font-weight:700;color:var(--grand-text);pointer-events:none;
+.srow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
-.split-bar .seg{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:width .1s}
-.seg.sp-seg{background:var(--seg-sp)}
-.seg.ch-seg{background:var(--seg-ch)}
-.slider-combo input[type=range]{
-  position:relative;width:100%;height:30px;margin:0;cursor:pointer;
-  -webkit-appearance:none;appearance:none;background:transparent;
+.sval {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--inh-first);
+  min-width: 64px;
+  text-align: left;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
-.slider-combo input[type=range]::-webkit-slider-runnable-track{height:30px;background:transparent}
-.slider-combo input[type=range]::-moz-range-track{height:30px;background:transparent}
-.slider-combo input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:8px;height:38px;margin-top:-4px;border-radius:4px;
-  background:var(--thumb-bg);border:2px solid var(--thumb-border);box-shadow:0 1px 3px rgba(0,0,0,.35);cursor:pointer;
+.slider-wrap {
+  flex: 1;
+  min-width: 0;
 }
-.slider-combo input[type=range]::-moz-range-thumb{
-  width:8px;height:38px;border-radius:4px;border:2px solid var(--thumb-border);
-  background:var(--thumb-bg);box-shadow:0 1px 3px rgba(0,0,0,.35);cursor:pointer;
+.slider-combo {
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
 }
-.split-legend{display:flex;justify-content:space-between;font-size:12px;color:var(--text-sub);margin-top:6px;font-variant-numeric:tabular-nums}
-@media screen and (max-width:600px){
-  .split-legend{flex-direction:column;align-items:stretch;gap:2px}
-  .split-legend #legendCh{text-align:right}
+.split-bar {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  height: 30px;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--grand-text);
+  pointer-events: none;
 }
-.reset-link{
-  border:none;background:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;
-  text-decoration:underline;padding:0;
+.split-bar .seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: width 0.1s;
 }
-.slider-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.slider-head-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
-.slider-head-actions .help .tipbox{left:auto;right:-4px}
-.slider-head-actions .help .tipbox::before{left:auto;right:18px}
-.slider-head label{font-size:12px;font-weight:600;color:var(--text-sub)}
-.best-hint{font-size:12px;color:var(--text-sub);margin-top:12px;padding:8px 10px;background:var(--surface-2);border-radius:8px;line-height:1.6}
-.best-hint b{color:var(--text)}
-.best-hint .hint-title{font-weight:700;color:var(--text-sub);margin-bottom:3px}
-.best-hint .tilde{margin:0 10px;color:var(--muted)}
-.best-hint .hint-item{display:inline-block}
-.best-hint .tag{
-  display:inline-block;font-weight:700;font-size:11px;padding:1px 7px;border-radius:10px;margin-right:2px;
+.seg.sp-seg {
+  background: var(--seg-sp);
 }
-.best-hint .tag.min{background:var(--inh-first-tag);color:var(--inh-first)}
-.best-hint .tag.max{background:var(--inh-second-tag);color:var(--inh-second)}
-.best-hint button{
-  border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-size:12px;font-weight:600;
-  border-radius:6px;padding:2px 10px;cursor:pointer;margin-left:8px;
+.seg.ch-seg {
+  background: var(--seg-ch);
 }
-.best-hint button:hover{background:var(--accent-soft)}
+.slider-combo input[type="range"] {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  margin: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.slider-combo input[type="range"]::-webkit-slider-runnable-track {
+  height: 30px;
+  background: transparent;
+}
+.slider-combo input[type="range"]::-moz-range-track {
+  height: 30px;
+  background: transparent;
+}
+.slider-combo input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 8px;
+  height: 38px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: var(--thumb-bg);
+  border: 2px solid var(--thumb-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.slider-combo input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 38px;
+  border-radius: 4px;
+  border: 2px solid var(--thumb-border);
+  background: var(--thumb-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.split-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+@media screen and (max-width: 600px) {
+  .split-legend {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .split-legend #legendCh {
+    text-align: right;
+  }
+}
+.reset-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.slider-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.slider-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.slider-head-actions .help .tipbox {
+  left: auto;
+  right: -4px;
+}
+.slider-head-actions .help .tipbox::before {
+  left: auto;
+  right: 18px;
+}
+.slider-head label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+.best-hint {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  line-height: 1.6;
+}
+.best-hint b {
+  color: var(--text);
+}
+.best-hint .hint-title {
+  font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 3px;
+}
+.best-hint .tilde {
+  margin: 0 10px;
+  color: var(--muted);
+}
+.best-hint .hint-item {
+  display: inline-block;
+}
+.best-hint .tag {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-right: 2px;
+}
+.best-hint .tag.min {
+  background: var(--inh-first-tag);
+  color: var(--inh-first);
+}
+.best-hint .tag.max {
+  background: var(--inh-second-tag);
+  color: var(--inh-second);
+}
+.best-hint button {
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 10px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.best-hint button:hover {
+  background: var(--accent-soft);
+}
 
 /* ---- 結果 ---- */
-.results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media screen and (max-width:600px){.results{grid-template-columns:1fr}}
-.res-box{border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.res-box h3{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.res-box.first h3{color:var(--inh-first)}
-.res-box.second h3{color:var(--inh-second)}
-/* バッジは色の面の上に載るので、地の色を文字色にして明暗を反転させる */
-.badge{font-size:10px;font-weight:700;color:var(--bg);border-radius:4px;padding:2px 6px}
-.first .badge{background:var(--inh-first)}
-.second .badge{background:var(--inh-second)}
-.rline{display:flex;justify-content:space-between;font-size:13px;color:var(--text-sub);padding:3px 0;font-variant-numeric:tabular-nums}
-.rline .v{font-weight:600;color:var(--text)}
-.rline.total{border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-weight:700}
-.rline.total .v{font-size:17px}
-.first .rline.total .v{color:var(--inh-first)}
-.second .rline.total .v{color:var(--inh-second)}
-.rline.dim,.rline.dim .v{color:var(--muted);font-weight:400}
-.grand{
-  margin-top:14px;background:linear-gradient(135deg,var(--grand-from),var(--grand-to));border-radius:10px;
-  padding:14px 18px;color:var(--grand-text);display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;
+.results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
-.grand .glabel{font-size:13px;font-weight:600;opacity:.85}
-.grand .gval{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
-.grand .gval small{font-size:14px;font-weight:600;margin-left:2px}
-.grand.keep{background:linear-gradient(135deg,var(--grand-keep-from),var(--grand-keep-to));margin-top:8px}
-.grand .per-child{font-size:13px;font-weight:600;margin-left:8px;opacity:.9;display:inline-flex;align-items:baseline;gap:2px}
-.pc-num{font-size:16px;font-weight:700}
-.grand .per-child .pc-num{font-size:28px}
-.first .pc-num{color:var(--inh-first)}
-.second .pc-num{color:var(--inh-second)}
-#legendCh .pc-num{color:var(--inh-keep)}
-.zero-note{font-size:12px;color:var(--inh-keep-text);font-weight:600;margin-top:4px}
+@media screen and (max-width: 600px) {
+  .results {
+    grid-template-columns: 1fr;
+  }
+}
+.res-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.res-box h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.res-box.first h3 {
+  color: var(--inh-first);
+}
+.res-box.second h3 {
+  color: var(--inh-second);
+}
+/* バッジは色の面の上に載るので、地の色を文字色にして明暗を反転させる */
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.first .badge {
+  background: var(--inh-first);
+}
+.second .badge {
+  background: var(--inh-second);
+}
+.rline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-sub);
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.rline .v {
+  font-weight: 600;
+  color: var(--text);
+}
+.rline.total {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 8px;
+  font-weight: 700;
+}
+.rline.total .v {
+  font-size: 17px;
+}
+.first .rline.total .v {
+  color: var(--inh-first);
+}
+.second .rline.total .v {
+  color: var(--inh-second);
+}
+.rline.dim,
+.rline.dim .v {
+  color: var(--muted);
+  font-weight: 400;
+}
+.grand {
+  margin-top: 14px;
+  background: linear-gradient(135deg, var(--grand-from), var(--grand-to));
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: var(--grand-text);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.grand .glabel {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.grand .gval {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.grand .gval small {
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 2px;
+}
+.grand.keep {
+  background: linear-gradient(
+    135deg,
+    var(--grand-keep-from),
+    var(--grand-keep-to)
+  );
+  margin-top: 8px;
+}
+.grand .per-child {
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 8px;
+  opacity: 0.9;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.pc-num {
+  font-size: 16px;
+  font-weight: 700;
+}
+.grand .per-child .pc-num {
+  font-size: 28px;
+}
+.first .pc-num {
+  color: var(--inh-first);
+}
+.second .pc-num {
+  color: var(--inh-second);
+}
+#legendCh .pc-num {
+  color: var(--inh-keep);
+}
+.zero-note {
+  font-size: 12px;
+  color: var(--inh-keep-text);
+  font-weight: 600;
+  margin-top: 4px;
+}
 
 /* ---- グラフ ---- */
-.chart-wrap{position:relative;height:300px}
+.chart-wrap {
+  position: relative;
+  height: 300px;
+}
 
 /* 印刷の直前にグラフを紙幅で描き直させるための指定（print.css と同じ余白にそろえる）。
    @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
-html.printing body{padding:0}
-html.printing .wrap{max-width:100%}
-html.printing .help,html.printing .reset-link,
-html.printing #jumpBest,html.printing #spShare,html.printing #yearsGap{display:none !important}
+html.printing body {
+  padding: 0;
+}
+html.printing .wrap {
+  max-width: 100%;
+}
+html.printing .help,
+html.printing .reset-link,
+html.printing #jumpBest,
+html.printing #spShare,
+html.printing #yearsGap {
+  display: none !important;
+}

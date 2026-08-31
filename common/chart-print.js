@@ -28,30 +28,32 @@
        });
    ============================================================= */
 (function (global) {
-	'use strict';
+  "use strict";
 
-	var handlers = [];
+  var handlers = [];
 
-	function redraw() {
-		for (var i = 0; i < handlers.length; i++) {
-			handlers[i]();
-		}
-	}
+  function redraw() {
+    for (var i = 0; i < handlers.length; i++) {
+      handlers[i]();
+    }
+  }
 
-	global.ChartPrint = {
-		onPrint: function (fn) { if (typeof fn === 'function') handlers.push(fn); }
-	};
+  global.ChartPrint = {
+    onPrint: function (fn) {
+      if (typeof fn === "function") handlers.push(fn);
+    },
+  };
 
-	global.addEventListener('beforeprint', redraw);
+  global.addEventListener("beforeprint", redraw);
 
-	/* beforeprint を出さないブラウザ向け。印刷用のスタイルに
+  /* beforeprint を出さないブラウザ向け。印刷用のスタイルに
 	   切り替わった時点で拾う */
-	if (global.matchMedia) {
-		var printQuery = global.matchMedia('print');
-		if (printQuery.addEventListener) {
-			printQuery.addEventListener('change', function (e) {
-				if (e.matches) redraw();
-			});
-		}
-	}
+  if (global.matchMedia) {
+    var printQuery = global.matchMedia("print");
+    if (printQuery.addEventListener) {
+      printQuery.addEventListener("change", function (e) {
+        if (e.matches) redraw();
+      });
+    }
+  }
 })(window);

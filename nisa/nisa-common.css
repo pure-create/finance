@@ -2,177 +2,467 @@
    ここで持つのは、円グラフの階級パレットのようにデータと結び付いた色だけ。
    ダークでは色味（緑→黄→橙→茶のグラデーション）を保ったまま明度を上げる。 */
 :root {
-  --nisa-360:  #4B9B00;  /* 300万円超（上限まで） */
-  --nisa-300:  #8DB500;
-  --nisa-240:  #C8A800;
-  --nisa-180:  #E08500;
-  --nisa-120:  #C45E00;
-  --nisa-60:   #7D3C00;
-  --nisa-0:    #D3D1C7;  /* 0円（買付なし） */
-  --nisa-none: #B4B2A9;  /* 口座未開設 */
+  --nisa-360: #4b9b00; /* 300万円超（上限まで） */
+  --nisa-300: #8db500;
+  --nisa-240: #c8a800;
+  --nisa-180: #e08500;
+  --nisa-120: #c45e00;
+  --nisa-60: #7d3c00;
+  --nisa-0: #d3d1c7; /* 0円（買付なし） */
+  --nisa-none: #b4b2a9; /* 口座未開設 */
 
   /* 扇形どうしの区切り線。ライトではカードの地色と同じ白なので「隙間」に見えるが、
      ダークで地色（暗い）をそのまま使うと、鮮やかな扇形に挟まれて黒い縁取りに見えてしまう。
      そのためダークだけは地色ではなく薄い光の線にしている。 */
   --nisa-seg-border: #ffffff;
 
-  --scroll-shadow: rgba(0,0,0,.15); /* 横スクロールの端に出す影 */
+  --scroll-shadow: rgba(0, 0, 0, 0.15); /* 横スクロールの端に出す影 */
 }
 /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
 :root[data-theme="dark"] {
-  --nisa-360:  #63BE00;
-  --nisa-300:  #A5D01C;
-  --nisa-240:  #DDBD1D;
-  --nisa-180:  #F09520;
-  --nisa-120:  #DC7220;
-  --nisa-60:   #A9581C;
-  --nisa-0:    #8A8880;
-  --nisa-none: #6E6C66;
-  --nisa-seg-border: rgba(255,255,255,.28);
-  --scroll-shadow: rgba(0,0,0,.55);
+  --nisa-360: #63be00;
+  --nisa-300: #a5d01c;
+  --nisa-240: #ddbd1d;
+  --nisa-180: #f09520;
+  --nisa-120: #dc7220;
+  --nisa-60: #a9581c;
+  --nisa-0: #8a8880;
+  --nisa-none: #6e6c66;
+  --nisa-seg-border: rgba(255, 255, 255, 0.28);
+  --scroll-shadow: rgba(0, 0, 0, 0.55);
 }
 
-  /* 本文の幅は年金・相続と揃えて840px。box-sizing が border-box なので、
+/* 本文の幅は年金・相続と揃えて840px。box-sizing が border-box なので、
      max-width には左右のpadding（16px×2）が含まれる。840を変えるときはこの値も直すこと */
-  body { font-size: 14px; margin: 0 auto; padding: 1rem; max-width: 872px; }
+body {
+  font-size: 14px;
+  margin: 0 auto;
+  padding: 1rem;
+  max-width: 872px;
+}
 
-  /* 時点の切り替え。年を増やすときは各ページのHTMLに1行ずつ足すこと
+/* 時点の切り替え。年を増やすときは各ページのHTMLに1行ずつ足すこと
      （どのページにも全年分を並べるので、既存のページも直す必要がある） */
-  .year-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.55rem; margin-top: 5px; font-size: 13px; }
-  .year-nav > * + *::before { content: "|"; color: var(--muted); margin-right: 0.55rem; }
-  .year-nav .current { color: var(--text); font-weight: 600; }
-  .year-nav a { color: var(--accent); text-decoration: none; }
-  .year-nav a:hover { text-decoration: underline; }
-  /* 注記の見た目は common/site.css の .site-foot / .foot-note に集約した。
+.year-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.55rem;
+  margin-top: 5px;
+  font-size: 13px;
+}
+.year-nav > * + *::before {
+  content: "|";
+  color: var(--muted);
+  margin-right: 0.55rem;
+}
+.year-nav .current {
+  color: var(--text);
+  font-weight: 600;
+}
+.year-nav a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.year-nav a:hover {
+  text-decoration: underline;
+}
+/* 注記の見た目は common/site.css の .site-foot / .foot-note に集約した。
      このページは末尾に余白が欲しいので、そこだけ足す */
-  .site-foot { margin-bottom: 1.5rem; }
-  .section-label { font-size: 12px; font-weight: 500; color: var(--text-sub); margin: 1.5rem 0 0.4rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  /* 端の影で横スクロールできることを知らせる。左右のぼかしは地の色と揃える必要がある */
-  .table-scroll {
-    overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -1px;
-    background-color: var(--bg);
-    background-image:
-      linear-gradient(to right, var(--bg) 30%, transparent),
-      linear-gradient(to left, var(--bg) 30%, transparent),
-      linear-gradient(to right, var(--scroll-shadow), transparent 100%),
-      linear-gradient(to left, var(--scroll-shadow), transparent 100%);
-    background-repeat: no-repeat;
-    background-size: 20px 100%, 20px 100%, 10px 100%, 10px 100%;
-    background-position: 0 0, 100% 0, 0 0, 100% 0;
-    background-attachment: local, local, scroll, scroll;
-  }
-  .table-scroll table { min-width: 480px; }
-  thead th { border-bottom: 1.5px solid var(--axis); padding: 7px 6px; text-align: right; font-weight: 500; color: var(--text-sub); white-space: nowrap; }
-  thead th:first-child { text-align: left; }
-  tbody td { padding: 6px 6px; border-bottom: 0.5px solid var(--grid); text-align: right; vertical-align: middle; }
-  tbody td:first-child { text-align: left; }
-  .total-row td { background: var(--surface-2); font-weight: 500; border-top: 1.5px solid var(--axis); }
-  .total-row td:first-child { white-space: nowrap; }
-  .ref-row td { background: var(--surface); color: var(--muted); border-top: 1px dashed var(--axis); font-size: 12px; }
-  .highlight-row td { background: var(--accent-soft); }
-  .pct { font-weight: 500; }
-  .dim { color: var(--muted); }
-  .cum { font-size: 11px; color: var(--muted); display: block; }
-  .cum-note { font-size: 11px; color: var(--muted); margin-top: 0.4rem; }
-  .ref-label { font-size: 11px; color: var(--muted); margin-top: 1.2rem; padding-top: 0.3rem; border-top: 1px dashed var(--border); }
+.site-foot {
+  margin-bottom: 1.5rem;
+}
+.section-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin: 1.5rem 0 0.4rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+/* 端の影で横スクロールできることを知らせる。左右のぼかしは地の色と揃える必要がある */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -1px;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, var(--bg) 30%, transparent),
+    linear-gradient(to left, var(--bg) 30%, transparent),
+    linear-gradient(to right, var(--scroll-shadow), transparent 100%),
+    linear-gradient(to left, var(--scroll-shadow), transparent 100%);
+  background-repeat: no-repeat;
+  background-size:
+    20px 100%,
+    20px 100%,
+    10px 100%,
+    10px 100%;
+  background-position:
+    0 0,
+    100% 0,
+    0 0,
+    100% 0;
+  background-attachment: local, local, scroll, scroll;
+}
+.table-scroll table {
+  min-width: 480px;
+}
+thead th {
+  border-bottom: 1.5px solid var(--axis);
+  padding: 7px 6px;
+  text-align: right;
+  font-weight: 500;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+thead th:first-child {
+  text-align: left;
+}
+tbody td {
+  padding: 6px 6px;
+  border-bottom: 0.5px solid var(--grid);
+  text-align: right;
+  vertical-align: middle;
+}
+tbody td:first-child {
+  text-align: left;
+}
+.total-row td {
+  background: var(--surface-2);
+  font-weight: 500;
+  border-top: 1.5px solid var(--axis);
+}
+.total-row td:first-child {
+  white-space: nowrap;
+}
+.ref-row td {
+  background: var(--surface);
+  color: var(--muted);
+  border-top: 1px dashed var(--axis);
+  font-size: 12px;
+}
+.highlight-row td {
+  background: var(--accent-soft);
+}
+.pct {
+  font-weight: 500;
+}
+.dim {
+  color: var(--muted);
+}
+.cum {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+}
+.cum-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+.ref-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1.2rem;
+  padding-top: 0.3rem;
+  border-top: 1px dashed var(--border);
+}
 
-  /* 円グラフセクション */
-  .chart-section { margin-top: 2rem; padding: 1.4rem 1.6rem; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); }
-  .chart-section h2 { font-size: 14px; font-weight: 500; margin: 0 0 1rem; color: var(--text); }
-  .chart-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1.4rem; margin-bottom: 1.4rem; }
-  /* セレクトボックスとチェックボックスの見た目は common/site.css の
+/* 円グラフセクション */
+.chart-section {
+  margin-top: 2rem;
+  padding: 1.4rem 1.6rem;
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.chart-section h2 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 1rem;
+  color: var(--text);
+}
+.chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.4rem;
+  margin-bottom: 1.4rem;
+}
+/* セレクトボックスとチェックボックスの見た目は common/site.css の
      .field-select / .field-check に持たせている（全ページ共通） */
-  .chart-controls label { font-size: 13px; color: var(--text-sub); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none; }
-  .chart-controls .field-select { min-width: 120px; }
+.chart-controls label {
+  font-size: 13px;
+  color: var(--text-sub);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+}
+.chart-controls .field-select {
+  min-width: 120px;
+}
 
-  /* ---- ヘルプの吹き出し ----
+/* ---- ヘルプの吹き出し ----
      チェックボックスと「？」を1つのまとまりにする箱。「？」をラベルの中に入れると
      ラベルへのクリック扱いでチェックが切り替わってしまうので、外に並べている。
      吹き出しの位置の基準はこの箱にする（印は16px角しかなく、それを基準にすると
      302pxの吹き出しが狭い画面で外へはみ出して切れる） */
-  .ctl-item { display: flex; align-items: center; gap: 0.4rem; position: relative; }
-  .help {
-    display: inline-flex; align-items: center; justify-content: center; position: static;
-    width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
-    color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1; cursor: help; flex-shrink: 0;
-  }
-  .help:hover, .help:focus-visible { border-color: var(--accent); color: var(--accent); }
-  .help .tipbox {
-    top: calc(100% + 8px); left: 0; right: auto;
-    width: 302px; max-width: min(302px, calc(100vw - 40px));
-    line-height: 1.7; padding: 10px 12px;
-    pointer-events: none;
-  }
-  /* 三角は出さない。「？」はまとまりの右端に付くのに対し、吹き出しは左端にそろうので、
+.ctl-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+}
+.help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: static;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+}
+.help:hover,
+.help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.help .tipbox {
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+  width: 302px;
+  max-width: min(302px, calc(100vw - 40px));
+  line-height: 1.7;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+/* 三角は出さない。「？」はまとまりの右端に付くのに対し、吹き出しは左端にそろうので、
      三角を左右どちらに置いても印を指さない（吹き出し自体がすぐ下に出るので要らない） */
-  .help .tipbox::before { display: none; }
-  .chart-body { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
-  .chart-canvas-wrap { position: relative; width: 500px; height: 500px; max-width: 100%; aspect-ratio: 1 / 1; }
-  .chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
+.help .tipbox::before {
+  display: none;
+}
+.chart-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  align-items: center;
+}
+.chart-canvas-wrap {
+  position: relative;
+  width: 500px;
+  height: 500px;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.chart-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
 
-  .chart-center-label {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    text-align: center; pointer-events: none; line-height: 1.4;
+.chart-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  line-height: 1.4;
+}
+.chart-center-label .center-age {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chart-legend-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 8px 32px;
+  font-size: 12px;
+  justify-content: center;
+}
+.chart-legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-legend-list .swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.chart-legend-list .leg-label {
+  color: var(--text-sub);
+  white-space: nowrap;
+  min-width: 150px;
+}
+.chart-legend-list .leg-pct {
+  font-weight: 500;
+  color: var(--text);
+  min-width: 38px;
+  text-align: right;
+}
+
+@media screen and (max-width: 600px) {
+  .page-head h1 {
+    font-size: 15px;
   }
-  .chart-center-label .center-age { font-size: 18px; font-weight: 600; color: var(--text); }
-
-  .chart-legend-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, auto); gap: 8px 32px; font-size: 12px; justify-content: center; }
-  .chart-legend-list li { display: flex; align-items: center; gap: 6px; }
-  .chart-legend-list .swatch { width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
-  .chart-legend-list .leg-label { color: var(--text-sub); white-space: nowrap; min-width: 150px; }
-  .chart-legend-list .leg-pct { font-weight: 500; color: var(--text); min-width: 38px; text-align: right; }
-
-  @media screen and (max-width: 600px) {
-    .page-head h1 { font-size: 15px; }
-    table { font-size: 11.5px; }
-    thead th { padding: 5px 4px; }
-    tbody td { padding: 5px 4px; }
-    .cum { font-size: 10px; }
-    .chart-section { padding: 1rem 0.8rem; }
-    .chart-controls { gap: 0.8rem; }
-    .chart-body { align-items: stretch; }
-    .chart-canvas-wrap { width: 100%; height: auto; }
-    .chart-center-label .center-age { font-size: 15px; }
-    .chart-legend-list { grid-template-columns: 1fr; gap: 6px; width: 100%; max-width: 100%; }
-    .chart-legend-list li { width: 100%; }
-    .chart-legend-list .leg-label { min-width: 0; white-space: normal; flex: 1; }
+  table {
+    font-size: 11.5px;
   }
+  thead th {
+    padding: 5px 4px;
+  }
+  tbody td {
+    padding: 5px 4px;
+  }
+  .cum {
+    font-size: 10px;
+  }
+  .chart-section {
+    padding: 1rem 0.8rem;
+  }
+  .chart-controls {
+    gap: 0.8rem;
+  }
+  .chart-body {
+    align-items: stretch;
+  }
+  .chart-canvas-wrap {
+    width: 100%;
+    height: auto;
+  }
+  .chart-center-label .center-age {
+    font-size: 15px;
+  }
+  .chart-legend-list {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .chart-legend-list li {
+    width: 100%;
+  }
+  .chart-legend-list .leg-label {
+    min-width: 0;
+    white-space: normal;
+    flex: 1;
+  }
+}
 
-  /* 印刷の直前に円グラフを紙の大きさで描き直させるための指定（下の @media print と同じ値）。
+/* 印刷の直前に円グラフを紙の大きさで描き直させるための指定（下の @media print と同じ値）。
      @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
-  html.printing body { padding: 0; max-width: 100%; }
-  html.printing .chart-body { flex-direction: row; }
-  html.printing .chart-canvas-wrap { width: 320px; height: 320px; margin: 0 auto; }
-  html.printing .chart-controls { display: none; }
+html.printing body {
+  padding: 0;
+  max-width: 100%;
+}
+html.printing .chart-body {
+  flex-direction: row;
+}
+html.printing .chart-canvas-wrap {
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+}
+html.printing .chart-controls {
+  display: none;
+}
 
-  /* 印刷用。白地・黒文字への切り替えは common/theme.css の @media print が行う。
+/* 印刷用。白地・黒文字への切り替えは common/theme.css の @media print が行う。
      print-color-adjust: exact は、白地に固定されたあとの表の地色や凡例の色を
      そのまま紙に出すために必要。 */
-  @media print {
-    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body { max-width: 100%; padding: 0; font-size: 11pt; color: #000; }
-    .page-head h1 { font-size: 15pt; }
-    a { color: #000; text-decoration: underline; }
-    td, th { color: #000; }
-
-    /* 操作用UIは印刷しない */
-    .chart-controls { display: none; }
-
-    .chart-section {
-      background: none; border: none; padding: 0; margin-top: 1rem;
-      break-inside: avoid;
-    }
-    .chart-canvas-wrap { width: 320px; height: 320px; margin: 0 auto; }
-    .chart-body { flex-direction: row; }
-    .chart-legend-list { grid-template-columns: repeat(2, auto); }
-
-    .table-scroll { overflow: visible; margin: 0; background: none; background-image: none; }
-    .table-scroll table { min-width: 0; }
-    table { font-size: 9.5pt; }
-    table, tr, .total-row, .ref-row { break-inside: avoid; }
-    thead { display: table-header-group; }
-
-    .section-label { break-after: avoid; }
-    .foot-note { color: #333; }
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+  body {
+    max-width: 100%;
+    padding: 0;
+    font-size: 11pt;
+    color: #000;
+  }
+  .page-head h1 {
+    font-size: 15pt;
+  }
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+  td,
+  th {
+    color: #000;
+  }
+
+  /* 操作用UIは印刷しない */
+  .chart-controls {
+    display: none;
+  }
+
+  .chart-section {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 1rem;
+    break-inside: avoid;
+  }
+  .chart-canvas-wrap {
+    width: 320px;
+    height: 320px;
+    margin: 0 auto;
+  }
+  .chart-body {
+    flex-direction: row;
+  }
+  .chart-legend-list {
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .table-scroll {
+    overflow: visible;
+    margin: 0;
+    background: none;
+    background-image: none;
+  }
+  .table-scroll table {
+    min-width: 0;
+  }
+  table {
+    font-size: 9.5pt;
+  }
+  table,
+  tr,
+  .total-row,
+  .ref-row {
+    break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+
+  .section-label {
+    break-after: avoid;
+  }
+  .foot-note {
+    color: #333;
+  }
+}

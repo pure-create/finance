@@ -1,143 +1,176 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- 存在しないURLで表示されるページ。GitHub Pages がリポジトリ直下の 404.html を使う。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 存在しないURLで表示されるページ。GitHub Pages がリポジトリ直下の 404.html を使う。
      検索結果に出す意味は無いので noindex にし、サイトマップにも載せない -->
-<meta name="robots" content="noindex">
-<title>ページが見つかりません｜資産運用・金融シミュレーター</title>
-<!-- このページは /finance/ 配下のどの深さのURLでも表示されるため、
+    <meta name="robots" content="noindex" />
+    <title>ページが見つかりません｜資産運用・金融シミュレーター</title>
+    <!-- このページは /finance/ 配下のどの深さのURLでも表示されるため、
      読み込み先とリンク先は相対パスにできない（絶対パスで書くこと） -->
-<link rel="icon" href="/finance/favicon.ico" sizes="32x32">
-<link rel="icon" href="/finance/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/finance/apple-touch-icon.png">
-<script src="/finance/common/analytics.js?v=20260805a" async></script>
-<script src="/finance/common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="/finance/common/theme.css?v=20260815a">
-<link rel="stylesheet" href="/finance/common/site.css?v=20260823b">
-<style>
-  body {
-    padding: 1.25rem 1rem 1.75rem;
-    font-size: 16px;
-    line-height: 1.6;
-  }
+    <link rel="icon" href="/finance/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/finance/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/finance/apple-touch-icon.png" />
+    <script src="/finance/common/analytics.js?v=20260805a" async></script>
+    <script src="/finance/common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="/finance/common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="/finance/common/site.css?v=20260823b" />
+    <style>
+      body {
+        padding: 1.25rem 1rem 1.75rem;
+        font-size: 16px;
+        line-height: 1.6;
+      }
 
-  /* 本文の幅は年金・相続・NISAと揃えて840px。
+      /* 本文の幅は年金・相続・NISAと揃えて840px。
      ヘッダー行は <main> の外（他のページと同じ位置）にあるので、
      本文と左右がずれないよう同じ幅をここでも与える */
-  main,
-  .site-head { max-width: 840px; margin: 0 auto; }
+      main,
+      .site-head {
+        max-width: 840px;
+        margin: 0 auto;
+      }
 
-  .lead { margin: 0 0 .6rem; }
+      .lead {
+        margin: 0 0 0.6rem;
+      }
 
-  .hint {
-    color: var(--muted);
-    font-size: .875rem;
-    line-height: 1.7;
-    margin: 0 0 1.4rem;
-  }
+      .hint {
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.7;
+        margin: 0 0 1.4rem;
+      }
 
-  /* サイト全体の構成をそのまま出す。行き先を選び直せるだけでなく、
+      /* サイト全体の構成をそのまま出す。行き先を選び直せるだけでなく、
      どこに何があるかが分かるようにするため、トップページを根に置いた木にしている。
 
      枝の線は罫線素片（├ └）ではなく、入れ子の <ul> に対してCSSで引いている。
      文字で描くと読み上げに混ざり、コピーしたときにも付いてくるため。
      縦線は各項目の ::before、横線は ::after。最後の子だけ縦線を途中で止めて
      「└」の形にする。 */
-  .tree,
-  .tree ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .tree li { line-height: 1.9; }
+      .tree,
+      .tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .tree li {
+        line-height: 1.9;
+      }
 
-  /* 子の階層。左に枝を引くぶんの幅を空ける */
-  .tree ul { margin-left: .5em; }
-  .tree ul > li { position: relative; padding-left: 1.5em; }
+      /* 子の階層。左に枝を引くぶんの幅を空ける */
+      .tree ul {
+        margin-left: 0.5em;
+      }
+      .tree ul > li {
+        position: relative;
+        padding-left: 1.5em;
+      }
 
-  .tree ul > li::before {   /* 縦線 */
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    border-left: 1px solid var(--axis);
-  }
-  .tree ul > li:last-child::before { bottom: auto; height: .95em; }
+      .tree ul > li::before {
+        /* 縦線 */
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-left: 1px solid var(--axis);
+      }
+      .tree ul > li:last-child::before {
+        bottom: auto;
+        height: 0.95em;
+      }
 
-  .tree ul > li::after {    /* 横線。文字の中心（line-height 1.9 の半分）に合わせる */
-    content: "";
-    position: absolute;
-    left: 0;
-    top: .95em;
-    width: 1em;
-    border-top: 1px solid var(--axis);
-  }
+      .tree ul > li::after {
+        /* 横線。文字の中心（line-height 1.9 の半分）に合わせる */
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.95em;
+        width: 1em;
+        border-top: 1px solid var(--axis);
+      }
 
-  .tree a { text-decoration: none; }
-  .tree a:hover { text-decoration: underline; }
+      .tree a {
+        text-decoration: none;
+      }
+      .tree a:hover {
+        text-decoration: underline;
+      }
 
-  /* 根（トップページ）。ここが起点だと分かるように少し強くする */
-  .tree > li > a { font-weight: 600; }
+      /* 根（トップページ）。ここが起点だと分かるように少し強くする */
+      .tree > li > a {
+        font-weight: 600;
+      }
 
-  /* ページを持たない区分の見出し。NISAは各年のページがあるだけで、
+      /* ページを持たない区分の見出し。NISAは各年のページがあるだけで、
      まとめのページを持っていないのでリンクにしない */
-  .tree .branch { color: var(--text-sub); }
-</style>
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<!-- ヘッダー行は <main> の外に置く。他の11ページと同じ位置にすることで、
+      .tree .branch {
+        color: var(--text-sub);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <!-- ヘッダー行は <main> の外に置く。他の11ページと同じ位置にすることで、
      「本文へ」のスキップリンクがこの行を飛ばして本文に着く -->
-<div class="site-head">
-  <!-- このページは存在しないURLの代わりに出るので、相対リンクの起点が定まらない。
+    <div class="site-head">
+      <!-- このページは存在しないURLの代わりに出るので、相対リンクの起点が定まらない。
        下のツリーと同じく、サイト直下からの絶対パスで書く -->
-  <a class="home-link" href="/finance/">トップページ</a>
-  <div class="page-tools">
-    <span data-theme-toggle></span>
-  </div>
-</div>
-<main id="main" tabindex="-1">
-  <div class="page-head">
-    <div class="page-title">
-      <h1>ページが見つかりません</h1>
-      <p class="sub">お探しのページは、移動したか削除された可能性があります。</p>
+      <a class="home-link" href="/finance/">トップページ</a>
+      <div class="page-tools">
+        <span data-theme-toggle></span>
+      </div>
     </div>
-  </div>
+    <main id="main" tabindex="-1">
+      <div class="page-head">
+        <div class="page-title">
+          <h1>ページが見つかりません</h1>
+          <p class="sub">
+            お探しのページは、移動したか削除された可能性があります。
+          </p>
+        </div>
+      </div>
 
-  <p class="lead">お探しのものが下にあるかもしれません。</p>
-  <p class="hint">共有されたURLを開いてこの画面が出た場合は、URLが途中で切れていないかご確認ください。</p>
+      <p class="lead">お探しのものが下にあるかもしれません。</p>
+      <p class="hint">
+        共有されたURLを開いてこの画面が出た場合は、URLが途中で切れていないかご確認ください。
+      </p>
 
-  <!-- サイトの構成をそのまま木にしたもの。ページを増やしたときはここにも足すこと -->
-  <ul class="tree">
-    <li>
-      <a href="/finance/">資産運用・金融シミュレーター</a>
-      <ul>
-        <li><a href="/finance/assetSimulator/">資産運用シミュレーター</a></li>
+      <!-- サイトの構成をそのまま木にしたもの。ページを増やしたときはここにも足すこと -->
+      <ul class="tree">
         <li>
-          <span class="branch">NISA利用状況</span>
+          <a href="/finance/">資産運用・金融シミュレーター</a>
           <ul>
-            <li><a href="/finance/nisa/nisa2025.html">2025年末</a></li>
-            <li><a href="/finance/nisa/nisa2024.html">2024年末</a></li>
+            <li>
+              <a href="/finance/assetSimulator/">資産運用シミュレーター</a>
+            </li>
+            <li>
+              <span class="branch">NISA利用状況</span>
+              <ul>
+                <li><a href="/finance/nisa/nisa2025.html">2025年末</a></li>
+                <li><a href="/finance/nisa/nisa2024.html">2024年末</a></li>
+              </ul>
+            </li>
+            <li><a href="/finance/ideco/">iDeCoシミュレーター</a></li>
+            <li>
+              <a href="/finance/retirement/">公務員退職手当計算</a>
+              <ul>
+                <li><a href="/finance/retirement/local/">地方公務員</a></li>
+                <li><a href="/finance/retirement/national/">国家公務員</a></li>
+              </ul>
+            </li>
+            <li>
+              <a href="/finance/pension/">年金の損益分岐点シミュレーター</a>
+            </li>
+            <li><a href="/finance/gift/">贈与税・相続対策シミュレーター</a></li>
+            <li><a href="/finance/inheritance/">二次相続シミュレーター</a></li>
+            <li><a href="/finance/privacy/">プライバシーポリシー</a></li>
           </ul>
         </li>
-        <li>
-          <a href="/finance/retirement/">公務員退職手当計算</a>
-          <ul>
-            <li><a href="/finance/retirement/local/">地方公務員</a></li>
-            <li><a href="/finance/retirement/national/">国家公務員</a></li>
-          </ul>
-        </li>
-        <li><a href="/finance/pension/">年金の損益分岐点シミュレーター</a></li>
-        <li><a href="/finance/ideco/">iDeCoシミュレーター</a></li>
-        <li><a href="/finance/inheritance/">二次相続シミュレーター</a></li>
-        <li><a href="/finance/gift/">贈与税・相続対策シミュレーター</a></li>
-        <li><a href="/finance/privacy/">プライバシーポリシー</a></li>
       </ul>
-    </li>
-  </ul>
-</main>
-</body>
+    </main>
+  </body>
 </html>

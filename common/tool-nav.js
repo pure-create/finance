@@ -21,82 +21,82 @@
    そのボタンをやめたので、置き場所そのものに持たせている。
    ============================================================= */
 (function (global) {
-	'use strict';
+  "use strict";
 
-	/* dir は「そのツールの区画」。今いるページがこの下にあれば、
+  /* dir は「そのツールの区画」。今いるページがこの下にあれば、
 	   リンクではなく「表示中」にする。年度違い（NISA）や
 	   地方/国家（退職手当）で開いているときも、区画としては同じと扱う。
 
 	   最後のプライバシーポリシーだけはツールではないが、どのページからも
 	   同じ位置で辿れるようにここへ並べている（注記の中のリンクだけだと、
 	   ページによって注記の長さが違い、探す場所が定まらない）。 */
-	var TOOLS = [
-		{ label: '資産運用',           dir: 'assetSimulator/', href: 'assetSimulator/' },
-		{ label: 'NISA利用状況',       dir: 'nisa/',           href: 'nisa/nisa2025.html' },
-		{ label: '公務員退職手当',     dir: 'retirement/',     href: 'retirement/' },
-		{ label: '年金',               dir: 'pension/',        href: 'pension/' },
-		{ label: 'iDeCo',              dir: 'ideco/',          href: 'ideco/' },
-		{ label: '相続',               dir: 'inheritance/',    href: 'inheritance/' },
-		{ label: '贈与税・相続対策',   dir: 'gift/',           href: 'gift/' },
-		{ label: 'プライバシーポリシー', dir: 'privacy/',       href: 'privacy/' }
-	];
+  var TOOLS = [
+    { label: "資産運用", dir: "assetSimulator/", href: "assetSimulator/" },
+    { label: "NISA利用状況", dir: "nisa/", href: "nisa/nisa2025.html" },
+    { label: "iDeCo", dir: "ideco/", href: "ideco/" },
+    { label: "公務員退職手当", dir: "retirement/", href: "retirement/" },
+    { label: "年金", dir: "pension/", href: "pension/" },
+    { label: "贈与", dir: "gift/", href: "gift/" },
+    { label: "相続", dir: "inheritance/", href: "inheritance/" },
+    { label: "プライバシーポリシー", dir: "privacy/", href: "privacy/" },
+  ];
 
-	function link(href, label) {
-		var a = document.createElement('a');
-		a.href = href;
-		a.textContent = label;
-		return a;
-	}
+  function link(href, label) {
+    var a = document.createElement("a");
+    a.href = href;
+    a.textContent = label;
+    return a;
+  }
 
-	/* 区切りの縦棒。線そのものはCSSが描くので、中身は空でよい。
+  /* 区切りの縦棒。線そのものはCSSが描くので、中身は空でよい。
 	   読み上げソフトが「たてぼう」と読んでも意味が無いので aria-hidden にする
 	   （CSSの ::before では aria-hidden を指定できないため要素で置いている） */
-	function separator() {
-		var sep = document.createElement('span');
-		sep.className = 'tool-nav-sep';
-		sep.setAttribute('aria-hidden', 'true');
-		return sep;
-	}
+  function separator() {
+    var sep = document.createElement("span");
+    sep.className = "tool-nav-sep";
+    sep.setAttribute("aria-hidden", "true");
+    return sep;
+  }
 
-	function render(host) {
-		var base = host.getAttribute('data-tool-nav') || './';
-		var here = global.location.pathname;
+  function render(host) {
+    var base = host.getAttribute("data-tool-nav") || "./";
+    var here = global.location.pathname;
 
-		/* トップページはこの一覧を持たないので、必ずリンクになる */
-		host.appendChild(link(base, 'トップページ'));
+    /* トップページはこの一覧を持たないので、必ずリンクになる */
+    host.appendChild(link(base, "トップページ"));
 
-		for (var i = 0; i < TOOLS.length; i++) {
-			var tool = TOOLS[i];
-			var dirUrl = new URL(base + tool.dir, global.location.href);
+    for (var i = 0; i < TOOLS.length; i++) {
+      var tool = TOOLS[i];
+      var dirUrl = new URL(base + tool.dir, global.location.href);
 
-			host.appendChild(separator());
+      host.appendChild(separator());
 
-			if (here.indexOf(dirUrl.pathname) === 0) {
-				/* 今いる区画。押しても同じ場所なので、リンクにせずただの文字にする。
+      if (here.indexOf(dirUrl.pathname) === 0) {
+        /* 今いる区画。押しても同じ場所なので、リンクにせずただの文字にする。
 				   「表示中」と書き添えはしない（色と、押せないことで足りる）が、
 				   目で見えない人には色が伝わらないので aria-current は必ず付ける */
-				var cur = document.createElement('span');
-				cur.className = 'current';
-				cur.setAttribute('aria-current', 'page');
-				cur.textContent = tool.label;
-				host.appendChild(cur);
-			} else {
-				host.appendChild(link(base + tool.href, tool.label));
-			}
-		}
+        var cur = document.createElement("span");
+        cur.className = "current";
+        cur.setAttribute("aria-current", "page");
+        cur.textContent = tool.label;
+        host.appendChild(cur);
+      } else {
+        host.appendChild(link(base + tool.href, tool.label));
+      }
+    }
 
-		host.className = 'tool-nav';
-		host.setAttribute('aria-label', 'サイト内のページ');
-	}
+    host.className = "tool-nav";
+    host.setAttribute("aria-label", "サイト内のページ");
+  }
 
-	function init() {
-		var hosts = document.querySelectorAll('[data-tool-nav]');
-		for (var i = 0; i < hosts.length; i++) render(hosts[i]);
-	}
+  function init() {
+    var hosts = document.querySelectorAll("[data-tool-nav]");
+    for (var i = 0; i < hosts.length; i++) render(hosts[i]);
+  }
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', init);
-	} else {
-		init();
-	}
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })(window);

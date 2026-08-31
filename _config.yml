@@ -29,8 +29,8 @@
 
 exclude:
   # このリポジトリで公開したくないもの
-  - test              # 計算のテスト（npm test で走らせる）
-  - package.json      # テストを走らせるためだけのファイル
+  - test # 計算のテスト（npm test で走らせる）
+  - package.json # テストを走らせるためだけのファイル
   - package-lock.json
 
   # ここから下は Jekyll の既定の除外。上書きになるので書き写している

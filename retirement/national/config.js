@@ -1,3 +1,5 @@
-window.TYOSEI_AMOUNTS = [95400, 78750, 70400, 65000, 59550, 54150, 43350, 32500, 27100, 21700, 0];
-window.RETIRE_STORAGE_KEY = 'retireCalcState_national';
-window.SALARY_LABEL = '俸給月額';
+window.TYOSEI_AMOUNTS = [
+  95400, 78750, 70400, 65000, 59550, 54150, 43350, 32500, 27100, 21700, 0,
+];
+window.RETIRE_STORAGE_KEY = "retireCalcState_national";
+window.SALARY_LABEL = "俸給月額";

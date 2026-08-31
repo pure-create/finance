@@ -1,191 +1,234 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="地方公務員・国家公務員向けの退職手当（退職金）を試算できる無料計算サイトです。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="地方公務員・国家公務員向けの退職手当（退職金）を試算できる無料計算サイトです。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/retirement/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/retirement/">
-<meta property="og:title" content="退職手当計算">
-<meta property="og:description" content="地方公務員・国家公務員向けの退職手当（退職金）を試算できる無料計算サイトです。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/retirement.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="公務員退職手当計算">
-<meta name="twitter:card" content="summary_large_image">
-<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+    <link
+      rel="canonical"
+      href="https://pure-create.github.io/finance/retirement/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta
+      property="og:url"
+      content="https://pure-create.github.io/finance/retirement/"
+    />
+    <meta property="og:title" content="退職手当計算" />
+    <meta
+      property="og:description"
+      content="地方公務員・国家公務員向けの退職手当（退職金）を試算できる無料計算サイトです。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/retirement.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="公務員退職手当計算" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
      名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
-<script type="application/ld+json">
-{
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
-		{"@type": "ListItem", "position": 2, "name": "退職手当計算", "item": "https://pure-create.github.io/finance/retirement/"}
-	]
-}
-</script>
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "資産運用・金融シミュレーター",
+            "item": "https://pure-create.github.io/finance/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "退職手当計算",
+            "item": "https://pure-create.github.io/finance/retirement/"
+          }
+        ]
+      }
+    </script>
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="../favicon.ico" sizes="32x32">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="../manifest.json">
-<script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260815a">
-<link rel="stylesheet" href="../common/site.css?v=20260823b">
-<title>退職手当計算</title>
-<style>
-  body {
-    font-size: 15px;
-    line-height: 1.8;
-    /* 幅は地方・国家のページ（css/main.css）と揃える。
+    <link rel="manifest" href="../manifest.json" />
+    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <title>退職手当計算</title>
+    <style>
+      body {
+        font-size: 15px;
+        line-height: 1.8;
+        /* 幅は地方・国家のページ（css/main.css）と揃える。
        入口からそれらへ移ったときに見出しの位置が動かないようにするため */
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 24px clamp(16px, 4vw, 56px);
-  }
-  .cards {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  a.card {
-    position: relative;
-    display: block;
-    /* 大きさはQRの読み取りやすさで決まる。96pxのQRが上下12pxの余白で収まる高さにし、
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px clamp(16px, 4vw, 56px);
+      }
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      a.card {
+        position: relative;
+        display: block;
+        /* 大きさはQRの読み取りやすさで決まる。96pxのQRが上下12pxの余白で収まる高さにし、
        幅は見出しとQRが触れないところまで広げている */
-    width: 220px;
-    height: 120px;
-    padding: 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow-sm);
-    text-decoration: none;
-    color: inherit;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  a.card:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-md);
-  }
-  a.card .title {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  /* 見た目は共有ボタンのQR（common/site.css の .share-qr）に揃え、
+        width: 220px;
+        height: 120px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        color: inherit;
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      a.card:hover {
+        border-color: var(--accent);
+        box-shadow: var(--shadow-md);
+      }
+      a.card .title {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      /* 見た目は共有ボタンのQR（common/site.css の .share-qr）に揃え、
      読み取り精度のためテーマで反転させない（白地・黒モジュールのまま）。
      大きさは share.js と同じ見積もり。計算ページのURLはQRが33モジュールになり、
      静穏帯の8モジュールを足した41に対して1モジュールあたり2.15px、
      さらに台紙の余白6pxを足して96px（share.js の QR_MIN_SIZE 72px も上回る） */
-  a.card .qr {
-    position: absolute;
-    right: 12px;
-    bottom: 12px;
-    display: block;
-    width: 96px;
-    height: 96px;
-    line-height: 0;
-    background: var(--qr-bg);
-    border-radius: 6px;
-    /* 静穏帯はQRの画像自体が4モジュール分持っているので、白地を少し広げる分だけでよい */
-    padding: 3px;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  a.card .qr svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  /* QRを作れなかったときに白い箱だけが残らないようにする */
-  a.card .qr:empty {
-    display: none;
-  }
-</style>
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<div class="site-head">
-	<a class="home-link" href="../">トップページ</a>
-	<div class="page-tools">
-		<div class="share-wrap">
-			<button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">URLを共有</button>
-			<div class="share-pop" id="sharePop">
-				<span id="shareQr" class="share-qr" aria-hidden="true"></span>
-				<p id="shareMsg" class="share-msg" aria-live="polite"></p>
-			</div>
-		</div>
-		<span data-theme-toggle></span>
-	</div>
-</div>
-<main id="main" tabindex="-1">
-<div class="page-head">
-	<div class="page-title">
-		<h1>退職手当計算</h1>
-		<p class="sub">地方公務員・国家公務員向けに、退職手当や税金・手取額を試算できます。</p>
-	</div>
-</div>
-<div class="cards">
-	<a class="card" href="./local/">
-		<span class="title">地方公務員</span>
-		<span class="qr" id="qrLocal" aria-hidden="true"></span>
-	</a>
-	<a class="card" href="./national/">
-		<span class="title">国家公務員</span>
-		<span class="qr" id="qrNational" aria-hidden="true"></span>
-	</a>
-</div>
-<p class="site-privacy">・ アクセス解析など情報の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
-<nav data-tool-nav="../"></nav>
-</main>
-<!-- QRと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+      a.card .qr {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        display: block;
+        width: 96px;
+        height: 96px;
+        line-height: 0;
+        background: var(--qr-bg);
+        border-radius: 6px;
+        /* 静穏帯はQRの画像自体が4モジュール分持っているので、白地を少し広げる分だけでよい */
+        padding: 3px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      a.card .qr svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      /* QRを作れなかったときに白い箱だけが残らないようにする */
+      a.card .qr:empty {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <div class="site-head">
+      <a class="home-link" href="../">トップページ</a>
+      <div class="page-tools">
+        <div class="share-wrap">
+          <button
+            class="share-btn"
+            id="shareBtn"
+            type="button"
+            aria-expanded="false"
+            aria-controls="sharePop"
+          >
+            URLを共有
+          </button>
+          <div class="share-pop" id="sharePop">
+            <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+            <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+          </div>
+        </div>
+        <span data-theme-toggle></span>
+      </div>
+    </div>
+    <main id="main" tabindex="-1">
+      <div class="page-head">
+        <div class="page-title">
+          <h1>退職手当計算</h1>
+          <p class="sub">
+            地方公務員・国家公務員向けに、退職手当や税金・手取額を試算できます。
+          </p>
+        </div>
+      </div>
+      <div class="cards">
+        <a class="card" href="./local/">
+          <span class="title">地方公務員</span>
+          <span class="qr" id="qrLocal" aria-hidden="true"></span>
+        </a>
+        <a class="card" href="./national/">
+          <span class="title">国家公務員</span>
+          <span class="qr" id="qrNational" aria-hidden="true"></span>
+        </a>
+      </div>
+      <p class="site-privacy">
+        ・ アクセス解析など情報の扱いについては<a href="../privacy/"
+          >プライバシーポリシー</a
+        >をご覧ください。
+      </p>
+      <nav data-tool-nav="../"></nav>
+    </main>
+    <!-- QRと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、この2つが届くまで本文が出ない）。
      下のインラインの renderQr / Share.init より前であればよい -->
-<script src="../common/tool-nav.js?v=20260814a"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260823a"></script>
-<script>
-	/* カードのQRは、地方・国家それぞれの計算ページをスマートフォンで開くためのもの。
+    <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/qrcode.js?v=20260805a"></script>
+    <script src="../common/share.js?v=20260823a"></script>
+    <script>
+      /* カードのQRは、地方・国家それぞれの計算ページをスマートフォンで開くためのもの。
 	   ヘッダーの共有ボタンが配るのはこの入口ページのURLなので、指す先が別になる。
 	   入力を持たないページで中身が変わらないため、開閉させず常時表示にしている。
 	   誤り訂正レベルは share.js と同じL（画面表示は汚れ・欠けが無く、
 	   モジュールが粗いほうが読みやすいため） */
-	function renderQr(elId, relativePath){
-		var el = document.getElementById(elId);
-		if(!el) return;
-		try{
-			var url = new URL(relativePath, window.location.href).href;
-			var qr = qrcode(0, 'L');
-			qr.addData(url);
-			qr.make();
-			el.innerHTML = qr.createSvgTag(4);
-		}catch(e){
-			el.innerHTML = '';
-		}
-	}
-	renderQr('qrLocal', './local/');
-	renderQr('qrNational', './national/');
+      function renderQr(elId, relativePath) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        try {
+          var url = new URL(relativePath, window.location.href).href;
+          var qr = qrcode(0, "L");
+          qr.addData(url);
+          qr.make();
+          el.innerHTML = qr.createSvgTag(4);
+        } catch (e) {
+          el.innerHTML = "";
+        }
+      }
+      renderQr("qrLocal", "./local/");
+      renderQr("qrNational", "./national/");
 
-	/* 入口のページなので、共有するのはクエリの付かないこのページのURLそのもの
+      /* 入口のページなので、共有するのはクエリの付かないこのページのURLそのもの
 	   （トップページと同じ形。JSモジュールを持たないページなのでここで初期化する） */
-	Share.init({
-		buildUrl: function () { return Share.urlWithParams(null); },
-		okMsg:    'このページのURLをコピーしました。'
-	});
-</script>
-</body>
+      Share.init({
+        buildUrl: function () {
+          return Share.urlWithParams(null);
+        },
+        okMsg: "このページのURLをコピーしました。",
+      });
+    </script>
+  </body>
 </html>

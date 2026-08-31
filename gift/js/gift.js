@@ -476,9 +476,9 @@
       "万円 / 子1人</strong>を贈与するケースです。各年1月1日時点の年齢で、子どもごとに一般・特例税率を判定します。";
     if (current.considerCapitalGainsTax)
       $("timelineNote").innerHTML +=
-        (current.giftMethod === "cash"
+        current.giftMethod === "cash"
           ? " 売却益税は、各年に現金贈与を行うための親側の売却分と、相続年の全資産売却分です。"
-          : " 売却益税は、各年の贈与税支払いに伴う受贈資産の売却分と、相続年の全資産売却分です。");
+          : " 売却益税は、各年の贈与税支払いに伴う受贈資産の売却分と、相続年の全資産売却分です。";
   }
   function update() {
     updateChildAgeInputs();

@@ -5,133 +5,172 @@
 // と書いてからこのファイルを読み込むこと、それだけ。
 // 数字は年ごとに nisa-data.js に置いてある（同じ年の数字が2ページに散らないように）。
 
-const yearData=NISA_DATA[YEAR];
-const pop=yearData.pop, accounts=yearData.accounts, nisaData=yearData.buys;
+const yearData = NISA_DATA[YEAR];
+const pop = yearData.pop,
+  accounts = yearData.accounts,
+  nisaData = yearData.buys;
 // 前年の数字。ある年だけ「前年比」の列を出す（最初の年＝2024は前年が無い）
-const prevYear=NISA_DATA[YEAR-1];
+const prevYear = NISA_DATA[YEAR - 1];
 
-const nisaTotal={};
-Object.keys(nisaData).forEach(a=>{ nisaTotal[a]=Object.values(nisaData[a]).reduce((s,v)=>s+v,0); });
+const nisaTotal = {};
+Object.keys(nisaData).forEach((a) => {
+  nisaTotal[a] = Object.values(nisaData[a]).reduce((s, v) => s + v, 0);
+});
 
-const workingAges=['20代','30代','40代','50代'];
-const workingPop=workingAges.reduce((s,a)=>s+pop[a],0);
-const workingNisaData={'0':0,'60':0,'120':0,'180':0,'240':0,'300':0,'360':0};
-workingAges.forEach(a=>Object.keys(workingNisaData).forEach(k=>{workingNisaData[k]+=nisaData[a][k];}));
-const workingNisaTotal=Object.values(workingNisaData).reduce((s,v)=>s+v,0);
+const workingAges = ["20代", "30代", "40代", "50代"];
+const workingPop = workingAges.reduce((s, a) => s + pop[a], 0);
+const workingNisaData = { 0: 0, 60: 0, 120: 0, 180: 0, 240: 0, 300: 0, 360: 0 };
+workingAges.forEach((a) =>
+  Object.keys(workingNisaData).forEach((k) => {
+    workingNisaData[k] += nisaData[a][k];
+  }),
+);
+const workingNisaTotal = Object.values(workingNisaData).reduce(
+  (s, v) => s + v,
+  0,
+);
 
 // 階級ごとの色は nisa-common.css の --nisa-* で定義している（ライト／ダークの2値）。
 // color はテーマが変わると変わるので、描画のたびに読み直す。
-const categories=[
-  {label:'300万円超（上限まで）', key:'360', token:'--nisa-360'},
-  {label:'240万円超〜300万円以下',key:'300', token:'--nisa-300'},
-  {label:'180万円超〜240万円以下',key:'240', token:'--nisa-240'},
-  {label:'120万円超〜180万円以下',key:'180', token:'--nisa-180'},
-  {label:'60万円超〜120万円以下', key:'120', token:'--nisa-120'},
-  {label:'0円超〜60万円以下',     key:'60',  token:'--nisa-60'},
-  {label:'0円（買付なし）',       key:'0',   token:'--nisa-0'},
-  {label:'口座未開設',            key:'none',token:'--nisa-none'},
+const categories = [
+  { label: "300万円超（上限まで）", key: "360", token: "--nisa-360" },
+  { label: "240万円超〜300万円以下", key: "300", token: "--nisa-300" },
+  { label: "180万円超〜240万円以下", key: "240", token: "--nisa-240" },
+  { label: "120万円超〜180万円以下", key: "180", token: "--nisa-180" },
+  { label: "60万円超〜120万円以下", key: "120", token: "--nisa-120" },
+  { label: "0円超〜60万円以下", key: "60", token: "--nisa-60" },
+  { label: "0円（買付なし）", key: "0", token: "--nisa-0" },
+  { label: "口座未開設", key: "none", token: "--nisa-none" },
 ];
 // 扇形の上に載せる文字の色。地の明るさで白／黒を切り替えるので、
 // パレットをテーマごとに変えても読めなくならない。
 function labelColorOn(bg) {
-  const m = /^#?([0-9a-f]{6})$/i.exec((bg || '').trim());
-  if (!m) return '#ffffff';
+  const m = /^#?([0-9a-f]{6})$/i.exec((bg || "").trim());
+  if (!m) return "#ffffff";
   const n = parseInt(m[1], 16);
-  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-  return lum > 0.62 ? '#1a1a1a' : '#ffffff';
+  const lum =
+    (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) /
+    255;
+  return lum > 0.62 ? "#1a1a1a" : "#ffffff";
 }
 
 // ── テーブル描画 ──
-(function buildSummary(){
-  const sb=document.getElementById('summary-body');
+(function buildSummary() {
+  const sb = document.getElementById("summary-body");
   // 前年の数字があるページだけ「前年比」列を追加する
   const hasPrev = !!prevYear;
-  function deltaCell(rate, prevRate){
-    const d=rate-prevRate;
-    return `<td><span class="pct">${d>=0?'+':''}${d.toFixed(1)}pt</span><span class="cum">前年 ${prevRate.toFixed(1)}%</span></td>`;
+  function deltaCell(rate, prevRate) {
+    const d = rate - prevRate;
+    return `<td><span class="pct">${d >= 0 ? "+" : ""}${d.toFixed(1)}pt</span><span class="cum">前年 ${prevRate.toFixed(1)}%</span></td>`;
   }
-  let tp=0,ta=0,tn=0,ptp=0,pta=0;
-  ['10代','20代','30代','40代','50代','60代','70代','80歳以上'].forEach(age=>{
-    const isRef=age==='10代';
-    const tr=document.createElement('tr'); if(isRef)tr.className='ref-row';
-    const p=pop[age],a=accounts[age],n=nisaTotal[age];
-    let cells=`<td>${age}${isRef?' ※':''}</td><td>${(p/10000).toFixed(1)}万人</td><td>${(a/10000).toFixed(1)}万口座</td><td class="pct">${(a/p*100).toFixed(1)}%</td>`;
-    if(hasPrev)cells+=deltaCell(a/p*100, prevYear.accounts[age]/prevYear.pop[age]*100);
-    cells+=`<td class="dim">${((p-n)/p*100).toFixed(1)}%</td>`;
-    tr.innerHTML=cells;
-    sb.appendChild(tr);
-    if(!isRef){
-      tp+=p;ta+=a;tn+=n;
-      if(hasPrev){ptp+=prevYear.pop[age];pta+=prevYear.accounts[age];}
-    }
-  });
-  const tr=document.createElement('tr');tr.className='total-row';
-  let cells=`<td>20代〜50代 合計</td><td>${(tp/10000).toFixed(1)}万人</td><td>${(ta/10000).toFixed(1)}万口座</td><td class="pct">${(ta/tp*100).toFixed(1)}%</td>`;
-  if(hasPrev)cells+=deltaCell(ta/tp*100, pta/ptp*100);
-  cells+=`<td class="dim">${((tp-tn)/tp*100).toFixed(1)}%</td>`;
-  tr.innerHTML=cells;
+  let tp = 0,
+    ta = 0,
+    tn = 0,
+    ptp = 0,
+    pta = 0;
+  ["10代", "20代", "30代", "40代", "50代", "60代", "70代", "80歳以上"].forEach(
+    (age) => {
+      const isRef = age === "10代";
+      const tr = document.createElement("tr");
+      if (isRef) tr.className = "ref-row";
+      const p = pop[age],
+        a = accounts[age],
+        n = nisaTotal[age];
+      let cells = `<td>${age}${isRef ? " ※" : ""}</td><td>${(p / 10000).toFixed(1)}万人</td><td>${(a / 10000).toFixed(1)}万口座</td><td class="pct">${((a / p) * 100).toFixed(1)}%</td>`;
+      if (hasPrev)
+        cells += deltaCell(
+          (a / p) * 100,
+          (prevYear.accounts[age] / prevYear.pop[age]) * 100,
+        );
+      cells += `<td class="dim">${(((p - n) / p) * 100).toFixed(1)}%</td>`;
+      tr.innerHTML = cells;
+      sb.appendChild(tr);
+      if (!isRef) {
+        tp += p;
+        ta += a;
+        tn += n;
+        if (hasPrev) {
+          ptp += prevYear.pop[age];
+          pta += prevYear.accounts[age];
+        }
+      }
+    },
+  );
+  const tr = document.createElement("tr");
+  tr.className = "total-row";
+  let cells = `<td>20代〜50代 合計</td><td>${(tp / 10000).toFixed(1)}万人</td><td>${(ta / 10000).toFixed(1)}万口座</td><td class="pct">${((ta / tp) * 100).toFixed(1)}%</td>`;
+  if (hasPrev) cells += deltaCell((ta / tp) * 100, (pta / ptp) * 100);
+  cells += `<td class="dim">${(((tp - tn) / tp) * 100).toFixed(1)}%</td>`;
+  tr.innerHTML = cells;
   sb.appendChild(tr);
 })();
-(function buildTables(){
-  function build(tbodyId,ages,showTotal){
-    const tbody=document.getElementById(tbodyId);
-    const totalPop=ages.reduce((s,a)=>s+pop[a],0);
-    const cum={total:0};ages.forEach(a=>cum[a]=0);
-    categories.forEach(cat=>{
-      const tr=document.createElement('tr');
-      if(cat.key==='none')tr.className='highlight-row';
-      let rowTotal=0,cells=`<td>${cat.label}</td>`;
-      ages.forEach(age=>{
-        const val=cat.key==='none'?pop[age]-nisaTotal[age]:nisaData[age][cat.key];
-        rowTotal+=val;cum[age]+=val;
-        cells+=`<td><span class="pct">${(val/pop[age]*100).toFixed(1)}%</span><span class="cum">↑${(cum[age]/pop[age]*100).toFixed(1)}%</span></td>`;
+(function buildTables() {
+  function build(tbodyId, ages, showTotal) {
+    const tbody = document.getElementById(tbodyId);
+    const totalPop = ages.reduce((s, a) => s + pop[a], 0);
+    const cum = { total: 0 };
+    ages.forEach((a) => (cum[a] = 0));
+    categories.forEach((cat) => {
+      const tr = document.createElement("tr");
+      if (cat.key === "none") tr.className = "highlight-row";
+      let rowTotal = 0,
+        cells = `<td>${cat.label}</td>`;
+      ages.forEach((age) => {
+        const val =
+          cat.key === "none"
+            ? pop[age] - nisaTotal[age]
+            : nisaData[age][cat.key];
+        rowTotal += val;
+        cum[age] += val;
+        cells += `<td><span class="pct">${((val / pop[age]) * 100).toFixed(1)}%</span><span class="cum">↑${((cum[age] / pop[age]) * 100).toFixed(1)}%</span></td>`;
       });
-      if(showTotal){
-        cum.total+=rowTotal;
-        cells+=`<td><span class="pct">${(rowTotal/totalPop*100).toFixed(1)}%</span><span class="cum">↑${(cum.total/totalPop*100).toFixed(1)}%</span></td>`;
+      if (showTotal) {
+        cum.total += rowTotal;
+        cells += `<td><span class="pct">${((rowTotal / totalPop) * 100).toFixed(1)}%</span><span class="cum">↑${((cum.total / totalPop) * 100).toFixed(1)}%</span></td>`;
       }
-      tr.innerHTML=cells;tbody.appendChild(tr);
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
     });
   }
-  build('table-body-working',workingAges,true);
-  build('table-body-ref',['10代','60代','70代','80歳以上'],false);
+  build("table-body-working", workingAges, true);
+  build("table-body-ref", ["10代", "60代", "70代", "80歳以上"], false);
 })();
 
 // ── Chart.js 円グラフ ──
 function getChartDatasets(age, inclInactive) {
-  const isW = age==='現役世代合計';
-  const p   = isW ? workingPop : pop[age];
-  const nd  = isW ? workingNisaData : nisaData[age];
-  const nt  = isW ? workingNisaTotal : nisaTotal[age];
+  const isW = age === "現役世代合計";
+  const p = isW ? workingPop : pop[age];
+  const nd = isW ? workingNisaData : nisaData[age];
+  const nt = isW ? workingNisaTotal : nisaTotal[age];
 
-  const filtered = categories.filter(c=>{
-    if(!inclInactive && (c.key==='none'||c.key==='0')) return false;
+  const filtered = categories.filter((c) => {
+    if (!inclInactive && (c.key === "none" || c.key === "0")) return false;
     return true;
   });
 
-  const vals   = filtered.map(c=> c.key==='none' ? p-nt : nd[c.key]);
-  const total  = vals.reduce((s,v)=>s+v,0);
-  const labels = filtered.map(c=>c.label);
-  const colors = filtered.map(c=>Theme.color(c.token));
-  const pcts   = vals.map(v=>(v/total*100));
+  const vals = filtered.map((c) => (c.key === "none" ? p - nt : nd[c.key]));
+  const total = vals.reduce((s, v) => s + v, 0);
+  const labels = filtered.map((c) => c.label);
+  const colors = filtered.map((c) => Theme.color(c.token));
+  const pcts = vals.map((v) => (v / total) * 100);
 
   return { labels, colors, vals, pcts, total };
 }
 
-const pieCtx = document.getElementById('pieChart').getContext('2d');
+const pieCtx = document.getElementById("pieChart").getContext("2d");
 Chart.register(ChartDataLabels);
 let chart = null;
 
 function updateCenterLabel(age) {
-  const displayAge = age === '現役世代合計' ? '20代〜50代' : age;
-  document.getElementById('centerAge').textContent = displayAge;
+  const displayAge = age === "現役世代合計" ? "20代〜50代" : age;
+  document.getElementById("centerAge").textContent = displayAge;
 }
 
 function updateLegendList(labels, colors, pcts) {
-  const ul = document.getElementById('chartLegend');
-  ul.innerHTML = '';
+  const ul = document.getElementById("chartLegend");
+  ul.innerHTML = "";
   labels.forEach((label, i) => {
-    const li = document.createElement('li');
+    const li = document.createElement("li");
     li.innerHTML = `<span class="swatch" style="background:${colors[i]}"></span><span class="leg-label">${label}</span><span class="leg-pct">${pcts[i].toFixed(1)}%</span>`;
     ul.appendChild(li);
   });
@@ -140,84 +179,92 @@ function updateLegendList(labels, colors, pcts) {
 // immediate=true でアニメーションを挟まずその場で描き切る。
 // 印刷時は beforeprint の中で描き終わっている必要があるため（アニメーションだと間に合わない）。
 function updateChart(immediate) {
-  const age         = document.getElementById('ageSelect').value;
-  const inclInactive= document.getElementById('chkInactive').checked;
+  const age = document.getElementById("ageSelect").value;
+  const inclInactive = document.getElementById("chkInactive").checked;
   const { labels, colors, pcts } = getChartDatasets(age, inclInactive);
 
   updateCenterLabel(age);
   updateLegendList(labels, colors, pcts);
 
   if (chart) {
-    chart.data.labels         = labels;
-    chart.data.datasets[0].data            = pcts;
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = pcts;
     chart.data.datasets[0].backgroundColor = colors;
     // 扇形の境界線とツールチップの色。テーマ変更でも追従させる
-    chart.data.datasets[0].borderColor     = Theme.color('--nisa-seg-border');
+    chart.data.datasets[0].borderColor = Theme.color("--nisa-seg-border");
     const tt = chart.options.plugins.tooltip;
-    tt.backgroundColor = Theme.color('--tooltip-bg');
-    tt.bodyColor = tt.titleColor = Theme.color('--tooltip-text');
-    tt.borderColor = Theme.color('--tooltip-border');
-    chart.update(immediate ? 'none' : undefined);
+    tt.backgroundColor = Theme.color("--tooltip-bg");
+    tt.bodyColor = tt.titleColor = Theme.color("--tooltip-text");
+    tt.borderColor = Theme.color("--tooltip-border");
+    chart.update(immediate ? "none" : undefined);
   } else {
     chart = new Chart(pieCtx, {
-      type: 'doughnut',
+      type: "doughnut",
       plugins: [ChartDataLabels],
       data: {
         labels,
-        datasets: [{
-          data: pcts,
-          backgroundColor: colors,
-          borderColor: Theme.color('--nisa-seg-border'),
-          borderWidth: 2,
-          hoverOffset: 14,
-        }]
+        datasets: [
+          {
+            data: pcts,
+            backgroundColor: colors,
+            borderColor: Theme.color("--nisa-seg-border"),
+            borderWidth: 2,
+            hoverOffset: 14,
+          },
+        ],
       },
       options: {
-        animation: { animateRotate: true, animateScale: false, duration: 600, easing: 'easeInOutQuart' },
-        cutout: '28%',
+        animation: {
+          animateRotate: true,
+          animateScale: false,
+          duration: 600,
+          easing: "easeInOutQuart",
+        },
+        cutout: "28%",
         plugins: {
           datalabels: {
-            color: (ctx) => labelColorOn(ctx.dataset.backgroundColor[ctx.dataIndex]),
+            color: (ctx) =>
+              labelColorOn(ctx.dataset.backgroundColor[ctx.dataIndex]),
             font: (ctx) => {
               const w = ctx.chart.width;
               const size = w < 320 ? 9 : w < 420 ? 10.5 : 12;
-              return { size, weight: 'bold', family: 'sans-serif' };
+              return { size, weight: "bold", family: "sans-serif" };
             },
             formatter(value, ctx) {
               const w = ctx.chart.width;
               const threshold = w < 320 ? 6 : w < 420 ? 4 : 3;
-              if (value < threshold) return '';
+              if (value < threshold) return "";
               const label = ctx.chart.data.labels[ctx.dataIndex];
-              return label + '\n' + value.toFixed(1) + '%';
+              return label + "\n" + value.toFixed(1) + "%";
             },
-            textAlign: 'center',
-            anchor: 'center',
-            align: 'center',
+            textAlign: "center",
+            anchor: "center",
+            align: "center",
             clip: false,
           },
           legend: {
-            display: false
+            display: false,
           },
           tooltip: {
             callbacks: {
               label(ctx) {
                 return `  ${ctx.label}：${ctx.parsed.toFixed(1)}%`;
-              }
+              },
             },
             bodyFont: { size: 13 },
             padding: 10,
             // 地色をテーマに合わせるぶん、円グラフに埋もれないよう枠線を添える
-            backgroundColor: Theme.color('--tooltip-bg'),
-            bodyColor: Theme.color('--tooltip-text'),
-            titleColor: Theme.color('--tooltip-text'),
-            borderColor: Theme.color('--tooltip-border'),
+            backgroundColor: Theme.color("--tooltip-bg"),
+            bodyColor: Theme.color("--tooltip-text"),
+            titleColor: Theme.color("--tooltip-text"),
+            borderColor: Theme.color("--tooltip-border"),
             borderWidth: 1,
-          }
+          },
         },
         responsive: true,
         maintainAspectRatio: true,
         aspectRatio: 1,
-      }
+      },
     });
   }
 }
@@ -226,18 +273,23 @@ function updateChart(immediate) {
    年代とチェックの状態は、年をまたいで共通の1か所に保存する。
    同じ年代を年ごとに見比べる使い方が多く、ページを移るたびに選び直すのが
    手間になるため。次に開いたときにも同じ状態で始まる。 */
-const CHART_PREF_KEY = 'nisaChart.v1';
+const CHART_PREF_KEY = "nisaChart.v1";
 
-const ageSelect   = document.getElementById('ageSelect');
-const chkInactive = document.getElementById('chkInactive');
+const ageSelect = document.getElementById("ageSelect");
+const chkInactive = document.getElementById("chkInactive");
 
 function saveChartPrefs() {
   try {
-    localStorage.setItem(CHART_PREF_KEY, JSON.stringify({
-      age: ageSelect.value,
-      inclInactive: chkInactive.checked
-    }));
-  } catch (e) { /* 保存できなくても表示は続ける */ }
+    localStorage.setItem(
+      CHART_PREF_KEY,
+      JSON.stringify({
+        age: ageSelect.value,
+        inclInactive: chkInactive.checked,
+      }),
+    );
+  } catch (e) {
+    /* 保存できなくても表示は続ける */
+  }
 }
 
 function restoreChartPrefs() {
@@ -247,16 +299,23 @@ function restoreChartPrefs() {
   } catch (e) {
     return; // プライベートブラウジング等で読めないときはページの既定のまま
   }
-  if (!p || typeof p !== 'object') return;
+  if (!p || typeof p !== "object") return;
   // 年によって選べる年代が変わっても壊れないよう、実在する選択肢のときだけ戻す
-  if (Array.prototype.some.call(ageSelect.options, o => o.value === p.age)) ageSelect.value = p.age;
-  if (typeof p.inclInactive === 'boolean') chkInactive.checked = p.inclInactive;
+  if (Array.prototype.some.call(ageSelect.options, (o) => o.value === p.age))
+    ageSelect.value = p.age;
+  if (typeof p.inclInactive === "boolean") chkInactive.checked = p.inclInactive;
 }
 
 // updateChart を直接渡すと、イベントオブジェクトが第1引数(immediate)に入って
 // アニメーションが省略されてしまうので、引数を渡さない形で呼ぶ
-ageSelect.addEventListener('change', function () { saveChartPrefs(); updateChart(); });
-chkInactive.addEventListener('change', function () { saveChartPrefs(); updateChart(); });
+ageSelect.addEventListener("change", function () {
+  saveChartPrefs();
+  updateChart();
+});
+chkInactive.addEventListener("change", function () {
+  saveChartPrefs();
+  updateChart();
+});
 
 restoreChartPrefs();
 updateChart();
@@ -269,15 +328,19 @@ Theme.onChange(function () {
 });
 
 let resizeTimer = null;
-window.addEventListener('resize', () => {
+window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (chart) chart.update(); }, 150);
+  resizeTimer = setTimeout(() => {
+    if (chart) chart.update();
+  }, 150);
 });
 
 /* このページは公表データを見せるだけで、試算の入力が無い。共有するのは
    クエリの付かないページのURLそのもの（年代の選択などはURLには載せない）。
    2024年版・2025年版の両方から読まれるので、ここに置いて1回で済ませている */
 Share.init({
-  buildUrl: function () { return Share.urlWithParams(null); },
-  okMsg:    'このページのURLをコピーしました。'
+  buildUrl: function () {
+    return Share.urlWithParams(null);
+  },
+  okMsg: "このページのURLをコピーしました。",
 });

@@ -66,8 +66,12 @@ body {
   background: none !important;
   border: 1px solid currentColor;
 }
-.first .badge { color: #1d4ed8 !important; }
-.second .badge { color: #db2777 !important; }
+.first .badge {
+  color: #1d4ed8 !important;
+}
+.second .badge {
+  color: #db2777 !important;
+}
 
 .split-bar {
   border: 1px solid #000;

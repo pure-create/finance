@@ -1,265 +1,505 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。">
-<!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。"
+    />
+    <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
-<link rel="canonical" href="https://pure-create.github.io/finance/inheritance/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="資産運用・金融シミュレーター">
-<meta property="og:locale" content="ja_JP">
-<meta property="og:url" content="https://pure-create.github.io/finance/inheritance/">
-<meta property="og:title" content="二次相続シミュレーター">
-<meta property="og:description" content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。">
-<meta property="og:image" content="https://pure-create.github.io/finance/og/inheritance.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="二次相続シミュレーター">
-<meta name="twitter:card" content="summary_large_image">
-<!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
+    <link
+      rel="canonical"
+      href="https://pure-create.github.io/finance/inheritance/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="資産運用・金融シミュレーター" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta
+      property="og:url"
+      content="https://pure-create.github.io/finance/inheritance/"
+    />
+    <meta property="og:title" content="二次相続シミュレーター" />
+    <meta
+      property="og:description"
+      content="一次相続と二次相続の相続税を合計で比較できるシミュレーター。家族構成と資産額を入力し、配偶者の取得割合をスライダーで調整。"
+    />
+    <meta
+      property="og:image"
+      content="https://pure-create.github.io/finance/og/inheritance.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="二次相続シミュレーター" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- 検索結果に出る階層（パンくず）。URLの断片ではなく日本語の階層が並ぶようになる。
      名前は <title> と同じにすること。食い違うと検索エンジンに無視される -->
-<script type="application/ld+json">
-{
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [
-		{"@type": "ListItem", "position": 1, "name": "資産運用・金融シミュレーター", "item": "https://pure-create.github.io/finance/"},
-		{"@type": "ListItem", "position": 2, "name": "二次相続シミュレーター", "item": "https://pure-create.github.io/finance/inheritance/"}
-	]
-}
-</script>
-<!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "資産運用・金融シミュレーター",
+            "item": "https://pure-create.github.io/finance/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "二次相続シミュレーター",
+            "item": "https://pure-create.github.io/finance/inheritance/"
+          }
+        ]
+      }
+    </script>
+    <!-- ファビコン。自動で読まれる /favicon.ico はホスト直下しか見ず、プロジェクトページ配下の
      このサイトでは拾われないため明示する。type を解せるブラウザはSVG、それ以外は .ico を使う -->
-<link rel="icon" href="../favicon.ico" sizes="32x32">
-<link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
+    <link rel="icon" href="../favicon.ico" sizes="32x32" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <!-- ホーム画面に追加したときの表示（アプリのように単独の画面で開く）。
      アイコンと開始URLは manifest.json 側に書いてある -->
-<link rel="manifest" href="../manifest.json">
-<title>二次相続シミュレーター</title>
-<script src="../common/analytics.js?v=20260805a" async></script>
-<script src="../common/theme.js?v=20260815a"></script>
-<link rel="stylesheet" href="../common/theme.css?v=20260815a">
-<link rel="stylesheet" href="../common/site.css?v=20260823b">
-<link rel="stylesheet" href="../common/card-page.css?v=20260823b">
-<link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b">
-<link rel="stylesheet" type="text/css" href="./css/print.css?v=20260805b" media="print">
-</head>
-<body>
-<a class="skip-link" href="#main">本文へ</a>
-<div class="wrap">
-  <div class="site-head">
-    <a class="home-link" href="../">トップページ</a>
-    <!-- 制度データの時点。相続税の速算表や控除額を直したら、ここも更新すること -->
-    <span class="data-asof">制度データ: 2026年8月時点</span>
-    <div class="page-tools">
-      <div class="share-wrap">
-        <button class="share-btn" id="shareBtn" type="button" aria-expanded="false" aria-controls="sharePop">試算結果を共有</button>
-        <div class="share-pop" id="sharePop">
-          <span id="shareQr" class="share-qr" aria-hidden="true"></span>
-          <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+    <link rel="manifest" href="../manifest.json" />
+    <title>二次相続シミュレーター</title>
+    <script src="../common/analytics.js?v=20260805a" async></script>
+    <script src="../common/theme.js?v=20260815a"></script>
+    <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
+    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="./css/print.css?v=20260805b"
+      media="print"
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">本文へ</a>
+    <div class="wrap">
+      <div class="site-head">
+        <a class="home-link" href="../">トップページ</a>
+        <!-- 制度データの時点。相続税の速算表や控除額を直したら、ここも更新すること -->
+        <span class="data-asof">制度データ: 2026年8月時点</span>
+        <div class="page-tools">
+          <div class="share-wrap">
+            <button
+              class="share-btn"
+              id="shareBtn"
+              type="button"
+              aria-expanded="false"
+              aria-controls="sharePop"
+            >
+              試算結果を共有
+            </button>
+            <div class="share-pop" id="sharePop">
+              <span id="shareQr" class="share-qr" aria-hidden="true"></span>
+              <p id="shareMsg" class="share-msg" aria-live="polite"></p>
+            </div>
+          </div>
+          <span data-theme-toggle></span>
         </div>
       </div>
-      <span data-theme-toggle></span>
-    </div>
-  </div>
-  <main id="main" tabindex="-1">
-  <div class="page-head">
-    <div class="page-title">
-      <h1>二次相続シミュレーター</h1>
-      <p class="sub">一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較</p>
-    </div>
-    <!-- 入力欄は下の各カードに散っているので、まとめて戻すボタンは見出しの行に置く -->
-    <div class="page-tools">
-      <button class="btn" id="resetAllBtn" type="button">入力をリセット</button>
-    </div>
-  </div>
+      <main id="main" tabindex="-1">
+        <div class="page-head">
+          <div class="page-title">
+            <h1>二次相続シミュレーター</h1>
+            <p class="sub">
+              一次相続（自分→家族）と二次相続（配偶者→子）の相続税を合計で比較
+            </p>
+          </div>
+          <!-- 入力欄は下の各カードに散っているので、まとめて戻すボタンは見出しの行に置く -->
+          <div class="page-tools">
+            <button class="btn" id="resetAllBtn" type="button">
+              入力をリセット
+            </button>
+          </div>
+        </div>
 
-  <!-- 家族構成 -->
-  <div class="card">
-    <h2 class="sec-title">家族構成と資産額</h2>
-    <div class="family" id="famBox">
-      <svg class="tree-svg" id="treeSvg" aria-hidden="true" focusable="false"></svg>
-      <div class="couple">
-        <div class="person me">
-          <svg class="avatar" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="24" cy="15" r="9"/><path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z"/></svg>
-          <!-- 「？」は金額の行ではなく名前の行に置く。人の箱は幅158pxしかなく、
+        <!-- 家族構成 -->
+        <div class="card">
+          <h2 class="sec-title">家族構成と資産額</h2>
+          <div class="family" id="famBox">
+            <svg
+              class="tree-svg"
+              id="treeSvg"
+              aria-hidden="true"
+              focusable="false"
+            ></svg>
+            <div class="couple">
+              <div class="person me">
+                <svg
+                  class="avatar"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <circle cx="24" cy="15" r="9" />
+                  <path d="M24 27c-10 0-16 6-16 14h32c0-8-6-14-16-14z" />
+                </svg>
+                <!-- 「？」は金額の行ではなく名前の行に置く。人の箱は幅158pxしかなく、
                金額の行（入力欄＋単位）に足すと単位が折り返してしまうため -->
-          <span class="plabel">自分（被相続人）<span class="help" tabindex="0" aria-label="自分の資産額について" aria-describedby="assetMeTip">？<span class="tipbox" id="assetMeTip" role="tooltip">相続税の<strong>評価額</strong>の合計です（売買の時価ではありません）。土地は路線価など、建物は固定資産税評価額、預貯金や上場株式は相続開始時の残高で数えます。<br><br>下の「自宅の土地の評価額」と「自分の死亡保険金」も、まずこの額に<strong>含めて</strong>ください。下の欄は、そのうち特例や非課税枠を当てる部分を指し示すためのものです。<br><br>債務・葬式費用は考慮していないので、それらがある場合は差し引いた後の額を入れてください。</span></span></span>
-          <span class="asset-in"><input type="number" id="assetMe" value="7000" min="0" step="100" inputmode="numeric" aria-label="自分の資産額（万円）"><span class="unit">万円</span></span>
-          <span class="oku" id="okuMe"></span>
+                <span class="plabel"
+                  >自分（被相続人）<span
+                    class="help"
+                    tabindex="0"
+                    aria-label="自分の資産額について"
+                    aria-describedby="assetMeTip"
+                    >？<span class="tipbox" id="assetMeTip" role="tooltip"
+                      >相続税の<strong>評価額</strong>の合計です（売買の時価ではありません）。土地は路線価など、建物は固定資産税評価額、預貯金や上場株式は相続開始時の残高で数えます。<br /><br />下の「自宅の土地の評価額」と「自分の死亡保険金」も、まずこの額に<strong>含めて</strong>ください。下の欄は、そのうち特例や非課税枠を当てる部分を指し示すためのものです。<br /><br />債務・葬式費用は考慮していないので、それらがある場合は差し引いた後の額を入れてください。</span
+                    ></span
+                  ></span
+                >
+                <span class="asset-in"
+                  ><input
+                    type="number"
+                    id="assetMe"
+                    value="7000"
+                    min="0"
+                    step="100"
+                    inputmode="numeric"
+                    aria-label="自分の資産額（万円）"
+                  /><span class="unit">万円</span></span
+                >
+                <span class="oku" id="okuMe"></span>
+              </div>
+              <div class="marriage" id="marriageLine"></div>
+              <div id="spouseSlot"></div>
+            </div>
+            <div class="children-row" id="childrenRow"></div>
+            <p class="fam-note">
+              配偶者・子はクリックで追加／×で削除できます（子は1〜6人）
+            </p>
+          </div>
         </div>
-        <div class="marriage" id="marriageLine"></div>
-        <div id="spouseSlot"></div>
-      </div>
-      <div class="children-row" id="childrenRow"></div>
-      <p class="fam-note">配偶者・子はクリックで追加／×で削除できます（子は1〜6人）</p>
-    </div>
-  </div>
 
-  <!-- 小規模宅地等の特例。自宅の土地は評価額が大きく、適用できるかどうかで
+        <!-- 小規模宅地等の特例。自宅の土地は評価額が大きく、適用できるかどうかで
        税額が桁で変わる。二次相続では「配偶者が取得 → 無条件で適用」が使えなくなり、
        同居していない子には適用できないことが多い。このツールの主題そのものなので、
        他の未考慮の項目（生命保険の非課税枠など）と違ってここだけは扱う -->
-  <div class="card" id="landCard">
-    <h2 class="sec-title">自宅の土地
-      <span class="help" tabindex="0" aria-label="小規模宅地等の特例とは" aria-describedby="landTip">？<span class="tipbox" id="landTip" role="tooltip">小規模宅地等の特例＝亡くなった人の自宅の土地について、330㎡までの部分の評価額を80%減額できる制度（特定居住用宅地等）。配偶者が取得する場合は、要件を問わず使えます。子が取得する場合は、①<strong>同居していた子</strong>か、②<strong>持ち家のない子</strong>（いわゆる家なき子）のどちらかにあてはまることが必要です。②は「亡くなった人に配偶者がいないこと」が前提なので、<strong>一次相続では使えず、二次相続でだけ使えます</strong>。それぞれの細かい要件は下の注記を参照してください。</span></span>
-    </h2>
-    <div class="assume-row">
-      <div class="assume">
-        <label for="landValue">自宅の土地の評価額</label>
-        <span class="asset-in"><input type="number" id="landValue" value="0" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
-        <span class="oku" id="okuLand"></span>
-        <p class="assume-note">上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち自宅の土地にあたる額を入力してください（0なら特例を使いません）</p>
-      </div>
-      <div class="assume" id="landUse">
-        <label for="landArea">土地の面積</label>
-        <span class="asset-in"><input type="number" id="landArea" value="200" min="0" step="10" inputmode="numeric"><span class="unit">㎡</span></span>
-        <p class="assume-note" id="landAreaNote">330㎡までの部分が80%減額の対象です</p>
-        <div class="land-checks">
-          <label class="land-check"><input type="checkbox" id="landFirst" checked><span id="landFirstLabel">一次相続で適用する</span></label>
-          <label class="land-check"><input type="checkbox" id="landSecond"><span>二次相続で適用する（同居していた子、または持ち家のない子が相続する場合）</span></label>
+        <div class="card" id="landCard">
+          <h2 class="sec-title">
+            自宅の土地
+            <span
+              class="help"
+              tabindex="0"
+              aria-label="小規模宅地等の特例とは"
+              aria-describedby="landTip"
+              >？<span class="tipbox" id="landTip" role="tooltip"
+                >小規模宅地等の特例＝亡くなった人の自宅の土地について、330㎡までの部分の評価額を80%減額できる制度（特定居住用宅地等）。配偶者が取得する場合は、要件を問わず使えます。子が取得する場合は、①<strong>同居していた子</strong>か、②<strong>持ち家のない子</strong>（いわゆる家なき子）のどちらかにあてはまることが必要です。②は「亡くなった人に配偶者がいないこと」が前提なので、<strong>一次相続では使えず、二次相続でだけ使えます</strong>。それぞれの細かい要件は下の注記を参照してください。</span
+              ></span
+            >
+          </h2>
+          <div class="assume-row">
+            <div class="assume">
+              <label for="landValue">自宅の土地の評価額</label>
+              <span class="asset-in"
+                ><input
+                  type="number"
+                  id="landValue"
+                  value="0"
+                  min="0"
+                  step="100"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+              <span class="oku" id="okuLand"></span>
+              <p class="assume-note">
+                上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち自宅の土地にあたる額を入力してください（0なら特例を使いません）
+              </p>
+            </div>
+            <div class="assume" id="landUse">
+              <label for="landArea">土地の面積</label>
+              <span class="asset-in"
+                ><input
+                  type="number"
+                  id="landArea"
+                  value="200"
+                  min="0"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">㎡</span></span
+              >
+              <p class="assume-note" id="landAreaNote">
+                330㎡までの部分が80%減額の対象です
+              </p>
+              <div class="land-checks">
+                <label class="land-check"
+                  ><input type="checkbox" id="landFirst" checked /><span
+                    id="landFirstLabel"
+                    >一次相続で適用する</span
+                  ></label
+                >
+                <label class="land-check"
+                  ><input type="checkbox" id="landSecond" /><span
+                    >二次相続で適用する（同居していた子、または持ち家のない子が相続する場合）</span
+                  ></label
+                >
+              </div>
+              <p class="assume-note" id="landNote"></p>
+            </div>
+          </div>
         </div>
-        <p class="assume-note" id="landNote"></p>
-      </div>
-    </div>
-  </div>
 
-  <!-- 生命保険金の非課税枠。自宅の土地と同じく課税価格を下げる仕組みだが、
+        <!-- 生命保険金の非課税枠。自宅の土地と同じく課税価格を下げる仕組みだが、
        枠が法定相続人の数で決まる分、二次相続では配偶者が減って枠も縮む。
        扱うのは自分の保険金だけ（配偶者自身の保険は別の契約の話になるため） -->
-  <div class="card" id="insCard">
-    <h2 class="sec-title">生命保険
-      <span class="help" tabindex="0" aria-label="生命保険金の非課税枠とは" aria-describedby="insTip">？<span class="tipbox" id="insTip" role="tooltip">死亡保険金は受取人固有の財産ですが、相続税では「みなし相続財産」として課税対象になります。ただし「500万円 × 法定相続人の数」までは非課税です。法定相続人の数で枠が決まるため、配偶者がいなくなる二次相続では枠も小さくなります。</span></span>
-    </h2>
-    <div class="assume-row">
-      <div class="assume">
-        <label for="insurance">自分の死亡保険金</label>
-        <span class="asset-in"><input type="number" id="insurance" value="0" min="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
-        <span class="oku" id="okuIns"></span>
-        <p class="assume-note">上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち死亡保険金にあたる額を入力してください（0なら非課税枠を使いません）</p>
-      </div>
-      <div class="assume">
-        <p class="ins-limit" id="insLimit"></p>
-        <p class="assume-note" id="insNote"></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 二次相続の前提 -->
-  <div class="card" id="secondCard">
-    <h2 class="sec-title">二次相続の前提</h2>
-    <div class="assume-row">
-      <div class="assume">
-        <label for="spDelta">二次相続までの配偶者の資産増減</label>
-        <span class="asset-in"><input type="number" id="spDelta" value="0" step="100" inputmode="numeric"><span class="unit">万円</span></span>
-        <span class="oku" id="okuDelta"></span>
-        <p class="assume-note">生活費の取り崩しは −（マイナス）、貯蓄の増加は ＋ で入力</p>
-      </div>
-      <div class="assume" id="yearsAssume">
-        <div class="assume-label-row">
-          <span class="term">相次相続</span>
-          <span class="help" tabindex="0" aria-label="相次相続とは" aria-describedby="soujiTip">？<span class="tipbox" id="soujiTip" role="tooltip">相次相続（そうじそうぞく）＝一次相続から10年以内に二次相続が起きて、相続が相次ぐこと。この場合「相次相続控除」により、一次相続で配偶者が納めた相続税の一部を二次相続の税額から差し引けます。控除できる額は経過1年ごとに10%ずつ減ります。</span></span>
-          <label for="yearsGap">一次相続から二次相続までの年数</label>
-        </div>
-        <div class="year-row">
-          <input type="range" id="yearsGap" min="0" max="10" step="1" value="10">
-          <span class="yval" id="yearsVal">10年以上</span>
-        </div>
-        <p class="assume-note" id="yearsNote">10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 遺産分割スライダー -->
-  <div class="card" id="splitCard">
-    <h2 class="sec-title">一次相続の遺産分割</h2>
-    <div class="slider-head">
-      <label for="spShare">配偶者の取得割合</label>
-      <span class="slider-head-actions">
-        <button class="reset-link" id="resetBtn">法定相続分に戻す</button>
-        <span class="help" tabindex="0" aria-label="法定相続分とは" aria-describedby="statutoryTip">？<span class="tipbox" id="statutoryTip" role="tooltip">法定相続分＝民法で定められた遺産分割の割合。配偶者と子が相続人の場合、配偶者が2分の1、子は全体で2分の1（子が複数いる場合は、その2分の1をさらに人数で均等に分けます）。実際の遺産分割は、相続人全員の合意などによって異なります。</span></span>
-      </span>
-    </div>
-    <div class="srow">
-      <span class="sval" id="spShareVal" aria-hidden="true">50%</span>
-      <div class="slider-wrap">
-        <div class="slider-combo">
-          <div class="split-bar" aria-hidden="true">
-            <div class="seg sp-seg" id="segSp"></div>
-            <div class="seg ch-seg" id="segCh"></div>
+        <div class="card" id="insCard">
+          <h2 class="sec-title">
+            生命保険
+            <span
+              class="help"
+              tabindex="0"
+              aria-label="生命保険金の非課税枠とは"
+              aria-describedby="insTip"
+              >？<span class="tipbox" id="insTip" role="tooltip"
+                >死亡保険金は受取人固有の財産ですが、相続税では「みなし相続財産」として課税対象になります。ただし「500万円
+                ×
+                法定相続人の数」までは非課税です。法定相続人の数で枠が決まるため、配偶者がいなくなる二次相続では枠も小さくなります。</span
+              ></span
+            >
+          </h2>
+          <div class="assume-row">
+            <div class="assume">
+              <label for="insurance">自分の死亡保険金</label>
+              <span class="asset-in"
+                ><input
+                  type="number"
+                  id="insurance"
+                  value="0"
+                  min="0"
+                  step="100"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+              <span class="oku" id="okuIns"></span>
+              <p class="assume-note">
+                上の「自分の資産額」に<strong>含めた</strong>うえで、そのうち死亡保険金にあたる額を入力してください（0なら非課税枠を使いません）
+              </p>
+            </div>
+            <div class="assume">
+              <p class="ins-limit" id="insLimit"></p>
+              <p class="assume-note" id="insNote"></p>
+            </div>
           </div>
-          <input type="range" id="spShare" min="0" max="100" step="1" value="50">
         </div>
-        <div class="split-legend">
-          <span id="legendSp">配偶者 3,500万円</span>
-          <span id="legendCh">子 3,500万円</span>
+
+        <!-- 二次相続の前提 -->
+        <div class="card" id="secondCard">
+          <h2 class="sec-title">二次相続の前提</h2>
+          <div class="assume-row">
+            <div class="assume">
+              <label for="spDelta">二次相続までの配偶者の資産増減</label>
+              <span class="asset-in"
+                ><input
+                  type="number"
+                  id="spDelta"
+                  value="0"
+                  step="100"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
+              <span class="oku" id="okuDelta"></span>
+              <p class="assume-note">
+                生活費の取り崩しは −（マイナス）、貯蓄の増加は ＋ で入力
+              </p>
+            </div>
+            <div class="assume" id="yearsAssume">
+              <div class="assume-label-row">
+                <span class="term">相次相続</span>
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="相次相続とは"
+                  aria-describedby="soujiTip"
+                  >？<span class="tipbox" id="soujiTip" role="tooltip"
+                    >相次相続（そうじそうぞく）＝一次相続から10年以内に二次相続が起きて、相続が相次ぐこと。この場合「相次相続控除」により、一次相続で配偶者が納めた相続税の一部を二次相続の税額から差し引けます。控除できる額は経過1年ごとに10%ずつ減ります。</span
+                  ></span
+                >
+                <label for="yearsGap">一次相続から二次相続までの年数</label>
+              </div>
+              <div class="year-row">
+                <input
+                  type="range"
+                  id="yearsGap"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="10"
+                />
+                <span class="yval" id="yearsVal">10年以上</span>
+              </div>
+              <p class="assume-note" id="yearsNote">
+                10年未満の場合、相次相続控除（一次で配偶者が納めた税額の一部を二次で控除）を適用します
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    <div class="best-hint" id="bestHint"></div>
-  </div>
 
-  <!-- 結果 -->
-  <div class="card">
-    <h2 class="sec-title">相続税の試算結果</h2>
-    <div class="results">
-      <div class="res-box first">
-        <h3><span class="badge">一次</span>自分が亡くなったとき</h3>
-        <div id="firstDetail"></div>
-      </div>
-      <div class="res-box second" id="secondBox">
-        <h3><span class="badge">二次</span>配偶者が亡くなったとき</h3>
-        <div id="secondDetail"></div>
-      </div>
-    </div>
-    <div class="grand" aria-live="polite">
-      <span class="glabel" id="grandLabel">一次＋二次の相続税合計</span>
-      <span class="gval" id="grandVal">0<small>万円</small></span>
-    </div>
-    <div class="grand keep" aria-live="polite">
-      <span class="glabel" id="keepLabel">最終的に子に残せる金額（総資産−税額合計）</span>
-      <span class="gval" id="keepVal">0<small>万円</small></span>
-    </div>
-  </div>
+        <!-- 遺産分割スライダー -->
+        <div class="card" id="splitCard">
+          <h2 class="sec-title">一次相続の遺産分割</h2>
+          <div class="slider-head">
+            <label for="spShare">配偶者の取得割合</label>
+            <span class="slider-head-actions">
+              <button class="reset-link" id="resetBtn">法定相続分に戻す</button>
+              <span
+                class="help"
+                tabindex="0"
+                aria-label="法定相続分とは"
+                aria-describedby="statutoryTip"
+                >？<span class="tipbox" id="statutoryTip" role="tooltip"
+                  >法定相続分＝民法で定められた遺産分割の割合。配偶者と子が相続人の場合、配偶者が2分の1、子は全体で2分の1（子が複数いる場合は、その2分の1をさらに人数で均等に分けます）。実際の遺産分割は、相続人全員の合意などによって異なります。</span
+                ></span
+              >
+            </span>
+          </div>
+          <div class="srow">
+            <span class="sval" id="spShareVal" aria-hidden="true">50%</span>
+            <div class="slider-wrap">
+              <div class="slider-combo">
+                <div class="split-bar" aria-hidden="true">
+                  <div class="seg sp-seg" id="segSp"></div>
+                  <div class="seg ch-seg" id="segCh"></div>
+                </div>
+                <input
+                  type="range"
+                  id="spShare"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                />
+              </div>
+              <div class="split-legend">
+                <span id="legendSp">配偶者 3,500万円</span>
+                <span id="legendCh">子 3,500万円</span>
+              </div>
+            </div>
+          </div>
+          <div class="best-hint" id="bestHint"></div>
+        </div>
 
-  <!-- グラフ -->
-  <div class="card" id="chartCard">
-    <h2 class="sec-title">配偶者の取得割合と税額の関係</h2>
-    <div class="chart-wrap"><canvas id="chart" role="img" aria-label="配偶者の取得割合（0〜100％）に応じた一次相続・二次相続・合計の税額を示す折れ線グラフ"></canvas></div>
-  </div>
+        <!-- 結果 -->
+        <div class="card">
+          <h2 class="sec-title">相続税の試算結果</h2>
+          <div class="results">
+            <div class="res-box first">
+              <h3><span class="badge">一次</span>自分が亡くなったとき</h3>
+              <div id="firstDetail"></div>
+            </div>
+            <div class="res-box second" id="secondBox">
+              <h3><span class="badge">二次</span>配偶者が亡くなったとき</h3>
+              <div id="secondDetail"></div>
+            </div>
+          </div>
+          <div class="grand" aria-live="polite">
+            <span class="glabel" id="grandLabel">一次＋二次の相続税合計</span>
+            <span class="gval" id="grandVal">0<small>万円</small></span>
+          </div>
+          <div class="grand keep" aria-live="polite">
+            <span class="glabel" id="keepLabel"
+              >最終的に子に残せる金額（総資産−税額合計）</span
+            >
+            <span class="gval" id="keepVal">0<small>万円</small></span>
+          </div>
+        </div>
 
-  <footer class="site-foot">
-    <p class="foot-note">
-      ・ <a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4155.htm' target='_blank' rel='noopener noreferrer'>相続税の速算表（平成27年1月1日以後）</a>に基づく簡易試算です。<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4152.htm' target='_blank' rel='noopener noreferrer'>基礎控除</a>は「3,000万円＋600万円×法定相続人の数」。<br>
-      ・ <a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4158.htm' target='_blank' rel='noopener noreferrer'>配偶者の税額軽減</a>（1億6,000万円または法定相続分のいずれか大きい額まで非課税）を適用しています。<br>
-      ・ 二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br>
-      ・ <a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm' target='_blank' rel='noopener noreferrer'>相次相続控除</a>は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br>
-      ・ <a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm' target='_blank' rel='noopener noreferrer'>小規模宅地等の特例</a>は、特定居住用宅地等（330㎡までの部分を80%減額）のみを扱います。自宅の土地は配偶者が取得する前提とし、二次相続では一次相続で配偶者が取得した割合分だけを特例の対象としています。事業用・貸付用の宅地や、他の宅地との併用の限度は考慮していません。<br>
-      ・ 子が自宅の土地を取得して特例を使うには、<strong>同居していた子</strong>なら「相続開始の直前から申告期限まで住み続け、宅地も持ち続けること」、<strong>持ち家のない子</strong>（家なき子）なら「亡くなった人に配偶者も同居していた相続人もおらず、相続開始前3年以内に自分・配偶者・三親等内の親族などが所有する家に住んでいないこと、今住んでいる家を過去に所有していないこと、宅地を申告期限まで持ち続けること」が必要です。<br>
-      ・ このツールは特例を使えるかどうかの判定は行わず、チェックの指定どおりに計算します。要件の詳細は国税庁<a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm' target='_blank' rel='noopener noreferrer'>「No.4124 相続した事業の用や居住の用の宅地等の価額の特例」</a>をご確認ください。<br>
-      ・ <a href='https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm' target='_blank' rel='noopener noreferrer'>生命保険金の非課税枠</a>（500万円×法定相続人の数）は、一次相続でのみ適用します。配偶者自身が加入する保険は扱いません。また死亡保険金も、他の財産と同じ割合で取得する前提で按分しています。<br>
-      ・ 債務・葬式費用、未成年者・障害者控除などは考慮していません。<br>
-      ・ 入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
-    </p>
-    <p class="foot-disclaimer">・ 試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。</p>
-    <p class="foot-privacy">・ 入力内容やアクセス解析の扱いについては<a href="../privacy/">プライバシーポリシー</a>をご覧ください。</p>
-  </footer>
-  <nav data-tool-nav="../"></nav>
-  </main>
-</div>
+        <!-- グラフ -->
+        <div class="card" id="chartCard">
+          <h2 class="sec-title">配偶者の取得割合と税額の関係</h2>
+          <div class="chart-wrap">
+            <canvas
+              id="chart"
+              role="img"
+              aria-label="配偶者の取得割合（0〜100％）に応じた一次相続・二次相続・合計の税額を示す折れ線グラフ"
+            ></canvas>
+          </div>
+        </div>
 
-<!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
+        <footer class="site-foot">
+          <p class="foot-note">
+            ・
+            <a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4155.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >相続税の速算表（平成27年1月1日以後）</a
+            >に基づく簡易試算です。<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4152.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >基礎控除</a
+            >は「3,000万円＋600万円×法定相続人の数」。<br />
+            ・
+            <a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4158.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >配偶者の税額軽減</a
+            >（1億6,000万円または法定相続分のいずれか大きい額まで非課税）を適用しています。<br />
+            ・
+            二次相続の遺産額は「配偶者の固有資産＋一次相続での取得額−一次相続で納めた税額±資産増減」とし、子が均等に相続する前提です。<br />
+            ・
+            <a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4168.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >相次相続控除</a
+            >は入力した経過年数（1年未満切捨て）に基づく簡易計算です。10年以上の場合は適用されません。<br />
+            ・
+            <a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >小規模宅地等の特例</a
+            >は、特定居住用宅地等（330㎡までの部分を80%減額）のみを扱います。自宅の土地は配偶者が取得する前提とし、二次相続では一次相続で配偶者が取得した割合分だけを特例の対象としています。事業用・貸付用の宅地や、他の宅地との併用の限度は考慮していません。<br />
+            ・
+            子が自宅の土地を取得して特例を使うには、<strong>同居していた子</strong>なら「相続開始の直前から申告期限まで住み続け、宅地も持ち続けること」、<strong>持ち家のない子</strong>（家なき子）なら「亡くなった人に配偶者も同居していた相続人もおらず、相続開始前3年以内に自分・配偶者・三親等内の親族などが所有する家に住んでいないこと、今住んでいる家を過去に所有していないこと、宅地を申告期限まで持ち続けること」が必要です。<br />
+            ・
+            このツールは特例を使えるかどうかの判定は行わず、チェックの指定どおりに計算します。要件の詳細は国税庁<a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4124.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >「No.4124 相続した事業の用や居住の用の宅地等の価額の特例」</a
+            >をご確認ください。<br />
+            ・
+            <a
+              href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4114.htm"
+              target="_blank"
+              rel="noopener noreferrer"
+              >生命保険金の非課税枠</a
+            >（500万円×法定相続人の数）は、一次相続でのみ適用します。配偶者自身が加入する保険は扱いません。また死亡保険金も、他の財産と同じ割合で取得する前提で按分しています。<br />
+            ・ 債務・葬式費用、未成年者・障害者控除などは考慮していません。<br />
+            ・
+            入力内容はこのブラウザに自動保存されます。「試算結果を共有」を押すと、同じ内容を再現できるURLがコピーされます。
+          </p>
+          <p class="foot-disclaimer">
+            ・
+            試算は概算です。重要な判断の際は、公的機関の情報をご確認いただくか、専門家にご相談ください。
+          </p>
+          <p class="foot-privacy">
+            ・ 入力内容やアクセス解析の扱いについては<a href="../privacy/"
+              >プライバシーポリシー</a
+            >をご覧ください。
+          </p>
+        </footer>
+        <nav data-tool-nav="../"></nav>
+      </main>
+    </div>
+
+    <!-- グラフと共有まわりは最初の表示に要らないので、本文を描き終えてから読む
      （<head> で同期に読むと、200KB超の Chart.js が届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
-<script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
-<script src="../common/chart-print.js?v=20260815b"></script>
-<script src="../common/qrcode.js?v=20260805a"></script>
-<script src="../common/share.js?v=20260823a"></script>
-<script src="../common/tool-nav.js?v=20260814a"></script>
-<script src="./js/inheritance-core.js?v=20260814e"></script>
-<script src="./js/inheritance.js?v=20260825b"></script>
-</body>
+    <script src="../common/vendor/chart.umd.min.js?v=4.4.1"></script>
+    <script src="../common/chart-print.js?v=20260815b"></script>
+    <script src="../common/qrcode.js?v=20260805a"></script>
+    <script src="../common/share.js?v=20260823a"></script>
+    <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="./js/inheritance-core.js?v=20260814e"></script>
+    <script src="./js/inheritance.js?v=20260825b"></script>
+  </body>
 </html>

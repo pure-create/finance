@@ -24,18 +24,39 @@
 
 /* 余白の初期化。ブラウザが h2 や p に付ける既定の余白を消して、
    カードの中の間隔をこちらで決められるようにする */
-*,*::before,*::after{margin:0;padding:0}
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+}
 
 /* 画面の縁とカードの間の余白。min-height は、内容が短いページでも
    背景色が画面の下まで届くようにするため */
-body{padding:16px;min-height:100vh}
+body {
+  padding: 16px;
+  min-height: 100vh;
+}
 
 /* 本文の幅。3ツールで揃えてあるので、ツールを行き来しても見出しの位置が動かない */
-.wrap{max-width:840px;margin:0 auto}
+.wrap {
+  max-width: 840px;
+  margin: 0 auto;
+}
 
 /* 白いカード。この3ページの見た目の基本単位 */
-.card{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
 
 /* 「？」の印に触れたとき・焦点が当たったとき。印そのものの大きさは
    ページによって違う（年金だけ15px）ので、色の変化だけを共通にしている */
-.help:hover,.help:focus-visible{border-color:var(--accent);color:var(--accent)}
+.help:hover,
+.help:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}

@@ -1,93 +1,253 @@
 /* 地の色・文字・枠線などは common/theme.css の共通トークンを使う。
    ここで持つのは受給開始年齢ごとの識別色だけ。本文で「65歳開始（緑色）」と
    呼んでいるので、ダークでも色味は変えず明度だけ上げる。 */
-:root{
-  --sc-60:#2563eb; --sc-60-bg:#eff6ff;
-  --sc-65:#059669; --sc-65-bg:#ecfdf5;
-  --sc-70:#d97706; --sc-70-bg:#fffbeb;
-  --sc-75:#dc2626; --sc-75-bg:#fef2f2;
-  --switch-thumb:#ffffff; /* 色のついた面に載るのでテーマで変えない */
+:root {
+  --sc-60: #2563eb;
+  --sc-60-bg: #eff6ff;
+  --sc-65: #059669;
+  --sc-65-bg: #ecfdf5;
+  --sc-70: #d97706;
+  --sc-70-bg: #fffbeb;
+  --sc-75: #dc2626;
+  --sc-75-bg: #fef2f2;
+  --switch-thumb: #ffffff; /* 色のついた面に載るのでテーマで変えない */
 }
 /* ダーク側。theme.js が data-theme に必ず light / dark を書き込むので、ここ1箇所でよい */
-:root[data-theme="dark"]{
-  --sc-60:#60a5fa; --sc-60-bg:#152238;
-  --sc-65:#34d399; --sc-65-bg:#0f2a20;
-  --sc-70:#fbbf24; --sc-70-bg:#2e2408;
-  --sc-75:#f87171; --sc-75-bg:#301617;
+:root[data-theme="dark"] {
+  --sc-60: #60a5fa;
+  --sc-60-bg: #152238;
+  --sc-65: #34d399;
+  --sc-65-bg: #0f2a20;
+  --sc-70: #fbbf24;
+  --sc-70-bg: #2e2408;
+  --sc-75: #f87171;
+  --sc-75-bg: #301617;
 }
 
 /* 余白の初期化・body の余白・.wrap の幅・.card の見た目・「？」の色の変化は、
    3ツールで同じなので common/card-page.css に移した。
    このファイルで上書きすれば、これまでどおりページ側が勝つ */
-.page-head h1{font-size:17px;letter-spacing:-.02em}
-.page-head .sub{font-size:11px}
+.page-head h1 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+.page-head .sub {
+  font-size: 11px;
+}
 
 /* 共有ボタン・QRコードの基本形は common/site.css にある。
    ここではこのページの文字サイズだけを調整する */
-.share-btn{font-size:11px;font-weight:600;min-height:0;padding:5px 10px;white-space:nowrap}
-@media screen and (max-width:600px){
-  .share-btn{white-space:normal}
+.share-btn {
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 0;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+@media screen and (max-width: 600px) {
+  .share-btn {
+    white-space: normal;
+  }
 }
 
 /* Controls */
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media screen and (max-width:540px){.controls{grid-template-columns:1fr}}
-.ctrl label{font-size:11px;font-weight:600;color:var(--text-sub);display:block;margin-bottom:7px}
-.ctrl-head{display:flex;align-items:center;gap:14px;margin-bottom:7px}
-.ctrl-head label{margin-bottom:0}
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media screen and (max-width: 540px) {
+  .controls {
+    grid-template-columns: 1fr;
+  }
+}
+.ctrl label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sub);
+  display: block;
+  margin-bottom: 7px;
+}
+.ctrl-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 7px;
+}
+.ctrl-head label {
+  margin-bottom: 0;
+}
 
 /* Help tooltip icon */
-.help{
-  position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:15px;height:15px;border-radius:50%;border:1px solid var(--axis);background:var(--surface);
-  color:var(--muted);font-size:10px;font-weight:700;cursor:help;flex-shrink:0;vertical-align:middle;margin-left:5px;
+.help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--axis);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-left: 5px;
 }
-.help .tipbox{width:260px;left:-12px;right:auto;line-height:1.7;padding:10px 12px;pointer-events:none}
-.help .tipbox::before{left:14px;right:auto}
-.srow{display:flex;align-items:center;gap:10px}
-.srow input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
-.sval{font-size:22px;font-weight:700;color:var(--accent);min-width:56px;text-align:right;font-variant-numeric:tabular-nums}
-.ssub{font-size:10px;color:var(--muted);margin-top:4px}
+.help .tipbox {
+  width: 260px;
+  left: -12px;
+  right: auto;
+  line-height: 1.7;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+.help .tipbox::before {
+  left: 14px;
+  right: auto;
+}
+.srow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.srow input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sval {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ssub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
 
 /* Tax toggle (inline, next to 想定利回り) */
-.ctrl-head label.tax-inline{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap}
-.switch{position:relative;width:26px;height:15px;flex-shrink:0}
-.switch input{position:absolute;opacity:0;width:0;height:0}
-.switch-track{position:absolute;inset:0;background:var(--axis);border-radius:8px;transition:background .2s}
-.switch input:checked + .switch-track{background:var(--accent)}
-.switch input:focus-visible + .switch-track{outline:2px solid var(--accent);outline-offset:2px}
-.switch-thumb{position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:var(--switch-thumb);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
-.switch input:checked + .switch-track .switch-thumb{transform:translateX(11px)}
+.ctrl-head label.tax-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.switch {
+  position: relative;
+  width: 26px;
+  height: 15px;
+  flex-shrink: 0;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--axis);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.switch input:checked + .switch-track {
+  background: var(--accent);
+}
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--switch-thumb);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(11px);
+}
 
 /* Chart */
-.chart-wrap{position:relative;height:370px}
+.chart-wrap {
+  position: relative;
+  height: 370px;
+}
 
 /* Timeline */
 /* カードの見出し。h2 の既定の字の大きさと上下余白は打ち消して、見た目は元のまま保つ */
-.sec-title{font-size:13px;font-weight:700;color:var(--text-sub);margin:0 0 12px}
-.timeline{display:flex;flex-direction:column;gap:6px}
-.period{
-  display:flex;align-items:center;gap:0;
-  border-radius:8px;overflow:hidden;
-  border-left:4px solid;
+.sec-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin: 0 0 12px;
 }
-.period .age-col{
-  font-size:12px;color:var(--text-sub);
-  padding:9px 12px;min-width:190px;flex-shrink:0;
-  border-right:1px solid var(--border);
-  background:var(--surface);
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.period .winner-col{
-  font-size:13px;font-weight:700;
-  padding:9px 14px;
+.period {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border-left: 4px solid;
 }
-@media screen and (max-width:480px){
-  .period{flex-direction:column;align-items:flex-start}
-  .period .age-col{border-right:none;border-bottom:1px solid var(--border);min-width:0;width:100%}
+.period .age-col {
+  font-size: 12px;
+  color: var(--text-sub);
+  padding: 9px 12px;
+  min-width: 190px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+.period .winner-col {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+}
+@media screen and (max-width: 480px) {
+  .period {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .period .age-col {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 /* 印刷の直前にグラフを紙幅・紙の高さで描き直させるための指定（css/print.css と同じ値）。
    @media print は印刷レイアウトが確定してからしか効かず、描き直しに間に合わない */
-html.printing body{padding:0}
-html.printing .chart-wrap{height:280px}
-html.printing .help,html.printing .switch{display:none !important}
+html.printing body {
+  padding: 0;
+}
+html.printing .chart-wrap {
+  height: 280px;
+}
+html.printing .help,
+html.printing .switch {
+  display: none !important;
+}
