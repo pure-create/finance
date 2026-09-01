@@ -71,8 +71,8 @@
       ratio = target / power;
     return (ratio <= 1 ? 1 : ratio <= 2 ? 2 : ratio <= 5 ? 5 : 10) * power;
   }
-  const taxMinimumMarker = {
-    id: "taxMinimumMarker",
+  const optimalValueMarker = {
+    id: "optimalValueMarker",
     afterDatasetsDraw(chart, args, opts) {
       const value = Number(opts && opts.value);
       if (
@@ -101,13 +101,17 @@
       ctx.font = "700 11px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      const label = "税負担最小 " + fmt(value) + "万円/人",
-        cx = Math.min(Math.max(px, left + 62), right - 62);
+      const label = (opts.label || "") + " " + fmt(value) + "万円/人",
+        halfLabelWidth = ctx.measureText(label).width / 2,
+        cx = Math.min(
+          Math.max(px, left + halfLabelWidth),
+          right - halfLabelWidth,
+        );
       ctx.fillText(label, cx, top + 5);
       ctx.restore();
     },
   };
-  function lineChart(id, labels, datasets, yTitle, taxMinimum) {
+  function lineChart(id, labels, datasets, yTitle, marker) {
     const ctx = $(id),
       css = getComputedStyle(document.documentElement),
       text = css.getPropertyValue("--text").trim(),
@@ -136,7 +140,7 @@
     charts[id] = new Chart(ctx, {
       type: "line",
       data: { datasets: series },
-      plugins: [taxMinimumMarker],
+      plugins: [optimalValueMarker],
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -165,7 +169,7 @@
             borderColor: Theme.color("--tooltip-border"),
             borderWidth: 1,
           },
-          taxMinimumMarker: { value: taxMinimum },
+          optimalValueMarker: marker,
         },
         scales: {
           x: {
@@ -378,7 +382,7 @@
         ),
       ],
       "万円",
-      bestTax.annual,
+      { value: bestKeep.annual, label: "最終手残り最大" },
     );
     lineChart(
       "burdenChart",
@@ -410,7 +414,7 @@
         ),
       ],
       "万円",
-      bestTax.annual,
+      { value: bestTax.annual, label: "税負担最小" },
     );
     $("bestAnnualTile").textContent = fmt(bestKeep.annual) + "万円/人";
     $("giftTaxTile").textContent = yen(bestKeep.giftTax);
