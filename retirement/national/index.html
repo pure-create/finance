@@ -73,11 +73,11 @@
     <script src="../../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../../common/site.css?v=20260823b" />
-    <link rel="stylesheet" type="text/css" href="../css/main.css?v=20260825b" />
+    <link rel="stylesheet" type="text/css" href="../css/main.css?v=20260903c" />
     <link
       rel="stylesheet"
       type="text/css"
-      href="../css/print.css?v=20260825b"
+      href="../css/print.css?v=20260903a"
       media="print"
     />
     <title>退職手当計算（国家公務員）</title>
@@ -93,7 +93,7 @@
       <!-- 退職手当の下層なので、トップページまでは2つ上 -->
       <a class="home-link" href="../../">トップページ</a>
       <!-- 制度データの時点。支給率・調整月額・所得税速算表・定年を直したら、ここも更新すること -->
-      <span class="data-asof">制度データ: 2026年8月時点</span>
+      <span class="data-asof">制度データ: 2026年9月時点</span>
       <div class="page-tools">
         <div class="share-wrap">
           <button
@@ -253,11 +253,73 @@
       </div>
       <div class="section-header">
         <h2>計算の結果</h2>
-        <span class="result-disclaimer"
-          >※概算による試算結果です。実際の退職手当・税額等とは異なる場合があります。</span
-        >
+        <div class="result-help">
+          <span class="result-disclaimer">※概算</span>
+          <span class="result-help-label">税金の計算</span>
+          <div class="question" aria-label="税金の計算について">？</div>
+          <div class="explain">
+            課税される所得金額は、（退職手当 − 退職所得控除額）× 2分の1
+            （1,000円未満切り捨て）です。所得税は次の速算表で計算し、所得税額の2.1%の復興特別所得税を加えます。住民税は課税される所得金額の10%、手取額は退職手当から所得税と住民税を引いた額です。<br />
+            <table class="tax-calc-table">
+              <tr>
+                <th colspan="3">課税される所得金額</th>
+                <th>税率</th>
+                <th>控除額</th>
+              </tr>
+              <tr>
+                <td class="tax-amount">1,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">1,949,000円</td>
+                <td class="tax-rate">5%</td>
+                <td class="tax-deduction">0円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">1,950,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">3,299,000円</td>
+                <td class="tax-rate">10%</td>
+                <td class="tax-deduction">97,500円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">3,300,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">6,949,000円</td>
+                <td class="tax-rate">20%</td>
+                <td class="tax-deduction">427,500円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">6,950,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">8,999,000円</td>
+                <td class="tax-rate">23%</td>
+                <td class="tax-deduction">636,000円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">9,000,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">17,999,000円</td>
+                <td class="tax-rate">33%</td>
+                <td class="tax-deduction">1,536,000円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">18,000,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">39,999,000円</td>
+                <td class="tax-rate">40%</td>
+                <td class="tax-deduction">2,796,000円</td>
+              </tr>
+              <tr>
+                <td class="tax-amount">40,000,000円</td>
+                <td class="tax-range-separator">～</td>
+                <td class="tax-amount">上限なし</td>
+                <td class="tax-rate">45%</td>
+                <td class="tax-deduction">4,796,000円</td>
+              </tr>
+            </table>
+          </div>
+        </div>
       </div>
-      <div id="msg">
+      <div id="msg" style="display: none">
         <span id="msg_birth" class="msg_input"
           >・生年（生まれた年度）を選択してください。</span
         ><br />
@@ -337,86 +399,9 @@
                   各行をクリックすると計算式を表示します。<br />
                 </div>
               </th>
-              <th class="own tax">
-                所得税
-                <div class="question" aria-label="自己都合の所得税について">
-                  ？
-                </div>
-                <div class="explain">
-                  所得税計算式:<br />
-                  <span style="text-decoration: underline"
-                    >(退職手当 - 退職所得控除額) ×
-                    2分の1(1000円未満切り捨て)</span
-                  >
-                  × 所得税率 - 控除額<br />
-                  　　　　　課税される所得金額<br />
-                  所得税率は課税される所得金額に応じて税率が変わります。<br />
-                  所得税の速算表<br />
-                  <table>
-                    <tr>
-                      <th>課税される所得金額</th>
-                      <th>税率</th>
-                      <th>控除額</th>
-                    </tr>
-                    <tr>
-                      <td>1,000円～1,949,000円</td>
-                      <td>5%</td>
-                      <td>0円</td>
-                    </tr>
-                    <tr>
-                      <td>1,950,000円～3,299,000円</td>
-                      <td>10%</td>
-                      <td>97,500円</td>
-                    </tr>
-                    <tr>
-                      <td>3,300,000円～6,949,000円</td>
-                      <td>20%</td>
-                      <td>427,500円</td>
-                    </tr>
-                    <tr>
-                      <td>6,950,000円～8,999,000円</td>
-                      <td>23%</td>
-                      <td>636,000円</td>
-                    </tr>
-                    <tr>
-                      <td>9,000,000円～17,999,000円</td>
-                      <td>33%</td>
-                      <td>1,536,000円</td>
-                    </tr>
-                    <tr>
-                      <td>18,000,000円～39,999,000円</td>
-                      <td>40%</td>
-                      <td>2,796,000円</td>
-                    </tr>
-                    <tr>
-                      <td>40,000,000円～</td>
-                      <td>45%</td>
-                      <td>4,796,000円</td>
-                    </tr>
-                  </table>
-                  また、所得税額の2.1%の復興特別所得税が課税されます。<br />
-                  ここでは復興特別所得税を合算した額を表示しています。
-                </div>
-              </th>
-              <th class="own tax">
-                住民税
-                <div class="question" aria-label="自己都合の住民税について">
-                  ？
-                </div>
-                <div class="explain">
-                  住民税は、課税される所得金額（(退職手当 - 退職所得控除額) ×
-                  2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
-                </div>
-              </th>
-              <th class="own price">
-                手取額
-                <div class="question" aria-label="自己都合の手取額について">
-                  ？
-                </div>
-                <div class="explain">
-                  所得税と住民税を差し引いた金額です。<br />
-                </div>
-              </th>
+              <th class="own tax">所得税</th>
+              <th class="own tax">住民税</th>
+              <th class="own price">手取額</th>
               <th class="mandatory price">
                 退職手当
                 <div class="question" aria-label="定年・勧奨の退職手当について">
@@ -428,86 +413,9 @@
                   各行をクリックすると計算式を表示します。<br />
                 </div>
               </th>
-              <th class="mandatory tax">
-                所得税
-                <div class="question" aria-label="定年・勧奨の所得税について">
-                  ？
-                </div>
-                <div class="explain">
-                  所得税計算式:<br />
-                  <span style="text-decoration: underline"
-                    >(退職手当 - 退職所得控除額) ×
-                    2分の1(1000円未満切り捨て)</span
-                  >
-                  × 所得税率 - 控除額<br />
-                  　　　　　課税される所得金額<br />
-                  所得税率は課税される所得金額に応じて税率が変わります。<br />
-                  所得税の速算表<br />
-                  <table>
-                    <tr>
-                      <th>課税される所得金額</th>
-                      <th>税率</th>
-                      <th>控除額</th>
-                    </tr>
-                    <tr>
-                      <td>1,000円～1,949,000円</td>
-                      <td>5%</td>
-                      <td>0円</td>
-                    </tr>
-                    <tr>
-                      <td>1,950,000円～3,299,000円</td>
-                      <td>10%</td>
-                      <td>97,500円</td>
-                    </tr>
-                    <tr>
-                      <td>3,300,000円～6,949,000円</td>
-                      <td>20%</td>
-                      <td>427,500円</td>
-                    </tr>
-                    <tr>
-                      <td>6,950,000円～8,999,000円</td>
-                      <td>23%</td>
-                      <td>636,000円</td>
-                    </tr>
-                    <tr>
-                      <td>9,000,000円～17,999,000円</td>
-                      <td>33%</td>
-                      <td>1,536,000円</td>
-                    </tr>
-                    <tr>
-                      <td>18,000,000円～39,999,000円</td>
-                      <td>40%</td>
-                      <td>2,796,000円</td>
-                    </tr>
-                    <tr>
-                      <td>40,000,000円～</td>
-                      <td>45%</td>
-                      <td>4,796,000円</td>
-                    </tr>
-                  </table>
-                  また、所得税額の2.1%の復興特別所得税が課税されます。<br />
-                  ここでは復興特別所得税を合算した額を表示しています。
-                </div>
-              </th>
-              <th class="mandatory tax">
-                住民税
-                <div class="question" aria-label="定年・勧奨の住民税について">
-                  ？
-                </div>
-                <div class="explain">
-                  住民税は、課税される所得金額（(退職手当 - 退職所得控除額) ×
-                  2分の1(1000円未満切り捨て)）<br />の一律10%となります。<br />
-                </div>
-              </th>
-              <th class="mandatory price">
-                手取額
-                <div class="question" aria-label="定年・勧奨の手取額について">
-                  ？
-                </div>
-                <div class="explain">
-                  所得税と住民税を差し引いた金額です。<br />
-                </div>
-              </th>
+              <th class="mandatory tax">所得税</th>
+              <th class="mandatory tax">住民税</th>
+              <th class="mandatory price">手取額</th>
             </tr>
           </thead>
           <tbody id="result">
@@ -523,7 +431,7 @@
         <p class="foot-note">
           実際の退職手当は退職事由、給与制度等により異なる場合があり、将来の昇給・制度改正等は考慮していません。<br />
           支給率は、<a
-            href="https://www.cas.go.jp/jp/gaiyou/jimu/jinjikyoku/files/h29_taishoku2_honbun.pdf"
+            href="https://www.cas.go.jp/jp/gaiyou/jimu/jinjikyoku/files/h300101_taishoku3.pdf"
             target="_blank"
             rel="noopener noreferrer"
             >内閣官房内閣人事局「国家公務員退職手当支給率早見表」（平成30年1月1日以降の退職）</a
@@ -566,6 +474,6 @@
     <script src="../../common/tax-core.js?v=20260831a"></script>
     <script src="../js/retire-calc.js?v=20260814d"></script>
     <script src="./config.js?v=20260805a"></script>
-    <script src="../js/retire-core.js?v=20260831a"></script>
+    <script src="../js/retire-core.js?v=20260903a"></script>
   </body>
 </html>

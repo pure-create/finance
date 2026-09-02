@@ -452,6 +452,14 @@ function calc() {
   msgHireEl.classList.toggle("msg_input_ok", !!hireYearEl.value);
   msgSalaryEl.classList.toggle("msg_input_ok", !!salaryRaw);
 
+  // HTMLでは非表示にして初期描画のちらつきを防ぎ、保存値の復元後に表示を確定する。
+  // リセット直後も同じ判定を通るため、案内をその場で再表示できる。
+  var hasRequiredInputs =
+    !!birthYearEl.value && !!hireYearEl.value && !!salaryRaw;
+  msgEl.style.transition = "";
+  msgEl.style.opacity = 1;
+  msgEl.style.display = hasRequiredInputs ? "none" : "block";
+
   if (birthYearEl.value) {
     age = stdYear - 1 - birthYearEl.value;
   }
@@ -654,9 +662,6 @@ function calc() {
     if (result === "") {
       result =
         "<tr><td colspan='13'>入力された生年・採用年度の組み合わせでは計算できる年度がありません。生年・採用年度をご確認ください。</td></tr>";
-    }
-    if (msgEl.style.display !== "none") {
-      fadeOut(msgEl, 1000);
     }
     resultEl.innerHTML = result;
   } else {

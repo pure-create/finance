@@ -19,6 +19,7 @@ const {
   makeNormal,
   incomeAt,
   lumpAt,
+  nisaLimits,
 } = require("../assetSimulator/js/asset-core.js");
 
 function near(actual, expected, tol, msg) {
@@ -338,6 +339,25 @@ test("NISA枠が残っていれば課税口座だけより有利になる", () =
     balanceAt(withNisa, 10) > balanceAt(noNisa, 10),
     "NISAを使ったほうが残る",
   );
+});
+
+test("NISA枠：2026年までは18歳未満に新規投資枠がない", () => {
+  assert.deepStrictEqual(nisaLimits(2026, 17), { annual: 0, lifetime: 0 });
+  assert.deepStrictEqual(nisaLimits(2026, 18), {
+    annual: 360,
+    lifetime: 1800,
+  });
+});
+
+test("NISA枠：2027年から18歳未満は年60万円・上限600万円", () => {
+  assert.deepStrictEqual(nisaLimits(2027, 17), {
+    annual: 60,
+    lifetime: 600,
+  });
+  assert.deepStrictEqual(nisaLimits(2027, 18), {
+    annual: 360,
+    lifetime: 1800,
+  });
 });
 
 test("定率取り崩しは残高の一定率を売る", () => {

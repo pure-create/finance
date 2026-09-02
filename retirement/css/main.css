@@ -148,10 +148,48 @@ div.section-header h2 {
 div.section-header .btn {
   margin-bottom: 12px;
 }
-span.result-disclaimer {
+.result-help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.result-disclaimer {
   color: var(--color-muted);
   font-size: 13px;
-  margin-bottom: 8px;
+}
+.result-help-label {
+  margin-left: 5px;
+  font-size: 13px;
+}
+
+.tax-calc-table th,
+.tax-calc-table td {
+  padding: 4px 5px;
+}
+
+.tax-calc-table .tax-amount,
+.tax-calc-table .tax-rate,
+.tax-calc-table .tax-deduction {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tax-calc-table .tax-range-separator {
+  border-right: 0;
+  border-left: 0;
+  padding-right: 0;
+  padding-left: 0;
+  text-align: center;
+}
+
+.tax-calc-table td:first-child {
+  border-right: 0;
+}
+
+.tax-calc-table td:nth-child(3) {
+  border-left: 0;
 }
 
 th,

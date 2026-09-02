@@ -90,6 +90,7 @@ a.switch-link {
 div.explain,
 tr.calc_memo,
 .help,
+.result-help-label,
 div.question {
   display: none !important;
 }

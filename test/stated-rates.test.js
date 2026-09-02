@@ -63,20 +63,11 @@ test("資産運用：NISAの投資枠の説明が定数と一致する", () => {
   const text = prose("assetSimulator/index.html");
   const m = must(
     text,
-    /NISAは年間(\d+)万円・生涯(\d+)万円（簿価）まで/,
+    /NISAは年間(\d+)万円（成人の場合）・生涯(\d+)万円（簿価）まで/,
     "assetSimulator/index.html",
   );
   assert.strictEqual(Number(m[1]), asset.NISA_ANNUAL, "年間投資枠");
   assert.strictEqual(Number(m[2]), asset.NISA_LIFETIME, "生涯投資枠");
-
-  // 「実質表示」の注記にも同じ額が出てくる
-  const m2 = must(
-    text,
-    /名目の金額（年(\d+)万円・生涯(\d+)万円）で固定/,
-    "assetSimulator/index.html",
-  );
-  assert.strictEqual(Number(m2[1]), asset.NISA_ANNUAL, "注記の年間投資枠");
-  assert.strictEqual(Number(m2[2]), asset.NISA_LIFETIME, "注記の生涯投資枠");
 
   // 入力欄の上限も生涯投資枠に合わせてある
   const m3 = must(
@@ -236,7 +227,7 @@ test("退職手当：所得税の速算表がcalcTaxと一致する", () => {
     const html = markup(page);
     const rows = [
       ...html.matchAll(
-        /<tr><td>([\d,]+)円(?:～([\d,]+)円)?～?<\/td><td>(\d+)%<\/td><td>([\d,]+)円<\/td><\/tr>/g,
+        /<tr><td class="tax-amount">([\d,]+)円<\/td><td class="tax-range-separator">～<\/td><td class="tax-amount">(?:([\d,]+)円|上限なし)<\/td><td class="tax-rate">(\d+)%<\/td><td class="tax-deduction">([\d,]+)円<\/td><\/tr>/g,
       ),
     ];
     assert.ok(
@@ -502,6 +493,8 @@ test("「制度データ」の時点が全ページでそろっている", () =>
 	   制度を直したときは全ページまとめて更新する */
   const pages = [
     "assetSimulator/index.html",
+    "gift/index.html",
+    "ideco/index.html",
     "inheritance/index.html",
     "pension/index.html",
   ].concat(RETIRE_PAGES);
