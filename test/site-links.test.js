@@ -93,6 +93,50 @@ test("HTMLを取りこぼさずに見ている", () => {
   assert.ok(HTML_FILES.includes("404.html"));
 });
 
+test("共有ボタンは、コピーするURLの内容をツールチップで説明する", () => {
+  const tooltips = {
+    試算結果を共有: "入力された試算条件を含むURLをコピーします",
+    URLを共有: "このサイトのURLをコピーします",
+  };
+  let count = 0;
+
+  for (const file of HTML_FILES) {
+    const html = read(file);
+    for (const match of html.matchAll(
+      /<div\s+class="share-wrap">([\s\S]*?)<div\s+class="share-pop"/g,
+    )) {
+      const block = match[1];
+      const buttonMatch = block.match(
+        /<button\b[^>]*class="[^"]*\bshare-btn\b[^"]*"[^>]*>[\s\S]*?<\/button>/,
+      );
+      assert.ok(buttonMatch, file + " の共有ボタンが見つからない");
+      const button = buttonMatch[0];
+      const label = button.includes("試算結果を共有")
+        ? "試算結果を共有"
+        : "URLを共有";
+      const tooltip = block.match(
+        /<span\s+class="tipbox share-button-tip"[^>]*>([\s\S]*?)<\/span\s*>/,
+      );
+      const tooltipText = tooltip
+        ? tooltip[1].replace(/<[^>]+>/g, "").trim()
+        : null;
+      assert.strictEqual(
+        tooltipText,
+        tooltips[label],
+        file + " の「" + label + "」のツールチップが正しくない",
+      );
+      assert.strictEqual(
+        attr(button, /\baria-describedby="([^"]+)"/),
+        "shareBtnTip",
+        file + " の共有ボタンとツールチップが関連付けられていない",
+      );
+      count++;
+    }
+  }
+
+  assert.ok(count > 0, "共有ボタンが見つからない");
+});
+
 test("sitemap.xml のURLは実在するページを指す", () => {
   assert.ok(SITEMAP_URLS.length > 0, "sitemap.xml からURLを読めていない");
   for (const url of SITEMAP_URLS) {

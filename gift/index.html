@@ -56,7 +56,7 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260906a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260906b" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
     <link rel="stylesheet" href="./css/main.css?v=20260906b" />
     <link rel="stylesheet" href="./css/print.css?v=20260906a" media="print" />
@@ -73,11 +73,18 @@
               class="share-btn"
               id="shareBtn"
               type="button"
+              aria-describedby="shareBtnTip"
               aria-expanded="false"
               aria-controls="sharePop"
             >
               試算結果を共有
             </button>
+            <span
+              class="tipbox share-button-tip"
+              id="shareBtnTip"
+              role="tooltip"
+              >入力された試算条件を含むURLをコピーします</span
+            >
             <div class="share-pop" id="sharePop">
               <span id="shareQr" class="share-qr" aria-hidden="true"></span>
               <p id="shareMsg" class="share-msg" aria-live="polite"></p>

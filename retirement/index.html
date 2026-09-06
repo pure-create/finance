@@ -66,7 +66,7 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260906a" />
+    <link rel="stylesheet" href="../common/site.css?v=20260906b" />
     <title>退職手当計算</title>
     <style>
       body {
@@ -154,11 +154,15 @@
             class="share-btn"
             id="shareBtn"
             type="button"
+            aria-describedby="shareBtnTip"
             aria-expanded="false"
             aria-controls="sharePop"
           >
             URLを共有
           </button>
+          <span class="tipbox share-button-tip" id="shareBtnTip" role="tooltip"
+            >このサイトのURLをコピーします</span
+          >
           <div class="share-pop" id="sharePop">
             <span id="shareQr" class="share-qr" aria-hidden="true"></span>
             <p id="shareMsg" class="share-msg" aria-live="polite"></p>

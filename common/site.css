@@ -520,6 +520,16 @@ main:focus {
   opacity: 1;
   visibility: visible;
 }
+.share-btn:hover + .share-button-tip,
+.share-btn:focus-visible + .share-button-tip {
+  opacity: 1;
+  visibility: visible;
+}
+/* 共有結果の窓を開いた後は、ボタンにフォーカスが残っていても説明を重ねない。 */
+.share-btn[aria-expanded="true"] + .share-button-tip {
+  opacity: 0;
+  visibility: hidden;
+}
 
 /* =============================================================
    ページ末尾の注記
