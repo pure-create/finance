@@ -76,6 +76,38 @@ body {
 .scroll thead {
   display: table-header-group;
 }
+
+/* 8列ある比較表は通常表示の nowrap のままだと印刷可能幅を超える。
+   列幅を紙幅から算出し、見出しと長い金額だけ必要に応じて折り返す。 */
+.compare-scroll {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.scroll .compare-table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  white-space: normal;
+  font-size: 6.8pt;
+}
+.scroll .compare-table th,
+.scroll .compare-table td {
+  padding: 3px 2px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.scroll .compare-table th {
+  text-align: center;
+}
+.scroll .compare-table th:first-child,
+.scroll .compare-table td:first-child {
+  width: 13%;
+}
+.scroll .compare-table th:nth-child(7),
+.scroll .compare-table td:nth-child(7) {
+  width: 15%;
+}
 .note,
 .tile .k {
   color: #333;
