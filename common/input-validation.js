@@ -39,8 +39,7 @@
     if (el.validity.badInput)
       return { el: el, text: name + "は数値で入力してください。" };
     if (el.value === "") {
-      if (el.required)
-        return { el: el, text: name + "を入力してください。" };
+      if (el.required) return { el: el, text: name + "を入力してください。" };
       return null;
     }
     if (el.validity.rangeUnderflow || el.validity.rangeOverflow) {
@@ -78,7 +77,9 @@
     alert.setAttribute("role", "alert");
     alert.hidden = true;
 
-    var container = first.closest(".card, .panel, aside, section, form") || first.parentElement;
+    var container =
+      first.closest(".card, .panel, aside, section, form") ||
+      first.parentElement;
     var heading = container && container.querySelector("h1, h2, h3");
     if (heading) heading.insertAdjacentElement("afterend", alert);
     else if (container) container.insertBefore(alert, container.firstChild);
@@ -88,12 +89,14 @@
   function refresh() {
     var alert = ensureAlert();
     if (!alert) return [];
-    document.querySelectorAll(FIELD_SELECTOR + '[aria-invalid="true"]').forEach(function (el) {
-      if (el.getAttribute("aria-errormessage") === ALERT_ID) {
-        el.removeAttribute("aria-invalid");
-        el.removeAttribute("aria-errormessage");
-      }
-    });
+    document
+      .querySelectorAll(FIELD_SELECTOR + '[aria-invalid="true"]')
+      .forEach(function (el) {
+        if (el.getAttribute("aria-errormessage") === ALERT_ID) {
+          el.removeAttribute("aria-invalid");
+          el.removeAttribute("aria-errormessage");
+        }
+      });
 
     var errors = [];
     document.querySelectorAll(FIELD_SELECTOR).forEach(function (el) {
