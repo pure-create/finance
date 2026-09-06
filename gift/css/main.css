@@ -333,7 +333,8 @@
 .scroll .quick-table thead tr:first-child th:first-child {
   text-align: left;
 }
-.quick-table .head-unit {
+.quick-table .head-unit,
+.compare-table .head-unit {
   font-size: 11px;
   font-weight: 500;
   color: var(--muted);
