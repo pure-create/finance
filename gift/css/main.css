@@ -20,6 +20,28 @@
   color: var(--text-sub);
   margin-bottom: 12px;
 }
+.input-alert {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--gift-tax);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.input-alert[hidden] {
+  display: none;
+}
+.input-alert ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+.field input[aria-invalid="true"] {
+  border-color: var(--gift-tax);
+  box-shadow: 0 0 0 1px var(--gift-tax);
+}
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -73,7 +95,8 @@
 .note strong {
   color: var(--text);
 }
-.child-ages-field {
+.recipient-ages-field,
+.recipient-notes {
   grid-column: 1/-1;
 }
 .field-label {
@@ -106,12 +129,12 @@
 .field.is-disabled {
   opacity: 0.58;
 }
-.child-age-grid {
+.recipient-age-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px 12px;
 }
-.field .child-age {
+.field .recipient-age {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
@@ -122,11 +145,19 @@
   border-radius: 8px;
   background: var(--surface-2);
 }
-.child-age .num {
+.recipient-age .num {
   min-width: 0;
 }
-.child-age[hidden] {
+.recipient-age[hidden],
+.recipient-ages-field[hidden] {
   display: none;
+}
+.recipient-notes .note {
+  margin-bottom: 0;
+}
+.recipient-assumption {
+  padding-left: 10px;
+  border-left: 3px solid var(--gift);
 }
 .range-row {
   display: flex;
@@ -512,7 +543,7 @@ html.printing .chart-wrap {
   .grid {
     grid-template-columns: 1fr 1fr;
   }
-  .child-age-grid {
+  .recipient-age-grid {
     grid-template-columns: 1fr 1fr;
   }
   .summary {

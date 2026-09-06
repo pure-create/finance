@@ -76,6 +76,29 @@ a:focus-visible {
   left: 8px;
 }
 
+.common-input-validation-alert {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--critical, #dc2626);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--surface-2, var(--surface-1, #fff));
+  color: var(--text, #1e293b);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.common-input-validation-alert[hidden] {
+  display: none;
+}
+.common-input-validation-alert ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+input[aria-invalid="true"] {
+  border-color: var(--critical, #dc2626) !important;
+  box-shadow: 0 0 0 1px var(--critical, #dc2626) !important;
+}
+
 /* 飛んだ先の <main> は tabindex="-1" で focus を受けられるようにしてある。
    ここに枠が出ると、押した覚えのない囲みが本文全体に付いたように見えるので消す
    （移動したことは画面が動くことで伝わる） */

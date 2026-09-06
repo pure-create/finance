@@ -3,6 +3,7 @@
 /* 贈与税・生前贈与の相続税加算・長期試算。金額の単位はすべて万円。
    制度を更新する際は、下の速算表と addBackForGifts の期間判定を見直す。 */
 const GIFT_BASIC_DEDUCTION = 110;
+const MAX_ANNUAL_GIFT_SEARCH = 10000;
 const GIFT_GENERAL_BRACKETS = [
   [200, 0.1, 0],
   [300, 0.15, 10],
@@ -42,6 +43,36 @@ function positive(v) {
 }
 function giftCategoryForAge(age) {
   return Math.floor(finite(age, 18)) >= 18 ? "special" : "general";
+}
+
+function normalizeRecipients(input) {
+  const o = input || {};
+  if (Array.isArray(o.recipients)) {
+    const normalized = o.recipients
+      .slice(0, 18)
+      .filter((x) => x && ["child", "grandchild", "other"].includes(x.type))
+      .map((x) => ({
+        type: x.type,
+        age:
+          x.type === "other"
+            ? null
+            : Math.max(0, Math.min(100, Math.floor(finite(x.age, 18)))),
+      }));
+    if (normalized.length) return normalized;
+  }
+
+  // 旧形式の呼び出しも、内部では受贈者配列へ変換して扱う。
+  const children = Math.max(1, Math.min(6, Math.floor(finite(o.children, 2))));
+  const ages = Array.isArray(o.childAges) ? o.childAges : [];
+  return Array.from({ length: children }, (_, i) => ({
+    type: "child",
+    age: Math.max(0, Math.min(100, Math.floor(finite(ages[i], 18)))),
+  }));
+}
+
+function giftCategoryForRecipient(recipient, elapsedYears) {
+  if (!recipient || recipient.type === "other") return "general";
+  return giftCategoryForAge(recipient.age + elapsedYears);
 }
 
 function giftTax(amount, category) {
@@ -184,7 +215,9 @@ function settleInheritance(estate, nChildren, childAddbacks) {
 
 function simulateScenario(input) {
   const o = input || {},
-    children = Math.max(1, Math.min(6, Math.floor(finite(o.children, 2))));
+    recipients = normalizeRecipients(o),
+    recipientCount = recipients.length,
+    children = recipients.filter((x) => x.type === "child").length;
   const years = Math.max(1, Math.min(60, Math.floor(finite(o.years, 20))));
   const startYear = Math.max(
     1,
@@ -194,24 +227,20 @@ function simulateScenario(input) {
   const annual = positive(o.annualGift);
   const considerCapitalGainsTax = Boolean(o.considerCapitalGainsTax);
   const giftMethod = o.giftMethod === "inKind" ? "inKind" : "cash";
-  const suppliedAges = Array.isArray(o.childAges) ? o.childAges : [];
-  const childAges = Array.from({ length: children }, (_, i) =>
-    Math.max(0, Math.min(100, Math.floor(finite(suppliedAges[i], 18)))),
-  );
   let asset = positive(o.estate),
     assetBasis = asset - Math.min(asset, positive(o.unrealizedGain)),
-    childGift = 0,
-    childGiftBasis = 0,
+    recipientGift = 0,
+    recipientGiftBasis = 0,
     giftTotal = 0,
     giftTaxTotal = 0,
     capitalGainsTaxTotal = 0,
     shortfall = false;
-  const history = Array.from({ length: children }, () => []);
+  const history = Array.from({ length: recipientCount }, () => []);
   const detail = [];
   function give(year) {
-    const wanted = annual * children;
+    const wanted = annual * recipientCount;
     let actual = 0,
-      basisPerChild = 0,
+      basisPerRecipient = 0,
       yearCapitalGainsTax = 0;
     if (giftMethod === "cash") {
       const sale = sellForNetCash(
@@ -231,35 +260,47 @@ function simulateScenario(input) {
       const transferredBasis = assetBeforeGift
         ? assetBasis * (actual / assetBeforeGift)
         : 0;
-      basisPerChild = transferredBasis / children;
+      basisPerRecipient = transferredBasis / recipientCount;
       asset -= actual;
       assetBasis = Math.max(0, assetBasis - transferredBasis);
     }
     if (actual + 1e-9 < wanted) shortfall = true;
-    const perChild = actual / children;
+    const perRecipient = actual / recipientCount;
     let yearTax = 0,
-      generalChildren = 0,
-      specialChildren = 0;
-    for (let i = 0; i < children; i++) {
-      const age = childAges[i] + year - startYear;
-      const category = giftCategoryForAge(age);
-      const gt = giftTax(perChild, category);
-      category === "special" ? specialChildren++ : generalChildren++;
-      history[i].push({ year, amount: perChild, tax: gt.tax, age, category });
+      generalRecipients = 0,
+      specialRecipients = 0;
+    const recipientTaxes = [];
+    for (let i = 0; i < recipientCount; i++) {
+      const recipient = recipients[i];
+      const elapsedYears = year - startYear;
+      const age = recipient.age == null ? null : recipient.age + elapsedYears;
+      const category = giftCategoryForRecipient(recipient, elapsedYears);
+      const gt = giftTax(perRecipient, category);
+      category === "special" ? specialRecipients++ : generalRecipients++;
+      const giftRecord = {
+        year,
+        amount: perRecipient,
+        tax: gt.tax,
+        type: recipient.type,
+        age,
+        category,
+      };
+      history[i].push(giftRecord);
+      recipientTaxes.push(giftRecord);
       if (giftMethod === "cash") {
-        const invested = Math.max(0, perChild - gt.tax);
-        childGift += invested;
-        childGiftBasis += invested;
+        const invested = Math.max(0, perRecipient - gt.tax);
+        recipientGift += invested;
+        recipientGiftBasis += invested;
       } else {
         const payment = sellForNetCash(
-          perChild,
-          basisPerChild,
+          perRecipient,
+          basisPerRecipient,
           gt.tax,
           year,
           considerCapitalGainsTax,
         );
-        childGift += payment.marketRemaining;
-        childGiftBasis += payment.basisRemaining;
+        recipientGift += payment.marketRemaining;
+        recipientGiftBasis += payment.basisRemaining;
         yearCapitalGainsTax += payment.capitalGainsTax;
       }
       yearTax += gt.tax;
@@ -271,8 +312,9 @@ function simulateScenario(input) {
       gross: actual,
       tax: yearTax,
       capitalGainsTax: yearCapitalGainsTax,
-      generalChildren,
-      specialChildren,
+      generalRecipients,
+      specialRecipients,
+      recipientTaxes,
     };
   }
   let inheritance = null,
@@ -281,11 +323,17 @@ function simulateScenario(input) {
     const year = startYear + step - 1;
     const g = give(year);
     asset *= 1 + rate;
-    childGift *= 1 + rate;
+    recipientGift *= 1 + rate;
     let event = "";
     if (step === years) {
-      const childAddbacks = history.map((h) => addBackForGifts(h, year));
-      inheritance = settleInheritance(asset, children, childAddbacks);
+      const childAddbacks = history
+        .filter((_, i) => recipients[i].type === "child")
+        .map((h) => addBackForGifts(h, year));
+      inheritance = settleInheritance(
+        asset,
+        Math.max(1, children),
+        childAddbacks,
+      );
       const eligibleYears = childAddbacks
         .flatMap((x) => x.gifts)
         .filter((x) => positive(x.amount) > 0)
@@ -299,9 +347,12 @@ function simulateScenario(input) {
       gift: g.gross,
       giftTax: g.tax,
       capitalGainsTax: g.capitalGainsTax,
-      childGift,
-      generalChildren: g.generalChildren,
-      specialChildren: g.specialChildren,
+      recipientGift,
+      generalRecipients: g.generalRecipients,
+      specialRecipients: g.specialRecipients,
+      generalChildren: g.generalRecipients,
+      specialChildren: g.specialRecipients,
+      recipientTaxes: g.recipientTaxes,
       event,
     });
   }
@@ -314,7 +365,7 @@ function simulateScenario(input) {
   const inheritanceTax = inheritance.totalTax;
   const finalYear = startYear + years - 1;
   const giftSale = considerCapitalGainsTax
-    ? capitalGainsTax(childGift, childGiftBasis, finalYear)
+    ? capitalGainsTax(recipientGift, recipientGiftBasis, finalYear)
     : { tax: 0 };
   const inheritanceSale = considerCapitalGainsTax
     ? capitalGainsTax(asset, assetBasis, finalYear)
@@ -324,13 +375,15 @@ function simulateScenario(input) {
   if (detail.length)
     detail[detail.length - 1].capitalGainsTax += terminalCapitalGainsTax;
   const inherited = Math.max(0, asset - inheritanceTax - inheritanceSale.tax);
-  const childGiftAfterSale = Math.max(0, childGift - giftSale.tax);
+  const recipientGiftAfterSale = Math.max(0, recipientGift - giftSale.tax);
   const grossTransfer = giftTotal + asset;
   const taxTotal = giftTaxTotal + inheritanceTax + capitalGainsTaxTotal;
   return {
     startYear,
+    recipients,
+    recipientCount,
     children,
-    childAges,
+    childAges: recipients.filter((x) => x.type === "child").map((x) => x.age),
     years,
     detail,
     shortfall,
@@ -344,14 +397,18 @@ function simulateScenario(input) {
     taxTotal,
     grossTransfer,
     effectiveTaxRate: grossTransfer ? (taxTotal / grossTransfer) * 100 : 0,
-    childGift,
-    childGiftBasis,
-    childGiftAfterSale,
+    recipientGift,
+    recipientGiftBasis,
+    recipientGiftAfterSale,
+    // 既存の参照先との互換用。値は全受贈者の合計。
+    childGift: recipientGift,
+    childGiftBasis: recipientGiftBasis,
+    childGiftAfterSale: recipientGiftAfterSale,
     assetBasis,
     inherited,
     finalKeep: Math.max(
       0,
-      childGift + asset - inheritanceTax - terminalCapitalGainsTax,
+      recipientGift + asset - inheritanceTax - terminalCapitalGainsTax,
     ),
     inheritance,
   };
@@ -372,18 +429,20 @@ function sweep(input, max, step) {
 }
 
 /* 最適値が比較範囲の右端にある間は、次の区切りまで自動で走査する。
-   初年度に全資産を贈与できる金額を超えると結果は同じになるため、そこを探索上限とする。 */
+   初年度に全資産を贈与できる金額を超えると結果は同じになるため、そこを探索上限とする。
+   高額資産でも候補数と描画件数が膨張しないよう、画面上の比較には安全上限も設ける。 */
 function adaptiveSweep(input, initialMax, block, step) {
   const o = input || {};
   initialMax = Math.max(1, positive(initialMax == null ? 1000 : initialMax));
   block = Math.max(1, positive(block == null ? 1000 : block));
   step = Math.max(1, positive(step == null ? 10 : step));
-  const children = Math.max(1, Math.min(6, Math.floor(finite(o.children, 2))));
-  const allAssetsGiftedAt = positive(o.estate) / children;
-  const relevantMax = Math.max(
-    initialMax,
-    Math.ceil(allAssetsGiftedAt / block) * block,
-  );
+  const recipientCount = normalizeRecipients(o).length;
+  const allAssetsGiftedAt = positive(o.estate) / recipientCount;
+  const uncappedRelevantMax = Math.max(
+      initialMax,
+      Math.ceil(allAssetsGiftedAt / block) * block,
+    ),
+    relevantMax = Math.min(uncappedRelevantMax, MAX_ANNUAL_GIFT_SEARCH);
   let max = Math.min(initialMax, relevantMax),
     out = [],
     calculatedMax = -step;
@@ -403,12 +462,16 @@ function adaptiveSweep(input, initialMax, block, step) {
       break;
     max = Math.min(max + block, relevantMax);
   } while (true);
+  out.searchLimited =
+    uncappedRelevantMax > relevantMax && calculatedMax >= relevantMax;
+  out.searchLimit = relevantMax;
   return out;
 }
 
 if (typeof module !== "undefined" && module.exports)
   module.exports = {
     GIFT_BASIC_DEDUCTION,
+    MAX_ANNUAL_GIFT_SEARCH,
     GIFT_GENERAL_BRACKETS,
     GIFT_SPECIAL_BRACKETS,
     SIM_START_YEAR,
@@ -417,6 +480,8 @@ if (typeof module !== "undefined" && module.exports)
       commonTaxCore().capitalGainsTaxRate(2037),
     RECONSTRUCTION_TAX_END_YEAR: commonTaxCore().RECONSTRUCTION_TAX_END_YEAR,
     giftCategoryForAge,
+    normalizeRecipients,
+    giftCategoryForRecipient,
     giftTax,
     capitalGainsTaxRate,
     capitalGainsTax,

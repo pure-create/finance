@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="暦年課税の贈与税と、生前贈与・資産運用・将来の相続を通した子どもの最終手残りを試算します。"
+      content="暦年課税の贈与税と、生前贈与・資産運用・将来の相続を通した家族全体の最終手残りを試算します。"
     />
     <link rel="canonical" href="https://pure-create.github.io/finance/gift/" />
     <meta property="og:type" content="website" />
@@ -56,9 +56,9 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260823b" />
+    <link rel="stylesheet" href="../common/site.css?v=20260906a" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
-    <link rel="stylesheet" href="./css/main.css?v=20260901a" />
+    <link rel="stylesheet" href="./css/main.css?v=20260906b" />
     <link rel="stylesheet" href="./css/print.css?v=20260831a" media="print" />
   </head>
   <body>
@@ -91,7 +91,7 @@
           <div class="page-title">
             <h1>贈与税・相続対策シミュレーター</h1>
             <p class="sub">
-              暦年贈与の税額と、資産成長・将来の相続まで含めた子どもの最終手残りを比較
+              暦年贈与の税額と、資産成長・将来の相続まで含めた家族全体の最終手残りを比較
             </p>
           </div>
           <div class="page-tools">
@@ -134,7 +134,7 @@
                         class="help"
                         tabindex="0"
                         aria-label="一般贈与について"
-                        data-tooltip="特例贈与に該当しない贈与です。兄弟・夫婦間の贈与や、直系尊属から18歳未満の人への贈与などに一般税率を適用します。"
+                        data-tooltip="特例贈与に該当しない贈与です。兄弟・夫婦間の贈与や、直系尊属から18歳未満の人への贈与などに一般贈与の税率を適用します。"
                         >？</span
                       ></span
                     >
@@ -167,6 +167,10 @@
         </section>
         <section class="card">
           <h2 class="sec-title">長期シミュレーションの条件</h2>
+          <div class="input-alert" id="inputAlert" role="alert" hidden>
+            <strong>入力内容を確認してください。</strong>
+            <ul id="inputErrors"></ul>
+          </div>
           <div class="grid">
             <div class="field">
               <label for="estate">相続予定の資産額</label
@@ -179,6 +183,32 @@
                   step="100"
                 /><span class="unit">万円</span></span
               >
+            </div>
+            <div class="field">
+              <label for="years">相続までの年数</label
+              ><span class="num"
+                ><input
+                  id="years"
+                  type="number"
+                  value="20"
+                  min="1"
+                  max="60"
+                  step="1"
+                /><span class="unit">年</span></span
+              >
+            </div>
+            <div class="field">
+              <label for="rate">年間運用利回り</label>
+              <div class="range-row">
+                <input
+                  id="rate"
+                  type="range"
+                  value="5"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                /><span class="range-val" id="rateVal"></span>
+              </div>
             </div>
             <div class="field">
               <span class="field-label">売却益への課税</span>
@@ -214,7 +244,7 @@
                   class="help"
                   tabindex="0"
                   aria-label="贈与方法について"
-                  data-tooltip="売却して現金贈与：&#10;親が贈与額を手取りで用意するため資産を売却し、親側の売却益税も資産から差し引きます。子は贈与税支払い後の現金を再投資します。&#10;&#10;現物贈与：&#10;贈与時には売却せず、親の取得費を子へ引き継ぎます。子が贈与税を支払うための売却時に売却益税を計算します。特定口座間では、受贈者が同一銘柄を保有していると一部数量の現物移管が制限される場合があります。"
+                  data-tooltip="売却して現金贈与：&#10;贈与者が贈与額を手取りで用意するため資産を売却し、贈与者側の売却益税も資産から差し引きます。受贈者は贈与税支払い後の現金を再投資します。&#10;&#10;現物贈与：&#10;贈与時には売却せず、贈与者の取得費を受贈者へ引き継ぎます。受贈者が贈与税を支払うための売却時に売却益税を計算します。特定口座間では、受贈者が同一銘柄を保有していると一部数量の現物移管が制限される場合があります。"
                   >？</span
                 >
               </label>
@@ -233,8 +263,17 @@
               </p>
             </div>
             <div class="field">
-              <label for="children">子どもの人数</label
-              ><span class="num"
+              <label class="field-label-with-help" for="children">
+                <span>子の人数</span>
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="養子の扱いについて"
+                  data-tooltip="養子も「子」に含められます。ただし、本シミュレーションは実子・養子を区別しません。相続税の法定相続人の数に含められる養子は、実子がいる場合は1人、実子がいない場合は2人までです（一定の例外があります）。"
+                  >？</span
+                >
+              </label>
+              <span class="num"
                 ><input
                   id="children"
                   type="number"
@@ -246,36 +285,46 @@
               >
             </div>
             <div class="field">
-              <label for="years">相続までの年数</label
+              <label for="grandchildren">孫の人数</label
               ><span class="num"
                 ><input
-                  id="years"
+                  id="grandchildren"
                   type="number"
-                  value="20"
-                  min="1"
-                  max="60"
+                  value="0"
+                  min="0"
+                  max="6"
                   step="1"
-                /><span class="unit">年</span></span
+                /><span class="unit">人</span></span
               >
             </div>
             <div class="field">
-              <label for="rate">年間運用利回り</label>
-              <div class="range-row">
-                <input
-                  id="rate"
-                  type="range"
-                  value="5"
+              <label class="field-label-with-help" for="others">
+                <span>その他の人数</span>
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="その他の贈与先について"
+                  data-tooltip="子の配偶者など、子・孫以外の受贈者を入力します。年齢にかかわらず一般贈与の税率を適用し、将来、相続・遺贈により財産を取得しない前提で試算します。"
+                  >？</span
+                >
+              </label>
+              <span class="num"
+                ><input
+                  id="others"
+                  type="number"
+                  value="0"
                   min="0"
-                  max="10"
-                  step="0.1"
-                /><span class="range-val" id="rateVal"></span>
-              </div>
+                  max="6"
+                  step="1"
+                /><span class="unit">人</span></span
+              >
+              <p class="field-note">子の配偶者など。年齢入力は不要です。</p>
             </div>
-            <div class="field child-ages-field">
-              <span class="field-label">子どもの年齢</span>
-              <div class="child-age-grid">
-                <label class="child-age" for="childAge1"
-                  ><span>子ども1</span
+            <div class="field recipient-ages-field">
+              <span class="field-label">子の年齢</span>
+              <div class="recipient-age-grid">
+                <label class="recipient-age child-age" for="childAge1"
+                  ><span>子1</span
                   ><span class="num"
                     ><input
                       id="childAge1"
@@ -286,8 +335,8 @@
                       step="1"
                     /><span class="unit">歳</span></span
                   ></label
-                ><label class="child-age" for="childAge2"
-                  ><span>子ども2</span
+                ><label class="recipient-age child-age" for="childAge2"
+                  ><span>子2</span
                   ><span class="num"
                     ><input
                       id="childAge2"
@@ -298,8 +347,8 @@
                       step="1"
                     /><span class="unit">歳</span></span
                   ></label
-                ><label class="child-age" for="childAge3" hidden
-                  ><span>子ども3</span
+                ><label class="recipient-age child-age" for="childAge3" hidden
+                  ><span>子3</span
                   ><span class="num"
                     ><input
                       id="childAge3"
@@ -310,8 +359,8 @@
                       step="1"
                     /><span class="unit">歳</span></span
                   ></label
-                ><label class="child-age" for="childAge4" hidden
-                  ><span>子ども4</span
+                ><label class="recipient-age child-age" for="childAge4" hidden
+                  ><span>子4</span
                   ><span class="num"
                     ><input
                       id="childAge4"
@@ -322,8 +371,8 @@
                       step="1"
                     /><span class="unit">歳</span></span
                   ></label
-                ><label class="child-age" for="childAge5" hidden
-                  ><span>子ども5</span
+                ><label class="recipient-age child-age" for="childAge5" hidden
+                  ><span>子5</span
                   ><span class="num"
                     ><input
                       id="childAge5"
@@ -334,8 +383,8 @@
                       step="1"
                     /><span class="unit">歳</span></span
                   ></label
-                ><label class="child-age" for="childAge6" hidden
-                  ><span>子ども6</span
+                ><label class="recipient-age child-age" for="childAge6" hidden
+                  ><span>子6</span
                   ><span class="num"
                     ><input
                       id="childAge6"
@@ -348,14 +397,119 @@
                   ></label
                 >
               </div>
+            </div>
+            <div
+              class="field recipient-ages-field"
+              id="grandchildAgesField"
+              hidden
+            >
+              <span class="field-label">孫の年齢</span>
+              <div class="recipient-age-grid">
+                <label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge1"
+                  hidden
+                  ><span>孫1</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge1"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                ><label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge2"
+                  hidden
+                  ><span>孫2</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge2"
+                      type="number"
+                      value="7"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                ><label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge3"
+                  hidden
+                  ><span>孫3</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge3"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                ><label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge4"
+                  hidden
+                  ><span>孫4</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge4"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                ><label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge5"
+                  hidden
+                  ><span>孫5</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge5"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                ><label
+                  class="recipient-age grandchild-age"
+                  for="grandchildAge6"
+                  hidden
+                  ><span>孫6</span
+                  ><span class="num"
+                    ><input
+                      id="grandchildAge6"
+                      type="number"
+                      value="10"
+                      min="0"
+                      max="100"
+                      step="1"
+                    /><span class="unit">歳</span></span
+                  ></label
+                >
+              </div>
+            </div>
+            <div class="recipient-notes">
               <p class="note">
                 <span id="simStartYear"></span
-                >年1月1日時点の満年齢です。贈与者は子どもの父母とし、各贈与年の1月1日時点で18歳未満なら一般税率、18歳以上なら特例税率を子どもごとに自動適用します。
+                >年1月1日時点の満年齢を入力してください。贈与者は子・孫の直系尊属とし、各贈与年の1月1日時点で18歳未満なら一般贈与の税率、18歳以上なら特例贈与の税率を受贈者ごとに自動適用します。その他の贈与先は年齢にかかわらず一般贈与の税率です。
+              </p>
+              <p class="note recipient-assumption">
+                本シミュレーションでは、子は将来相続等により財産を取得し、孫・その他の贈与先は相続・遺贈により財産を取得しないものとして試算します。
               </p>
             </div>
           </div>
           <p class="note">
-            贈与は毎年の年初に行います。年間贈与額は入力せず、<strong>子1人あたり0〜1,000万円/年</strong>から10万円刻みで自動比較します。最適値が1,000万円を超える場合は、ピークを含む次の1,000万円単位まで比較範囲を自動で広げます。
+            贈与は毎年の年初に行い、子・孫・その他の各受贈者へ同額を贈与します。年間贈与額は入力せず、<strong>受贈者1人あたり0〜1,000万円/年</strong>から10万円刻みで自動比較します。最適値が1,000万円を超える場合は、ピークを含む次の1,000万円単位（最大1億円/年）まで比較範囲を自動で広げます。
           </p>
         </section>
         <section class="card">
@@ -383,7 +537,7 @@
               <div class="v" id="totalTaxTile">—</div>
             </div>
             <div class="tile keep summary-final-keep">
-              <div class="k">最終手残り</div>
+              <div class="k">家族全体の最終手残り</div>
               <div class="v" id="finalKeepTile">—</div>
             </div>
           </div>
@@ -394,7 +548,7 @@
               <strong id="noGiftTotalTax">—</strong>
             </span>
             <span>
-              最終手残り額
+              家族全体の最終手残り額
               <strong id="noGiftFinalKeep">—</strong>
             </span>
           </div>
@@ -406,6 +560,9 @@
           <p class="warning" id="shortfall" hidden>
             比較範囲の一部では、資産不足により設定額の贈与を継続できません。該当ケースは可能な範囲に自動制限しています。
           </p>
+          <p class="warning" id="searchLimit" hidden>
+            資産額が大きいため、処理時間を抑える目的で年間贈与額は受贈者1人あたり1億円まで比較しています。最適額が比較上限と一致する場合、実際の最適額は上限を超える可能性があります。
+          </p>
           <div
             class="scroll compare-scroll"
             tabindex="0"
@@ -415,13 +572,13 @@
             <table class="compare-table">
               <thead>
                 <tr>
-                  <th>年間贈与額（万円）/人</th>
+                  <th>年間贈与額（万円）/受贈者1人</th>
                   <th>累計贈与額</th>
                   <th>累計贈与税</th>
                   <th>相続税</th>
                   <th>売却益税</th>
                   <th>税負担合計</th>
-                  <th>最終手残り</th>
+                  <th>家族全体の最終手残り</th>
                   <th>贈与なしとの差</th>
                 </tr>
               </thead>
@@ -433,7 +590,7 @@
           <h2 class="sec-title">グラフ</h2>
           <div class="charts">
             <div>
-              <p class="chart-title">年間贈与額と最終手残り</p>
+              <p class="chart-title">年間贈与額と家族全体の最終手残り</p>
               <p class="chart-note">
                 灰色の破線は、同じ資産額・年数・利回りで<strong>生前贈与を一切行わなかった場合</strong>の最終手残りです。各贈与額を比べるための固定基準線として表示しています。
               </p>
@@ -441,7 +598,7 @@
                 <canvas
                   id="keepChart"
                   role="img"
-                  aria-label="年間贈与額と最終手残り。生前贈与なしの最終手残りを破線の基準線で示すグラフ"
+                  aria-label="年間贈与額と家族全体の最終手残り。生前贈与なしの最終手残りを破線の基準線で示すグラフ"
                 ></canvas>
               </div>
             </div>
@@ -473,7 +630,7 @@
                   <th>年間贈与税</th>
                   <th>売却益税</th>
                   <th>適用税率</th>
-                  <th>子側の贈与資産残高</th>
+                  <th>受贈者側の贈与資産残高</th>
                   <th class="timeline-event">イベント</th>
                 </tr>
               </thead>
@@ -530,6 +687,11 @@
                 rel="noopener"
                 >暦年課税による生前贈与の加算対象期間の見直し</a
               >、<a
+                href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/sozoku/4161.htm"
+                target="_blank"
+                rel="noopener"
+                >No.4161 贈与財産の加算と税額控除（暦年課税）</a
+              >、<a
                 href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm"
                 target="_blank"
                 rel="noopener"
@@ -559,7 +721,7 @@
     <script src="../common/tool-nav.js?v=20260831a"></script>
     <script src="../common/tax-core.js?v=20260831a"></script>
     <script src="../inheritance/js/inheritance-core.js?v=20260829a"></script>
-    <script src="./js/gift-core.js?v=20260831b"></script>
-    <script src="./js/gift.js?v=20260901a"></script>
+    <script src="./js/gift-core.js?v=20260906c"></script>
+    <script src="./js/gift.js?v=20260906d"></script>
   </body>
 </html>

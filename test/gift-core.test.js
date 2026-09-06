@@ -168,6 +168,108 @@ test("年齢が異なる子どもには同じ年でも一般・特例税率を�
   assert.equal(r.detail[0].giftTax, 53 + 48.5);
 });
 
+test("ケース1：子だけの受贈者配列は従来の子2人の計算と一致する", () => {
+  const common = {
+    startYear: 2026,
+    estate: 10000,
+    rate: 5,
+    years: 20,
+    annualGift: 300,
+  };
+  const legacy = gift.simulateScenario({
+    ...common,
+    children: 2,
+    childAges: [35, 32],
+  });
+  const recipients = gift.simulateScenario({
+    ...common,
+    recipients: [
+      { type: "child", age: 35 },
+      { type: "child", age: 32 },
+    ],
+  });
+  closeTo(recipients.giftTotal, legacy.giftTotal);
+  closeTo(recipients.giftTax, legacy.giftTax);
+  closeTo(recipients.inheritanceTax, legacy.inheritanceTax);
+  closeTo(recipients.finalKeep, legacy.finalKeep);
+});
+
+test("ケース2：孫は各年1月1日時点で18歳になった年から特例税率へ切り替わる", () => {
+  const r = gift.simulateScenario({
+    startYear: 2026,
+    estate: 50000,
+    recipients: [
+      { type: "child", age: 35 },
+      { type: "child", age: 32 },
+      { type: "grandchild", age: 10 },
+      { type: "grandchild", age: 7 },
+    ],
+    rate: 0,
+    years: 20,
+    annualGift: 500,
+  });
+  const categories = (year) =>
+    r.detail
+      .find((x) => x.year === year)
+      .recipientTaxes.filter((x) => x.type === "grandchild")
+      .map((x) => [x.age, x.category]);
+  assert.deepEqual(categories(2033), [
+    [17, "general"],
+    [14, "general"],
+  ]);
+  assert.deepEqual(categories(2034), [
+    [18, "special"],
+    [15, "general"],
+  ]);
+  assert.deepEqual(categories(2037), [
+    [21, "special"],
+    [18, "special"],
+  ]);
+});
+
+test("ケース3：子・孫・その他の6人へ同額を贈与し、基礎控除を各人に適用する", () => {
+  const r = gift.simulateScenario({
+    startYear: 2026,
+    estate: 10000,
+    recipients: [
+      { type: "child", age: 35 },
+      { type: "child", age: 32 },
+      { type: "grandchild", age: 10 },
+      { type: "grandchild", age: 7 },
+      { type: "other" },
+      { type: "other" },
+    ],
+    rate: 0,
+    years: 1,
+    annualGift: 100,
+  });
+  assert.equal(r.recipientCount, 6);
+  assert.equal(r.detail[0].gift, 600);
+  assert.equal(r.giftTotal, 600);
+  assert.equal(r.giftTax, 0);
+  assert.equal(r.detail[0].recipientTaxes.length, 6);
+  assert.ok(r.detail[0].recipientTaxes.every((x) => x.amount === 100));
+});
+
+test("相続前贈与加算は子への贈与だけを対象にする", () => {
+  const r = gift.simulateScenario({
+    startYear: 2026,
+    estate: 10000,
+    recipients: [
+      { type: "child", age: 35 },
+      { type: "grandchild", age: 20 },
+      { type: "other" },
+    ],
+    rate: 0,
+    years: 1,
+    annualGift: 500,
+  });
+  assert.equal(r.inheritance.totalAdd, 500);
+  assert.equal(r.detail[0].generalRecipients, 1);
+  assert.equal(r.detail[0].specialRecipients, 2);
+  assert.equal(r.detail[0].giftTax, 53 + 48.5 * 2);
+});
+
 test("2031年以後: 3年以内は全額、3年超7年以内は合計100万円控除", () => {
   const h = [
     { year: 2030, amount: 50, tax: 0 },
@@ -274,4 +376,17 @@ test("最終手残りのピークが1,000万円超なら次の1,000万円単位�
   const best = r.reduce((a, x) => (x.finalKeep > a.finalKeep ? x : a));
   assert.equal(best.annual, 1090);
   assert.equal(r.at(-1).annual, 2000);
+});
+
+test("資産額が非常に大きくても贈与額の探索件数を制限する", () => {
+  const r = gift.adaptiveSweep(
+    { estate: 1e9, children: 1, childAges: [30], rate: 5, years: 20 },
+    1000,
+    1000,
+    10,
+  );
+  assert.equal(r.searchLimited, true);
+  assert.equal(r.searchLimit, gift.MAX_ANNUAL_GIFT_SEARCH);
+  assert.equal(r.at(-1).annual, gift.MAX_ANNUAL_GIFT_SEARCH);
+  assert.ok(r.length <= gift.MAX_ANNUAL_GIFT_SEARCH / 10 + 1);
 });
