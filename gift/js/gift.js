@@ -632,12 +632,60 @@
     } catch (e) {}
     update();
   };
+  function animateDetailRows(selector, open, button) {
+    const rows = Array.from(document.querySelectorAll(selector)),
+      reduceMotion =
+        !Element.prototype.animate ||
+        !Element.prototype.getAnimations ||
+        matchMedia("(prefers-reduced-motion: reduce)").matches;
+    rows.forEach((row, index) => {
+      row.getAnimations().forEach((animation) => animation.cancel());
+      if (reduceMotion) {
+        row.hidden = !open;
+        return;
+      }
+      const offset = Math.min(index, 8) * 18;
+      if (open) {
+        row.hidden = false;
+        const animation = row.animate(
+          [
+            { opacity: 0, transform: "translateY(-5px)" },
+            { opacity: 1, transform: "translateY(0)" },
+          ],
+          {
+            duration: 280,
+            delay: offset,
+            easing: "ease-out",
+            fill: "backwards",
+          },
+        );
+        animation.onfinish = () => animation.cancel();
+      } else {
+        const animation = row.animate(
+          [
+            { opacity: 1, transform: "translateY(0)" },
+            { opacity: 0, transform: "translateY(-5px)" },
+          ],
+          {
+            duration: 220,
+            delay: Math.max(0, 8 - Math.min(index, 8)) * 12,
+            easing: "ease-in",
+            fill: "forwards",
+          },
+        );
+        animation.onfinish = () => {
+          if (button.getAttribute("aria-expanded") !== "true")
+            row.hidden = true;
+          animation.cancel();
+        };
+      }
+    });
+  }
   $("quickBody").addEventListener("click", (e) => {
     const b = e.target.closest(".quick-expand");
     if (!b) return;
     const open = b.getAttribute("aria-expanded") !== "true";
     b.setAttribute("aria-expanded", open ? "true" : "false");
-    b.querySelector(".quick-arrow").textContent = open ? "△" : "▽";
     b.setAttribute(
       "aria-label",
       fmt(+b.dataset.start) +
@@ -646,16 +694,17 @@
         "万円までの10万円刻みを" +
         (open ? "閉じる" : "表示"),
     );
-    document
-      .querySelectorAll('.quick-detail[data-group="' + b.dataset.start + '"]')
-      .forEach((row) => (row.hidden = !open));
+    animateDetailRows(
+      '.quick-detail[data-group="' + b.dataset.start + '"]',
+      open,
+      b,
+    );
   });
   $("compareBody").addEventListener("click", (e) => {
     const b = e.target.closest(".compare-expand");
     if (!b) return;
     const open = b.getAttribute("aria-expanded") !== "true";
     b.setAttribute("aria-expanded", open ? "true" : "false");
-    b.querySelector(".quick-arrow").textContent = open ? "△" : "▽";
     b.setAttribute(
       "aria-label",
       fmt(+b.dataset.start) +
@@ -664,9 +713,11 @@
         "万円までの10万円刻みを" +
         (open ? "閉じる" : "表示"),
     );
-    document
-      .querySelectorAll('.compare-detail[data-group="' + b.dataset.start + '"]')
-      .forEach((row) => (row.hidden = !open));
+    animateDetailRows(
+      '.compare-detail[data-group="' + b.dataset.start + '"]',
+      open,
+      b,
+    );
   });
   $("quickMore").onclick = () => {
     const open = $("quickMore").getAttribute("aria-expanded") !== "true";
@@ -685,7 +736,6 @@
         .querySelectorAll(".quick-major.quick-high .quick-expand")
         .forEach((b) => {
           b.setAttribute("aria-expanded", "false");
-          b.querySelector(".quick-arrow").textContent = "▽";
         });
     }
   };

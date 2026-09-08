@@ -383,6 +383,19 @@
   border-color: var(--accent);
   background: var(--gift-soft);
 }
+.quick-arrow {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.32s ease;
+}
+.quick-expand[aria-expanded="true"] .quick-arrow {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .quick-arrow {
+    transition: none;
+  }
+}
 .quick-more {
   display: block;
   margin: 10px 0 0;
