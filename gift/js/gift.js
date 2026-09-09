@@ -348,11 +348,11 @@
           a < 5000
             ? '<button class="quick-expand" type="button" data-start="' +
               a +
-              '" data-tooltip="次の100万円までを10万円刻みで表示します。" aria-expanded="false" aria-label="' +
+              '" data-tooltip="次の100万円分を10万円刻みで表示します。" aria-expanded="false" aria-label="' +
               fmt(a) +
               "万円から" +
               fmt(a + 100) +
-              '万円までを10万円刻みで表示"><span class="quick-arrow" aria-hidden="true">▽</span></button>'
+              '万円までを10万円刻みで表示"><span class="quick-symbol" aria-hidden="true"></span></button>'
             : "";
       rows.push(
         '<tr class="quick-major' +
@@ -383,6 +383,8 @@
     $("quickBody").innerHTML = rows.join("");
   }
   let activeTipTarget = null;
+  const EXPAND_TOOLTIP = "次の100万円分を10万円刻みで表示します。",
+    COLLAPSE_TOOLTIP = "表示中の10万円刻みを閉じます。";
   function hideQuickTip() {
     activeTipTarget = null;
     $("quickFloatTip").hidden = true;
@@ -403,6 +405,11 @@
     if (top + t.height > innerHeight - 12) top = r.top - t.height - gap;
     tip.style.left = left + "px";
     tip.style.top = Math.max(12, top) + "px";
+  }
+  function updateExpandTooltip(button, open) {
+    button.dataset.tooltip = open ? COLLAPSE_TOOLTIP : EXPAND_TOOLTIP;
+    if (activeTipTarget === button)
+      $("quickFloatTip").textContent = button.dataset.tooltip;
   }
   function renderComparison(o) {
     currentSweep = adaptiveSweep(o, 1000, 1000, 10);
@@ -438,11 +445,11 @@
           hundredStep && x.annual < comparisonMax
             ? '<button class="quick-expand compare-expand" type="button" data-start="' +
               x.annual +
-              '" data-tooltip="次の100万円までを10万円刻みで表示します。" aria-expanded="false" aria-label="' +
+              '" data-tooltip="次の100万円分を10万円刻みで表示します。" aria-expanded="false" aria-label="' +
               fmt(x.annual) +
               "万円から" +
               fmt(x.annual + 100) +
-              '万円までを10万円刻みで表示"><span class="quick-arrow" aria-hidden="true">▽</span></button>'
+              '万円までを10万円刻みで表示"><span class="quick-symbol" aria-hidden="true"></span></button>'
             : "",
         classes = [visible ? "compare-major" : "compare-detail"];
       if (x === bestKeep) classes.push("chosen");
@@ -694,6 +701,7 @@
         "万円までの10万円刻みを" +
         (open ? "閉じる" : "表示"),
     );
+    updateExpandTooltip(b, open);
     animateDetailRows(
       '.quick-detail[data-group="' + b.dataset.start + '"]',
       open,
@@ -713,6 +721,7 @@
         "万円までの10万円刻みを" +
         (open ? "閉じる" : "表示"),
     );
+    updateExpandTooltip(b, open);
     animateDetailRows(
       '.compare-detail[data-group="' + b.dataset.start + '"]',
       open,
@@ -723,8 +732,8 @@
     const open = $("quickMore").getAttribute("aria-expanded") !== "true";
     $("quickMore").setAttribute("aria-expanded", open ? "true" : "false");
     $("quickMore").textContent = open
-      ? "1,000万円超を閉じる △"
-      : "1,000万円超（5,000万円まで）を表示 ▽";
+      ? "1,000万円超を閉じる －"
+      : "1,000万円超（5,000万円まで）を表示 ＋";
     document
       .querySelectorAll(".quick-major.quick-high")
       .forEach((row) => (row.hidden = !open));
@@ -736,6 +745,7 @@
         .querySelectorAll(".quick-major.quick-high .quick-expand")
         .forEach((b) => {
           b.setAttribute("aria-expanded", "false");
+          updateExpandTooltip(b, false);
         });
     }
   };

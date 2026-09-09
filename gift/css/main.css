@@ -383,16 +383,40 @@
   border-color: var(--accent);
   background: var(--gift-soft);
 }
-.quick-arrow {
+.quick-symbol {
+  position: relative;
   display: inline-block;
-  transform: rotate(0deg);
+  width: 10px;
+  height: 10px;
+}
+.quick-symbol::before,
+.quick-symbol::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+  border-radius: 1px;
+}
+.quick-symbol::before {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+.quick-symbol::after {
+  top: 50%;
+  left: 50%;
+  width: 1.5px;
+  height: 100%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transform-origin: center;
   transition: transform 0.32s ease;
 }
-.quick-expand[aria-expanded="true"] .quick-arrow {
-  transform: rotate(180deg);
+.quick-expand[aria-expanded="true"] .quick-symbol::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 @media (prefers-reduced-motion: reduce) {
-  .quick-arrow {
+  .quick-symbol::after {
     transition: none;
   }
 }
