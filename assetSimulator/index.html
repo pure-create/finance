@@ -67,7 +67,7 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260906b" />
+    <link rel="stylesheet" href="../common/site.css?v=20260909a" />
     <link rel="stylesheet" href="./css/main.css?v=20260825d" />
   </head>
   <body>
@@ -737,7 +737,15 @@
               <div class="fig-sub" id="tableSub" style="margin: 4px 0 8px">
                 –
               </div>
-              <div class="table-wrap">
+              <p class="scroll-hint" aria-hidden="true">
+                表は横にスクロールできます →
+              </p>
+              <div
+                class="table-wrap"
+                tabindex="0"
+                role="region"
+                aria-label="年次の詳細表"
+              >
                 <table class="data" id="dataTable">
                   <thead></thead>
                   <tbody></tbody>
@@ -793,6 +801,7 @@
      （<head> で同期に読むと、これらが届くまで本文が出ない）。
      このページのスクリプトより前であれば、呼び出し順は変わらない -->
     <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/scroll-hint.js?v=20260909a"></script>
     <script src="../common/qrcode.js?v=20260805a"></script>
     <script src="../common/share.js?v=20260823a"></script>
     <script src="../common/state.js?v=20260901a"></script>

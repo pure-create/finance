@@ -66,7 +66,7 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260906b" />
+    <link rel="stylesheet" href="../common/site.css?v=20260909a" />
     <title>退職手当計算</title>
     <style>
       body {
@@ -79,17 +79,18 @@
         padding: 24px clamp(16px, 4vw, 56px);
       }
       .cards {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
         gap: 16px;
+        max-width: 720px;
       }
       a.card {
         position: relative;
-        display: block;
-        /* 大きさはQRの読み取りやすさで決まる。96pxのQRが上下12pxの余白で収まる高さにし、
-       幅は見出しとQRが触れないところまで広げている */
-        width: 220px;
-        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        min-height: 132px;
         padding: 16px;
         background: var(--surface);
         border: 1px solid var(--border);
@@ -105,26 +106,41 @@
         border-color: var(--accent);
         box-shadow: var(--shadow-md);
       }
+      a.card:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      a.card .card-copy {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 7px;
+      }
       a.card .title {
-        position: absolute;
-        top: 16px;
-        left: 16px;
         font-size: 17px;
         font-weight: 700;
         color: var(--accent);
       }
+      a.card .description {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      a.card .open-label {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+      }
       /* 見た目は共有ボタンのQR（common/site.css の .share-qr）に揃え、
      読み取り精度のためテーマで反転させない（白地・黒モジュールのまま）。
-     大きさは share.js と同じ見積もり。計算ページのURLはQRが33モジュールになり、
-     静穏帯の8モジュールを足した41に対して1モジュールあたり2.15px、
-     さらに台紙の余白6pxを足して96px（share.js の QR_MIN_SIZE 72px も上回る） */
+     カードの主役はページ名と説明なので、QRは補助導線として右端に置く。 */
       a.card .qr {
-        position: absolute;
-        right: 12px;
-        bottom: 12px;
         display: block;
-        width: 96px;
-        height: 96px;
+        flex: 0 0 76px;
+        width: 76px;
+        height: 76px;
         line-height: 0;
         background: var(--qr-bg);
         border-radius: 6px;
@@ -182,11 +198,23 @@
       </div>
       <div class="cards">
         <a class="card" href="./local/">
-          <span class="title">地方公務員</span>
+          <span class="card-copy">
+            <span class="title">地方公務員</span>
+            <span class="description"
+              >地方公務員向けの支給率・調整額で試算します。</span
+            >
+            <span class="open-label">計算ページを開く →</span>
+          </span>
           <span class="qr" id="qrLocal" aria-hidden="true"></span>
         </a>
         <a class="card" href="./national/">
-          <span class="title">国家公務員</span>
+          <span class="card-copy">
+            <span class="title">国家公務員</span>
+            <span class="description"
+              >国家公務員向けの支給率・調整額で試算します。</span
+            >
+            <span class="open-label">計算ページを開く →</span>
+          </span>
           <span class="qr" id="qrNational" aria-hidden="true"></span>
         </a>
       </div>

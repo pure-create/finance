@@ -42,9 +42,28 @@ a:focus-visible {
    中身の右側を読めない。HTML側で tabindex="0" を付けて焦点を受けられるようにし、
    矢印キーで動かせるようにしてある。焦点が当たったことが見えないと押せる場所が
    分からないので、リンクやボタンと同じ枠をここで描く。 */
-.table-scroll:focus-visible {
+.table-scroll:focus-visible,
+.table-wrap:focus-visible,
+.scroll:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* 横長の表はスマートフォンでは一部だけが見えるため、操作方法を表の直前に示す。
+   各ページで文言や余白がばらつかないよう、案内の見た目をここで共通化する。 */
+.scroll-hint {
+  display: none;
+  margin: 4px 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+@media screen and (max-width: 700px) {
+  .scroll-hint.is-overflowing {
+    display: block;
+  }
 }
 
 /* =============================================================

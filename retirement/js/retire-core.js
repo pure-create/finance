@@ -439,6 +439,7 @@ function calc() {
   var msgAgeWarningEl = document.getElementById("msg_age_warning");
   var middleYearEl = document.getElementById("middle_year");
   var msgEl = document.getElementById("msg");
+  var msgTitleEl = msgEl.querySelector(".input-guide-title");
   var resultEl = document.getElementById("result");
 
   var salaryRaw = (salaryEl.value || "").toString().replace(/,/g, "").trim();
@@ -458,7 +459,6 @@ function calc() {
     !!birthYearEl.value && !!hireYearEl.value && !!salaryRaw;
   msgEl.style.transition = "";
   msgEl.style.opacity = 1;
-  msgEl.style.display = hasRequiredInputs ? "none" : "block";
 
   if (birthYearEl.value) {
     age = stdYear - 1 - birthYearEl.value;
@@ -473,9 +473,11 @@ function calc() {
   }
 
   // 生年・採用年の組み合わせが実際の年齢として不自然でないかの簡易チェック
+  var hasAgeWarning = false;
   if (birthYearEl.value && hireYearEl.value) {
     var hireAge = hireYearEl.value - birthYearEl.value;
     if (hireAge < 15 || hireAge > 70) {
+      hasAgeWarning = true;
       msgAgeWarningEl.textContent =
         "・生年と採用年度の組み合わせが実際の年齢と大きくずれている可能性があります。入力内容をご確認ください。";
       msgAgeWarningEl.style.display = "inline-block";
@@ -487,6 +489,11 @@ function calc() {
     msgAgeWarningEl.style.display = "none";
     msgAgeWarningEl.textContent = "";
   }
+
+  msgTitleEl.textContent = hasRequiredInputs
+    ? "入力内容を確認してください"
+    : "次の3項目を入力すると計算結果が表示されます";
+  msgEl.style.display = hasRequiredInputs && !hasAgeWarning ? "none" : "block";
 
   if (tyoseiError) {
     resultEl.innerHTML =

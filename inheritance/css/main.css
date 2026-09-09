@@ -194,21 +194,35 @@
   position: absolute;
   top: -9px;
   right: -9px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+}
+.remove-btn::after {
+  content: "×";
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: none;
   background: var(--muted);
   color: var(--surface);
   font-size: 13px;
   line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-.remove-btn:hover {
+.remove-btn:hover::after {
   background: var(--danger);
+}
+.remove-btn:focus-visible::after {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .add-spouse {
   width: 158px;
@@ -285,6 +299,9 @@
   text-align: center;
 }
 @media screen and (max-width: 600px) {
+  #landTip {
+    left: -20px;
+  }
   .couple {
     align-self: stretch;
   }
@@ -334,11 +351,15 @@
     font-size: 11px;
   }
   .person.child .remove-btn {
-    width: 17px;
-    height: 17px;
-    font-size: 10px;
+    width: 40px;
+    height: 40px;
     top: -7px;
     right: -6px;
+  }
+  .person.child .remove-btn::after {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
   }
   .add-child {
     font-size: 11px;
@@ -506,7 +527,7 @@
   margin-right: 2px;
 }
 /* 吹き出しは site.css のものを、このページの配置（左寄せ・幅広）に合わせて上書きする */
-.tipbox {
+.help > .tipbox {
   top: calc(100% + 8px);
   left: -12px;
   right: auto;
@@ -516,7 +537,7 @@
   padding: 10px 12px;
   pointer-events: none;
 }
-.tipbox::before {
+.help > .tipbox::before {
   left: 14px;
   right: auto;
   border-bottom-color: var(--tooltip-border);

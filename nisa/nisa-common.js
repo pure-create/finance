@@ -248,7 +248,7 @@ function updateChart(immediate) {
           tooltip: {
             callbacks: {
               label(ctx) {
-                return `  ${ctx.label}：${ctx.parsed.toFixed(1)}%`;
+                return `  ${ctx.parsed.toFixed(1)}%`;
               },
             },
             bodyFont: { size: 13 },

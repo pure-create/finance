@@ -56,7 +56,7 @@
     <script src="../common/analytics.js?v=20260831a" async></script>
     <script src="../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../common/site.css?v=20260906b" />
+    <link rel="stylesheet" href="../common/site.css?v=20260909a" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
     <link rel="stylesheet" href="./css/main.css?v=20260909b" />
     <link rel="stylesheet" href="./css/print.css?v=20260906a" media="print" />
@@ -102,6 +102,7 @@
             </p>
           </div>
           <div class="page-tools">
+            <a class="btn" href="#simulationConditions">入力欄へ ↓</a>
             <button class="btn" id="resetBtn" type="button">
               入力をリセット
             </button>
@@ -111,6 +112,9 @@
           <h2 class="sec-title">贈与税早見表</h2>
           <p class="note">
             年間贈与額から<strong>基礎控除110万円を1回だけ</strong>引いた課税価格で計算しています。実効税率は年間贈与額に対する税額の割合です。
+          </p>
+          <p class="scroll-hint" aria-hidden="true">
+            表は横にスクロールできます →
           </p>
           <div
             class="scroll quick-scroll"
@@ -172,7 +176,7 @@
             1,000万円超（5,000万円まで）を表示 ＋
           </button>
         </section>
-        <section class="card">
+        <section class="card" id="simulationConditions">
           <h2 class="sec-title">長期シミュレーションの条件</h2>
           <div class="input-alert" id="inputAlert" role="alert" hidden>
             <strong>入力内容を確認してください。</strong>
@@ -570,6 +574,9 @@
           <p class="warning" id="searchLimit" hidden>
             資産額が大きいため、処理時間を抑える目的で年間贈与額は受贈者1人あたり1億円まで比較しています。最適額が比較上限と一致する場合、実際の最適額は上限を超える可能性があります。
           </p>
+          <p class="scroll-hint" aria-hidden="true">
+            表は横にスクロールできます →
+          </p>
           <div
             class="scroll compare-scroll"
             tabindex="0"
@@ -631,6 +638,9 @@
         <section class="card">
           <h2 class="sec-title">年次詳細（最終手残りが最大のケース）</h2>
           <p class="note" id="timelineNote"></p>
+          <p class="scroll-hint" aria-hidden="true">
+            表は横にスクロールできます →
+          </p>
           <div class="scroll" tabindex="0" role="region" aria-label="年次詳細">
             <table>
               <thead>
@@ -730,6 +740,7 @@
     <script src="../common/share.js?v=20260823a"></script>
     <script src="../common/chart-print.js?v=20260815a"></script>
     <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/scroll-hint.js?v=20260909a"></script>
     <script src="../common/tax-core.js?v=20260831a"></script>
     <script src="../inheritance/js/inheritance-core.js?v=20260829a"></script>
     <script src="./js/gift-core.js?v=20260906c"></script>

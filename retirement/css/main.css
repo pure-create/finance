@@ -415,26 +415,39 @@ tr.calc_memo.open .calc_memo_inner {
   padding: 10px 12px;
 }
 
+.input-guide {
+  max-width: 760px;
+  margin: 4px 0 10px;
+  padding: 10px 12px;
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+}
+.input-guide-title {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
 span.msg_input {
-  display: inline-block;
-  background: var(--color-danger-soft);
+  display: block;
+  background: transparent;
   color: var(--color-danger);
-  border-radius: var(--radius-sm);
-  padding: 3px 10px;
-  margin-bottom: 3px;
+  padding: 2px 0;
+  margin: 0;
   transition:
     background-color 1s,
     color 1s;
-  line-height: 180%;
+  line-height: 1.6;
 }
 
 span.msg_input_ok {
-  background: var(--color-success-soft);
-  display: inline-block;
+  background: transparent;
+  display: block;
   color: var(--good-text);
-  border-radius: var(--radius-sm);
-  padding: 3px 10px;
-  margin-bottom: 3px;
+  padding: 2px 0;
+  margin: 0;
 }
 
 span.msg_input_ok::after {
@@ -494,6 +507,17 @@ div.basis-row {
   display: inline-flex;
   align-items: center;
   gap: 1px;
+}
+
+.required-badge {
+  margin: 0 2px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.7;
 }
 
 /* 吹き出しは common/site.css のものを上書きする。

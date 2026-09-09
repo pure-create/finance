@@ -72,8 +72,8 @@
     <script src="../../common/analytics.js?v=20260831a" async></script>
     <script src="../../common/theme.js?v=20260815a"></script>
     <link rel="stylesheet" href="../../common/theme.css?v=20260815a" />
-    <link rel="stylesheet" href="../../common/site.css?v=20260906b" />
-    <link rel="stylesheet" type="text/css" href="../css/main.css?v=20260903c" />
+    <link rel="stylesheet" href="../../common/site.css?v=20260909a" />
+    <link rel="stylesheet" type="text/css" href="../css/main.css?v=20260909a" />
     <link
       rel="stylesheet"
       type="text/css"
@@ -133,6 +133,7 @@
         <span class="basis-item"
           ><span class="basis-label"
             ><label for="birthYear">生年</label
+            ><span class="required-badge">必須</span
             ><span
               class="help"
               tabindex="0"
@@ -150,6 +151,7 @@
         <span class="basis-item"
           ><span class="basis-label"
             ><label for="hireYear">採用年</label
+            ><span class="required-badge">必須</span
             ><span
               class="help"
               tabindex="0"
@@ -176,6 +178,7 @@
         <span class="basis-item"
           ><span class="basis-label"
             ><label for="salary">俸給月額</label
+            ><span class="required-badge">必須</span
             ><span
               class="help"
               tabindex="0"
@@ -190,6 +193,7 @@
         >
       </div>
       調整月額:<span id="tyosei_status" style="display: none"></span>
+      <p class="scroll-hint" aria-hidden="true">表は横にスクロールできます →</p>
       <div
         class="table-scroll"
         tabindex="0"
@@ -323,18 +327,28 @@
           </div>
         </div>
       </div>
-      <div id="msg" style="display: none">
+      <div
+        id="msg"
+        class="input-guide"
+        style="display: none"
+        role="status"
+        aria-live="polite"
+      >
+        <strong class="input-guide-title"
+          >次の3項目を入力すると計算結果が表示されます</strong
+        >
         <span id="msg_birth" class="msg_input"
           >・生年（生まれた年度）を選択してください。</span
-        ><br />
+        >
         <span id="msg_hire" class="msg_input"
           >・採用年度を選択してください。</span
-        ><br />
+        >
         <span id="msg_salary" class="msg_input"
           >・俸給月額を入力してください。</span
-        ><br />
+        >
         <span id="msg_age_warning" class="warning" style="display: none"></span>
       </div>
+      <p class="scroll-hint" aria-hidden="true">表は横にスクロールできます →</p>
       <div
         class="table-scroll result-scroll"
         tabindex="0"
@@ -472,6 +486,7 @@
      config.js（区分の数など、このページ固有の値）も、本文中で使うものが
      無くなったのでここへ移した。retire-core.js より前に置くこと -->
     <script src="../../common/tool-nav.js?v=20260831a"></script>
+    <script src="../../common/scroll-hint.js?v=20260909a"></script>
     <script src="../../common/qrcode.js?v=20260805a"></script>
     <script src="../../common/share.js?v=20260823a"></script>
     <script src="../../common/state.js?v=20260901a"></script>
@@ -479,6 +494,6 @@
     <script src="../../common/tax-core.js?v=20260831a"></script>
     <script src="../js/retire-calc.js?v=20260814d"></script>
     <script src="./config.js?v=20260805a"></script>
-    <script src="../js/retire-core.js?v=20260903a"></script>
+    <script src="../js/retire-core.js?v=20260909a"></script>
   </body>
 </html>
