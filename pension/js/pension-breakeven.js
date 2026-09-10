@@ -264,7 +264,7 @@ document.getElementById("taxToggle").addEventListener("change", render);
 const inputs = Inputs.create({
   fields: [
     ["rSlider", 0, "r"],
-    ["iSlider", 65, "i"],
+    ["iSlider", 70, "i"],
     // 初期値はHTMLの value / checked と合わせること（税の考慮は既定で入り）
     ["taxToggle", true, "t"],
   ],
