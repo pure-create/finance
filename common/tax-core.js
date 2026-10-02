@@ -22,7 +22,7 @@ function roundedTaxableIncome(amount) {
 }
 
 /* 所得税の速算表（課税所得金額 → 税率・控除額）。
-   金額は円。復興特別所得税（2.1%）は下の incomeTax で最後に掛ける。
+   金額は円。復興特別所得税・防衛特別所得税は下の incomeTax で最後に掛ける。
    退職手当ページの説明文に同じ表が載っており、
    test/stated-rates.test.js がその表とここを突き合わせている */
 var INCOME_TAX_BRACKETS = [
@@ -35,11 +35,17 @@ var INCOME_TAX_BRACKETS = [
   { over: 0, rate: 0.05, deduction: 0 },
 ];
 
-// 復興特別所得税の上乗せ（2013年〜2037年）。将来年の試算でも固定で
-// 1.021倍しないよう、税率を使う関数には可能な限り計算年を渡す。
+/* 2026年度税制改正後の付加税。
+   2027年から復興特別所得税は2.1%→1.1%となり、防衛特別所得税1%が始まる。
+   復興特別所得税は2047年まで延長、防衛特別所得税は2027年以後当分の間。
+   将来年の試算でも1.021倍に固定しないよう、税率を使う関数には計算年を渡す。 */
 var RECONSTRUCTION_RATE = 1.021;
+var RECONSTRUCTION_RATE_FROM_2027 = 1.011;
 var RECONSTRUCTION_TAX_START_YEAR = 2013;
-var RECONSTRUCTION_TAX_END_YEAR = 2037;
+var RECONSTRUCTION_TAX_RATE_CHANGE_YEAR = 2027;
+var RECONSTRUCTION_TAX_END_YEAR = 2047;
+var DEFENSE_TAX_RATE = 1.01;
+var DEFENSE_TAX_START_YEAR = 2027;
 var CAPITAL_GAINS_BASE_RATE = 0.2;
 var CAPITAL_GAINS_INCOME_TAX_RATE = 0.15;
 
@@ -50,21 +56,36 @@ function taxYear(year) {
 
 function reconstructionRateForYear(year) {
   var y = taxYear(year);
-  return y >= RECONSTRUCTION_TAX_START_YEAR && y <= RECONSTRUCTION_TAX_END_YEAR
-    ? RECONSTRUCTION_RATE
-    : 1;
+  if (y < RECONSTRUCTION_TAX_START_YEAR || y > RECONSTRUCTION_TAX_END_YEAR)
+    return 1;
+  return y >= RECONSTRUCTION_TAX_RATE_CHANGE_YEAR
+    ? RECONSTRUCTION_RATE_FROM_2027
+    : RECONSTRUCTION_RATE;
 }
 
-/* 上場株式等の譲渡益税率。本則20%のうち所得税15%にだけ、2037年まで
-   復興特別所得税2.1%が上乗せされる。 */
-function capitalGainsTaxRate(year) {
+function defenseRateForYear(year) {
+  return taxYear(year) >= DEFENSE_TAX_START_YEAR ? DEFENSE_TAX_RATE : 1;
+}
+
+function incomeTaxMultiplierForYear(year) {
   return (
-    CAPITAL_GAINS_BASE_RATE +
-    CAPITAL_GAINS_INCOME_TAX_RATE * (reconstructionRateForYear(year) - 1)
+    Math.round(
+      (reconstructionRateForYear(year) + defenseRateForYear(year) - 1) *
+        1000000,
+    ) / 1000000
   );
 }
 
-/* 課税所得金額から所得税額（復興特別所得税込み、円未満切捨て）を求める。
+/* 上場株式等の譲渡益税率。本則20%のうち所得税15%にだけ、年ごとの
+   復興特別所得税・防衛特別所得税を加算する。 */
+function capitalGainsTaxRate(year) {
+  return (
+    CAPITAL_GAINS_BASE_RATE +
+    CAPITAL_GAINS_INCOME_TAX_RATE * (incomeTaxMultiplierForYear(year) - 1)
+  );
+}
+
+/* 課税所得金額から所得税額（付加税込み、円未満切捨て）を求める。
    通常の所得にも退職所得にも同じ表を使う（退職所得は「1/2してから」
    ここへ渡すという違いだけ） */
 function incomeTax(taxableIncome, year) {
@@ -74,7 +95,7 @@ function incomeTax(taxableIncome, year) {
     var b = INCOME_TAX_BRACKETS[i];
     if (kazei > b.over) {
       return Math.floor(
-        (kazei * b.rate - b.deduction) * reconstructionRateForYear(year),
+        (kazei * b.rate - b.deduction) * incomeTaxMultiplierForYear(year),
       );
     }
   }
@@ -208,6 +229,8 @@ var Tax = {
   roundedTaxableIncome: roundedTaxableIncome,
   incomeTax: incomeTax,
   reconstructionRateForYear: reconstructionRateForYear,
+  defenseRateForYear: defenseRateForYear,
+  incomeTaxMultiplierForYear: incomeTaxMultiplierForYear,
   capitalGainsTaxRate: capitalGainsTaxRate,
   inhabitantTax: inhabitantTax,
   retireDeductionBase: retireDeductionBase,
@@ -219,7 +242,9 @@ var Tax = {
   SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
   SHORT_TENURE_HALF_LIMIT: SHORT_TENURE_HALF_LIMIT,
   RECONSTRUCTION_TAX_START_YEAR: RECONSTRUCTION_TAX_START_YEAR,
+  RECONSTRUCTION_TAX_RATE_CHANGE_YEAR: RECONSTRUCTION_TAX_RATE_CHANGE_YEAR,
   RECONSTRUCTION_TAX_END_YEAR: RECONSTRUCTION_TAX_END_YEAR,
+  DEFENSE_TAX_START_YEAR: DEFENSE_TAX_START_YEAR,
   CAPITAL_GAINS_BASE_RATE: CAPITAL_GAINS_BASE_RATE,
 };
 if (typeof window !== "undefined") window.Tax = Tax;
@@ -230,6 +255,8 @@ if (typeof module !== "undefined" && module.exports) {
     roundedTaxableIncome: roundedTaxableIncome,
     incomeTax: incomeTax,
     reconstructionRateForYear: reconstructionRateForYear,
+    defenseRateForYear: defenseRateForYear,
+    incomeTaxMultiplierForYear: incomeTaxMultiplierForYear,
     capitalGainsTaxRate: capitalGainsTaxRate,
     inhabitantTax: inhabitantTax,
     retireDeductionBase: retireDeductionBase,
@@ -241,8 +268,12 @@ if (typeof module !== "undefined" && module.exports) {
     INCOME_TAX_BRACKETS: INCOME_TAX_BRACKETS,
     INHABITANT_TAX_RATE: INHABITANT_TAX_RATE,
     RECONSTRUCTION_RATE: RECONSTRUCTION_RATE,
+    RECONSTRUCTION_RATE_FROM_2027: RECONSTRUCTION_RATE_FROM_2027,
     RECONSTRUCTION_TAX_START_YEAR: RECONSTRUCTION_TAX_START_YEAR,
+    RECONSTRUCTION_TAX_RATE_CHANGE_YEAR: RECONSTRUCTION_TAX_RATE_CHANGE_YEAR,
     RECONSTRUCTION_TAX_END_YEAR: RECONSTRUCTION_TAX_END_YEAR,
+    DEFENSE_TAX_RATE: DEFENSE_TAX_RATE,
+    DEFENSE_TAX_START_YEAR: DEFENSE_TAX_START_YEAR,
     CAPITAL_GAINS_BASE_RATE: CAPITAL_GAINS_BASE_RATE,
     PENSION_INCOME_BRACKETS: PENSION_INCOME_BRACKETS,
     SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,

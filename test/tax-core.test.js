@@ -18,13 +18,16 @@ const {
   pensionDeduction,
   INHABITANT_TAX_RATE,
   RECONSTRUCTION_RATE,
+  RECONSTRUCTION_RATE_FROM_2027,
   reconstructionRateForYear,
+  defenseRateForYear,
+  incomeTaxMultiplierForYear,
   capitalGainsTaxRate,
   SHORT_TENURE_YEARS,
   SHORT_TENURE_HALF_LIMIT,
 } = require("../common/tax-core.js");
 
-/* 所得税は最後に復興特別所得税ぶんの1.021を掛けて切り捨てるため、
+/* 所得税は最後に復興・防衛の付加税ぶんを掛けて切り捨てるため、
    二進小数の丸めで手計算より1円小さくなることがある
    （例: 13,204,000×1.021 は 13,481,283.999… になり、切り捨てで1円減る）。
    区分や税率の取り違えを見つけるのが目的なので、1円までは許容する */
@@ -45,20 +48,33 @@ test("課税所得金額は1,000円未満を切り捨てる", () => {
   assert.strictEqual(roundedTaxableIncome(-5000), 0, "マイナスは0");
 });
 
-test("復興特別所得税は2.1%の上乗せ", () => {
+test("復興特別所得税は2027年から1.1%へ下がる", () => {
   assert.strictEqual(RECONSTRUCTION_RATE, 1.021);
+  assert.strictEqual(RECONSTRUCTION_RATE_FROM_2027, 1.011);
+  assert.strictEqual(reconstructionRateForYear(2026), 1.021);
+  assert.strictEqual(reconstructionRateForYear(2027), 1.011);
+  assert.strictEqual(reconstructionRateForYear(2047), 1.011);
+  assert.strictEqual(reconstructionRateForYear(2048), 1);
 });
 
-test("復興特別所得税は2037年までで、2038年以後は上乗せしない", () => {
-  assert.strictEqual(reconstructionRateForYear(2037), 1.021);
-  assert.strictEqual(reconstructionRateForYear(2038), 1);
-  taxNear(incomeTax(1000000, 2037), 51050);
-  assert.strictEqual(incomeTax(1000000, 2038), 50000);
+test("防衛特別所得税は2027年以後1%を上乗せする", () => {
+  assert.strictEqual(defenseRateForYear(2026), 1);
+  assert.strictEqual(defenseRateForYear(2027), 1.01);
+  assert.strictEqual(defenseRateForYear(2048), 1.01);
 });
 
-test("上場株式等の譲渡益税率は2037年まで20.315%、以後20%", () => {
-  assert.ok(Math.abs(capitalGainsTaxRate(2037) - 0.20315) < 1e-12);
-  assert.ok(Math.abs(capitalGainsTaxRate(2038) - 0.2) < 1e-12);
+test("付加税合計は2047年まで2.1%、2048年以後1%", () => {
+  assert.strictEqual(incomeTaxMultiplierForYear(2026), 1.021);
+  assert.strictEqual(incomeTaxMultiplierForYear(2027), 1.021);
+  assert.strictEqual(incomeTaxMultiplierForYear(2047), 1.021);
+  assert.strictEqual(incomeTaxMultiplierForYear(2048), 1.01);
+  taxNear(incomeTax(1000000, 2047), 51050);
+  assert.strictEqual(incomeTax(1000000, 2048), 50500);
+});
+
+test("上場株式等の譲渡益税率は2047年まで20.315%、以後20.15%", () => {
+  assert.ok(Math.abs(capitalGainsTaxRate(2047) - 0.20315) < 1e-12);
+  assert.ok(Math.abs(capitalGainsTaxRate(2048) - 0.2015) < 1e-12);
 });
 
 test("住民税の所得割は10%", () => {

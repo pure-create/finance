@@ -285,7 +285,7 @@ test("売却益への課税は含み益の割合ぶんだけかかる", () => {
   near(free.medianFinalWithdrawReal, 100, 1e-6, "非課税の手取り");
 });
 
-test("売却益税率は売却年が2038年になると20%へ切り替わる", () => {
+test("売却益税率は売却年が2048年になると20.15%へ切り替わる", () => {
   const common = {
     ageNow: 65,
     ageRetire: 65,
@@ -294,11 +294,11 @@ test("売却益税率は売却年が2038年になると20%へ切り替わる", (
     withdraw: 100,
     taxOn: true,
   };
-  const through2037 = simulate(cfg(Object.assign({ startYear: 2036 }, common)));
-  const through2038 = simulate(cfg(Object.assign({ startYear: 2037 }, common)));
+  const through2047 = simulate(cfg(Object.assign({ startYear: 2046 }, common)));
+  const through2048 = simulate(cfg(Object.assign({ startYear: 2047 }, common)));
   assert.ok(
-    balanceAt(through2038, 2) > balanceAt(through2037, 2),
-    "2038年の売却に2037年までの税率が使われている",
+    balanceAt(through2048, 2) > balanceAt(through2047, 2),
+    "2048年の売却に2047年までの税率が使われている",
   );
 });
 

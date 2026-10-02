@@ -94,7 +94,7 @@ function giftTax(amount, category) {
   };
 }
 
-/* 上場株式等の譲渡益税率。復興特別所得税は現行法上2037年まで。 */
+/* 上場株式等の譲渡益税率。復興・防衛の付加税を売却年別に反映する。 */
 function capitalGainsTaxRate(year) {
   return commonTaxCore().capitalGainsTaxRate(
     Math.floor(finite(year, SIM_START_YEAR)),

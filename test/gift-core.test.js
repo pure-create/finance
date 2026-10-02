@@ -41,9 +41,9 @@ test("2人から150万円ずつでも、子の年合計300万円に基礎控除�
   assert.notEqual(gift.giftTax(150, "special").tax * 2, 19);
 });
 
-test("売却益税率は2037年まで20.315%、2038年以後20%", () => {
-  assert.equal(gift.capitalGainsTaxRate(2037), 0.20315);
-  assert.equal(gift.capitalGainsTaxRate(2038), 0.2);
+test("売却益税率は2047年まで20.315%、2048年以後20.15%", () => {
+  assert.equal(gift.capitalGainsTaxRate(2047), 0.20315);
+  assert.equal(gift.capitalGainsTaxRate(2048), 0.2015);
 });
 
 test("贈与税を手取りで用意する売却では譲渡益税分も売却する", () => {
