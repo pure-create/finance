@@ -221,6 +221,21 @@ table.result-table th,
 table.result-table td {
   padding: 6px 4px;
 }
+
+/* 見出しの「退職所得」と、万円単位の控除額を途中で分断しない。 */
+th.retirement-deduction {
+  min-width: calc(5em + 10px);
+}
+
+th.retirement-deduction .nowrap,
+td.retirement-deduction {
+  white-space: nowrap;
+}
+
+td.retirement-deduction {
+  font-variant-numeric: tabular-nums;
+}
+
 /* 金額の列は入る桁数で幅を決める。ch は「0」1文字分の幅で、数字は tabular-nums なので
    どのフォントでもカンマ入りの表示がちょうど収まる。加える10pxは左右のpadding(4px×2)と枠線。
    退職手当・手取額は8桁（12,345,678＝10文字）、所得税・住民税は7桁（1,234,567＝9文字） */

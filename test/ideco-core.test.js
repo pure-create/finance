@@ -12,6 +12,7 @@ const {
   joinAgeLimit,
   taxSaving,
   accumulate,
+  annualSavingHighlight,
   overlapYears,
   adjustedDeduction,
   lumpSumTax,
@@ -23,6 +24,13 @@ const {
   bestMix,
   MIX_STEPS,
   taxableAccountTax,
+  taxableEquivalentAccumulation,
+  nisaPriorityAccumulation,
+  taxableLumpPayout,
+  taxableAnnuityPayout,
+  nisaLumpPayout,
+  nisaAnnuityPayout,
+  mixedInvestmentPayout,
   TAXABLE_GAIN_TAX_RATE,
   LIMIT_REFORM_YEAR,
   JOIN_AGE_LIMIT,
@@ -464,6 +472,42 @@ test("積立：2027年をまたぐと限度額が上がる", () => {
   assert.strictEqual(a.rows[1].year, 2027);
   assert.strictEqual(a.rows[1].limit, 62000, "2027年から改正後");
   assert.strictEqual(a.rows[1].contribution, 50000 * 12, "希望額が枠に収まる");
+});
+
+test("節税表示：改正後に入力額を拠出できる場合は改正後の年額を使う", () => {
+  const a = accumulate(
+    Object.assign({}, baseAcc, {
+      category: "publicSv",
+      monthly: 50000,
+      payAge: 43,
+    }),
+    tax,
+  );
+  const highlight = annualSavingHighlight(a.rows, 50000);
+
+  assert.strictEqual(highlight.year, 2027);
+  assert.strictEqual(highlight.startsLater, true);
+  assert.strictEqual(highlight.saving, a.rows[1].saving);
+  assert.ok(
+    highlight.saving > a.rows[0].saving,
+    "現行上限24万円ではなく、改正後の年60万円で節税額を表示する",
+  );
+});
+
+test("節税表示：現行上限内の掛金は初年度の年額を使う", () => {
+  const a = accumulate(
+    Object.assign({}, baseAcc, {
+      category: "publicSv",
+      monthly: 20000,
+      payAge: 43,
+    }),
+    tax,
+  );
+  const highlight = annualSavingHighlight(a.rows, 20000);
+
+  assert.strictEqual(highlight.year, 2026);
+  assert.strictEqual(highlight.startsLater, false);
+  assert.strictEqual(highlight.saving, a.rows[0].saving);
 });
 
 test("積立：加入できる年齢を過ぎたら拠出は止まるが運用は続く", () => {
@@ -1748,4 +1792,147 @@ test("課税口座：運用益に比例する（分けて計算しても合計�
       i * 10 + "%で分けた場合",
     );
   }
+});
+
+test("課税口座比較：各年の掛金から節税額を引いた実質負担額を積み立てる", () => {
+  const ideco = accumulate(baseAcc, tax);
+  const account = taxableEquivalentAccumulation(baseAcc, ideco.rows);
+  const expected = ideco.rows.reduce(
+    (sum, row) => sum + row.contribution - row.saving,
+    0,
+  );
+
+  near(account.netContributions, expected, 1e-6, "実質負担額");
+  near(account.basis, expected, 1e-6, "取得額");
+  near(account.balance, expected, 1e-6, "利回り0%の残高");
+  assert.ok(account.balance < ideco.balance, "節税分まで投資している");
+});
+
+test("課税口座比較：iDeCoと同じ時期・利回りで実質負担額を運用する", () => {
+  const cfg = Object.assign({}, baseAcc, { yieldRate: 3 });
+  const ideco = accumulate(cfg, tax);
+  const account = taxableEquivalentAccumulation(cfg, ideco.rows);
+  let expected = 0;
+  for (let i = 0; i < ideco.rows.length; i++) {
+    expected =
+      expected * 1.03 +
+      (ideco.rows[i].contribution - ideco.rows[i].saving) * Math.pow(1.03, 0.5);
+  }
+  near(account.balance, expected, 1e-6, "運用後残高");
+  assert.ok(account.balance < ideco.balance, "iDeCo掛金全額と同額になっている");
+});
+
+test("課税口座比較：一括売却は元本を除いた利益だけに課税する", () => {
+  const result = taxableLumpPayout({ balance: 1000000, basis: 600000 }, 2026);
+  near(result.tax, 400000 * 0.20315, 1e-6, "譲渡益税");
+  near(result.net, 1000000 - 400000 * 0.20315, 1e-6, "手取り");
+});
+
+test("課税口座比較：年金形式は各年の売却益にその年の税率を使う", () => {
+  const result = taxableAnnuityPayout(
+    { balance: 1000000, basis: 600000 },
+    2047,
+    2,
+    0,
+  );
+  near(result.gross, 1000000, 1e-6, "総受取額");
+  near(
+    result.tax,
+    200000 * 0.20315 + 200000 * 0.2015,
+    1e-6,
+    "2047年と2048年の税率",
+  );
+  near(result.net, result.gross - result.tax, 1e-6, "手取り");
+});
+
+test("課税口座比較：一時金と年金に分けても元の残高を超えない", () => {
+  const account = { balance: 1000000, basis: 600000 };
+  const lump = taxableLumpPayout(account, 2026, 0.4);
+  const annuity = taxableAnnuityPayout(account, 2026, 10, 0, 0.6);
+  near(lump.gross + annuity.gross, account.balance, 1e-6, "総受取額");
+  near(lump.basis + annuity.basis, account.basis, 1e-6, "取得額");
+});
+
+test("NISA比較：残り枠内なら実質負担額の全額をNISAへ積み立てる", () => {
+  const cfg = Object.assign({}, baseAcc, { yieldRate: 3 });
+  const ideco = accumulate(cfg, tax);
+  const taxable = taxableEquivalentAccumulation(cfg, ideco.rows);
+  const nisa = nisaPriorityAccumulation(cfg, ideco.rows, 0);
+
+  near(nisa.nisaContributions, ideco.netCost, 1e-6, "NISAへの積立");
+  assert.strictEqual(nisa.taxableContributions, 0, "課税口座への積立");
+  near(nisa.balance, taxable.balance, 1e-6, "同じ利回りの運用後残高");
+});
+
+test("NISA比較：年間枠を超えた分は課税口座へ積み立てる", () => {
+  const rows = [{ year: 2026, age: 40, contribution: 5000000, saving: 0 }];
+  const result = nisaPriorityAccumulation(
+    { yieldRate: 0, initialBalance: 0 },
+    rows,
+    0,
+  );
+
+  assert.strictEqual(result.nisaContributions, 3600000);
+  assert.strictEqual(result.taxableContributions, 1400000);
+  assert.strictEqual(result.balance, 5000000);
+});
+
+test("NISA比較：生涯枠を使用済みなら課税口座だけの結果と一致する", () => {
+  const cfg = Object.assign({}, baseAcc, { yieldRate: 3 });
+  const ideco = accumulate(cfg, tax);
+  const taxable = taxableEquivalentAccumulation(cfg, ideco.rows);
+  const nisa = nisaPriorityAccumulation(cfg, ideco.rows, 18000000);
+
+  assert.strictEqual(nisa.nisaContributions, 0);
+  near(nisa.taxable.balance, taxable.balance, 1e-6, "課税口座残高");
+  near(nisa.taxable.basis, taxable.basis, 1e-6, "課税口座元本");
+});
+
+test("NISA比較：NISA部分の受取には売却益税がかからない", () => {
+  const result = mixedInvestmentPayout(
+    { balance: 0, basis: 0 },
+    1000000,
+    2026,
+    10,
+    0,
+    0.4,
+  );
+
+  assert.strictEqual(result.gross, 1000000);
+  assert.strictEqual(result.tax, 0);
+  assert.strictEqual(result.net, 1000000);
+});
+
+test("NISA比較：一時金と年金の各部分でもNISA資産を同じ割合で分ける", () => {
+  const account = {
+    taxable: { balance: 1000000, basis: 600000 },
+    nisaBalance: 1000000,
+  };
+  const lump = nisaLumpPayout(account, 2026, 0.4);
+  const annuity = nisaAnnuityPayout(account, 2026, 10, 0, 0.6);
+
+  near(lump.gross, 800000, 1e-6, "一時金部分");
+  near(annuity.gross, 1200000, 1e-6, "年金部分");
+  near(lump.gross + annuity.gross, 2000000, 1e-6, "受取総額");
+  near(
+    lump.tax + annuity.tax,
+    400000 * 0.20315,
+    1e-6,
+    "課税口座部分だけの税金",
+  );
+});
+
+test("NISA比較：課税口座との併用では課税口座の利益だけに課税する", () => {
+  const result = mixedInvestmentPayout(
+    { balance: 1000000, basis: 600000 },
+    1000000,
+    2026,
+    10,
+    0,
+    0.5,
+  );
+
+  near(result.gross, 2000000, 1e-6, "受取総額");
+  near(result.tax, 400000 * 0.20315, 1e-6, "課税口座部分の税金");
+  near(result.net, result.gross - result.tax, 1e-6, "最終手取り");
 });

@@ -85,23 +85,20 @@ function percentile(sorted, p) {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
-const NISA_ANNUAL = 360; // 年間投資枠（万円・簿価）
-const NISA_LIFETIME = 1800; // 生涯投資枠（万円・簿価）
-const MINOR_NISA_START_YEAR = 2027;
-const MINOR_NISA_MAX_AGE = 17;
-const MINOR_NISA_ANNUAL = 60; // 未成年者の年間投資枠（万円・簿価）
-const MINOR_NISA_LIFETIME = 600; // 未成年者の非課税保有限度額（万円・簿価）
-
-/* 2026年までは18歳未満に新規のNISA枠はない。2027年からは年初時点で
-   18歳未満なら未成年者向けのつみたて投資枠を使い、18歳以後は成人向けの
-   枠へ自動移行する。nisaUsed は移行前後を通した簿価残高として扱う。 */
-function nisaLimits(year, age) {
-  if (age > MINOR_NISA_MAX_AGE)
-    return { annual: NISA_ANNUAL, lifetime: NISA_LIFETIME };
-  if (year >= MINOR_NISA_START_YEAR)
-    return { annual: MINOR_NISA_ANNUAL, lifetime: MINOR_NISA_LIFETIME };
-  return { annual: 0, lifetime: 0 };
+function commonNisaCore() {
+  if (typeof NisaRules !== "undefined") return NisaRules;
+  if (typeof require === "function")
+    return require("../../common/nisa-core.js");
+  throw new Error("NISA core is required");
 }
+const NISA_RULES = commonNisaCore();
+const NISA_ANNUAL = NISA_RULES.NISA_ANNUAL;
+const NISA_LIFETIME = NISA_RULES.NISA_LIFETIME;
+const MINOR_NISA_START_YEAR = NISA_RULES.MINOR_NISA_START_YEAR;
+const MINOR_NISA_MAX_AGE = NISA_RULES.MINOR_NISA_MAX_AGE;
+const MINOR_NISA_ANNUAL = NISA_RULES.MINOR_NISA_ANNUAL;
+const MINOR_NISA_LIFETIME = NISA_RULES.MINOR_NISA_LIFETIME;
+const nisaLimits = NISA_RULES.nisaLimits;
 function commonTaxCore() {
   if (typeof Tax !== "undefined") return Tax;
   if (typeof require === "function") return require("../../common/tax-core.js");

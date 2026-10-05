@@ -65,6 +65,13 @@ body {
   break-inside: avoid;
   page-break-inside: avoid;
 }
+.account-compare {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.account-compare {
+  min-width: 0;
+}
 /* 課税口座との比較は、見出しの一行と2行の数字で1組。切り離さない */
 .ref {
   break-inside: avoid;

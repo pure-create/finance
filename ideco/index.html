@@ -66,11 +66,11 @@
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260909a" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
-    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20260825b" />
+    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20261006b" />
     <link
       rel="stylesheet"
       type="text/css"
-      href="./css/print.css?v=20260816b"
+      href="./css/print.css?v=20261005a"
       media="print"
     />
   </head>
@@ -212,9 +212,9 @@
               >
             </div>
           </div>
-          <!-- 残高と、そのうちの元本。差が今までの含み益になる。
-         課税口座と比べるときの運用益に効くので、隣どうしに並べる -->
-          <div class="grid2">
+          <!-- 残高と、そのうちの元本、NISA使用済み枠。
+         iDeCo・NISA・課税口座の比較に使うので、隣どうしに並べる -->
+          <div class="grid3">
             <div class="fld">
               <label for="balance"
                 >現在のiDeCo残高
@@ -248,7 +248,7 @@
                   aria-label="掛金の元本について"
                   aria-describedby="balancePaidTip"
                   >？<span class="tipbox" id="balancePaidTip" role="tooltip"
-                    >今の残高のうち、<strong>これまでに払い込んだ掛金の累計</strong>（拠出金累計額）を入れてください。残高との差が、すでに出ている<strong>含み益</strong>になります。<br /><br />使うのは「課税口座で同じように運用して売った場合」と比べるところだけです。課税口座なら含み益にも売却時に課税されるためで、iDeCoの税額そのものは元本と運用益を区別しないので変わりません。<br /><br />0のままなら、残高すべてを元本（含み益なし）として扱います。</span
+                    >今の残高のうち、<strong>これまでに払い込んだ掛金の累計</strong>（拠出金累計額）を入れてください。残高との差が、すでに出ている<strong>含み益</strong>になります。<br /><br />使うのは「NISA優先・課税口座で同じように運用した場合」と比べるところだけです。比較上、現在残高は課税口座にあるものとして、含み益へ売却時に課税します。iDeCoの税額そのものは元本と運用益を区別しないので変わりません。<br /><br />0のままなら、残高すべてを元本（含み益なし）として扱います。</span
                   ></span
                 >
               </label>
@@ -263,6 +263,31 @@
                 /><span class="unit">万円</span></span
               >
               <p class="note" id="balancePaidNote"></p>
+            </div>
+            <div class="fld">
+              <label for="nisaUsed"
+                >NISA生涯枠の使用済み
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="NISA生涯枠の使用済みについて"
+                  aria-describedby="nisaUsedTip"
+                  >？<span class="tipbox" id="nisaUsedTip" role="tooltip"
+                    >現在使用している非課税保有限度額（簿価）です。現在の評価額ではありません。生涯枠1,800万円の残りを、iDeCoと同じ実質負担額の比較に使います。<br /><br />各年の年間枠はほかの投資で使わない前提です。年間枠または生涯枠を超える積立分は、課税口座で運用するものとして計算します。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="nisaUsed"
+                  value="0"
+                  min="0"
+                  max="1800"
+                  step="10"
+                  inputmode="numeric"
+                /><span class="unit">万円</span></span
+              >
             </div>
           </div>
           <div class="ctrl">
@@ -634,14 +659,12 @@
                 <div id="mixAnnuityDetail"></div>
               </div>
             </div>
-            <!-- この割合での合計。2行目に、それを課税口座と比べた差を入れる
-           （上の2つの欄と同じ出し方で、割り振り全体の損得を最後に出す） -->
+            <!-- この割合でiDeCoによって増減する税金の合計 -->
             <div class="mix-sum" id="mixSum" aria-live="polite">
               <span class="glabel" id="mixSumLabel"
                 >この割合でiDeCoによって増える税金</span
               >
               <span class="gval" id="mixSumVal">0<small>万円</small></span>
-              <div class="ref-diff" id="mixRefDiff"></div>
             </div>
             <div class="chart-wrap">
               <canvas
@@ -652,6 +675,33 @@
             </div>
             <p class="note" id="mixChartNote"></p>
           </div>
+        </div>
+
+        <div class="card" id="accountCompareCard">
+          <h2 class="sec-title">
+            同じ実質負担額（<span id="accountCompareCost">0</span
+            >万円）で運用した場合
+          </h2>
+          <p class="note" id="accountCompareLead"></p>
+          <div
+            class="table-scroll"
+            tabindex="0"
+            aria-label="iDeCo・NISA優先・課税口座の最終手取り比較"
+          >
+            <table class="account-compare">
+              <thead>
+                <tr>
+                  <th scope="col">運用方法</th>
+                  <th scope="col">実際の投資額</th>
+                  <th scope="col">受取総額</th>
+                  <th scope="col">税金</th>
+                  <th scope="col">最終手取り</th>
+                </tr>
+              </thead>
+              <tbody id="accountCompareBody"></tbody>
+            </table>
+          </div>
+          <p class="note" id="accountCompareNote"></p>
         </div>
 
         <!-- グラフ -->
@@ -699,12 +749,14 @@
             ・
             併用では、一時金と年金に分ける割合を比較します。両者を別の年に受け取る組み合わせや、運営管理機関ごとの指定単位は扱いません。<br />
             ・
-            「参考：同じ額を課税口座で運用して売った場合」は、同じ運用益を課税口座で得たものとして、<a
+            「参考：同じ実質負担額で運用した場合」は、今後の各年についてiDeCo掛金からその年の節税額を差し引いた額を、NISA優先または課税口座へ同じ時期・利回りで積み立てる比較です。現在のiDeCo残高がある場合は、比較する運用方法にも同額がある状態から始めます。一時金は受取時に全額を売却し、年金は同じ年数で取り崩して、各売却年の<a
               href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm"
               target="_blank"
               rel="noopener noreferrer"
               >売却益</a
-            >に、売却年が2047年までは20.315%（2027年以後は復興特別所得税1.1%と防衛特別所得税1%を含む）、2048年以後は20.15%を一度だけ掛ける簡易比較です。掛金の所得控除による節税は含みません。<br />
+            >に、売却年が2047年までは20.315%（2027年以後は復興特別所得税1.1%と防衛特別所得税1%を含む）、2048年以後は20.15%を掛けます。現在残高に対応する過去の掛金で受けた節税額は、入力がないため比較に含みません。<br />
+            ・
+            NISA優先では、成人の年間投資枠360万円・非課税保有限度額1,800万円（簿価）の残りをこれから投資する金額に使い、超過分は課税口座で運用します。各年の年間枠はほかの投資で使わない前提です。現在のiDeCo残高に対応する比較資産は、過去にNISA枠を使えたか判定できないため課税口座にあるものとして扱います。<br />
             ・
             運用は入力した利回りで一定に増え、その年の掛金には半年分の利回りが付く前提です。信託報酬・口座管理手数料・給付事務手数料は考慮しません。
           </p>
@@ -732,8 +784,9 @@
     <script src="../common/state.js?v=20260901a"></script>
     <script src="../common/input-validation.js?v=20260906b"></script>
     <script src="../common/tool-nav.js?v=20260831a"></script>
+    <script src="../common/nisa-core.js?v=20261005a"></script>
     <script src="../common/tax-core.js?v=20261002a"></script>
-    <script src="./js/ideco-core.js?v=20261002a"></script>
-    <script src="./js/ideco.js?v=20260831a"></script>
+    <script src="./js/ideco-core.js?v=20261005d"></script>
+    <script src="./js/ideco.js?v=20261006g"></script>
   </body>
 </html>

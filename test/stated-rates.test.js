@@ -34,6 +34,7 @@ const asset = require("../assetSimulator/js/asset-core.js");
 const inherit = require("../inheritance/js/inheritance-core.js");
 const retire = require("../retirement/js/retire-calc.js");
 const tax = require("../common/tax-core.js");
+const nisa = require("../common/nisa-core.js");
 const pension = require("../pension/js/pension-core.js");
 
 // 「1,536,000円」のような表記を数値にする
@@ -731,6 +732,28 @@ test("iDeCo：注記の譲渡益税率が定数と一致する", () => {
     ideco.TAXABLE_GAIN_TAX_RATE,
     asset.TAX_RATE,
     "譲渡益税率が2つのツールで違う",
+  );
+});
+
+test("iDeCo：NISA比較の投資枠と入力上限が共通定数と一致する", () => {
+  const text = prose("ideco/index.html");
+  const m = must(
+    text,
+    /成人の年間投資枠([\d,]+)万円・非課税保有限度額([\d,]+)万円（簿価）/,
+    "ideco/index.html",
+  );
+  assert.strictEqual(yen(m[1]), nisa.NISA_ANNUAL, "年間投資枠");
+  assert.strictEqual(yen(m[2]), nisa.NISA_LIFETIME, "非課税保有限度額");
+
+  const input = must(
+    read("ideco/index.html"),
+    /id="nisaUsed"[^>]*max="(\d+)"/,
+    "ideco/index.html",
+  );
+  assert.strictEqual(
+    Number(input[1]),
+    nisa.NISA_LIFETIME,
+    "NISA使用済み欄の上限",
   );
 });
 

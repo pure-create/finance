@@ -13,6 +13,7 @@ const FIELDS = [
   ["nowAge", 40, "na"],
   ["balance", 0, "bl"],
   ["balancePaid", 0, "bp"],
+  ["nisaUsed", 0, "nu"],
   ["yieldRate", 3, "yr"],
   ["taxableIncome", 400, "ti"],
   ["joinAge", 40, "ja"],
@@ -29,14 +30,16 @@ const $ = (id) => document.getElementById(id);
 const fmt = (v) => Math.round(v).toLocaleString("ja-JP");
 // 円で計算した額を万円の表示にする
 const man = (v) => fmt(v / 10000);
+// 「毎年の節税額」は差が分かるよう0.1万円単位で表示する
+const man1 = (v) =>
+  (Math.round(v / 1000) / 10).toLocaleString("ja-JP", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 const num = (id) => {
   const v = parseFloat($(id).value);
   return isFinite(v) ? v : 0;
 };
-/* 割合の定数を「20.315」の形にする。0.20315×100 は二進小数の桁が出る
-   （20.314999999999998）ので、いったん整数に丸めてから戻す */
-const fmtRate = (r) => String(Math.round(r * 1e5) / 1e3);
-
 // このツールが基準にする「今年」。拠出限度額の切り替えに使う
 const THIS_YEAR = new Date().getFullYear();
 
@@ -74,6 +77,7 @@ function readConfig() {
     initialBalance: num("balance") * 10000,
     // 今ある残高のうちの元本。残高との差が含み益になる（0なら残高＝元本）
     initialPaid: num("balancePaid") * 10000,
+    nisaUsed: num("nisaUsed") * 10000,
     yieldRate: num("yieldRate"),
     taxableIncome: num("taxableIncome") * 10000,
 
@@ -834,20 +838,32 @@ function update() {
     },
     Tax,
   );
+  /* 課税口座との比較は、iDeCo掛金と同額ではなく、各年の掛金から
+     所得控除による節税額を引いた「家計の実質負担額」を積み立てる */
+  const taxableEquivalent = taxableEquivalentAccumulation(cfg, acc.rows);
+  const nisaPriority = nisaPriorityAccumulation(cfg, acc.rows, cfg.nisaUsed);
 
   /* 節税額。判断に効くのは毎年の額より累計なので、累計を主役に出す。
 	   拠出できる年が無い（受取年齢まで年数がない）ときや課税所得が無いときは
 	   どちらも0になるので、額を並べず一言で済ませる */
-  const perYearSaving = acc.rows.length ? acc.rows[0].saving : 0;
+  const savingHighlight = annualSavingHighlight(acc.rows, cfg.monthly);
+  const savingStartsLater = savingHighlight.startsLater
+    ? savingHighlight.year === THIS_YEAR + 1
+      ? "（来年から）"
+      : "（" + savingHighlight.year + "年から）"
+    : "";
   $("savingLine").innerHTML =
     acc.saved > 0
       ? "毎年 <b>" +
-        man(perYearSaving) +
-        "万円</b> の節税（" +
+        man1(savingHighlight.saving) +
+        "万円</b> の節税" +
+        savingStartsLater +
+        (savingStartsLater ? "。" : "（") +
         acc.rows.length +
         '年の拠出で累計 <b class="total">' +
         man(acc.saved) +
-        "万円</b>）"
+        "万円</b>" +
+        (savingStartsLater ? "" : "）")
       : "この条件では、掛金による節税はありません。";
 
   /* 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
@@ -950,6 +966,7 @@ function update() {
   const idecoAmount = acc.balance;
   const outCfg = payoutCfg(cfg, idecoAmount, cfg.payAge);
   const cmp = compare(outCfg, Tax);
+  const payoutYear = outCfg.startYear + (outCfg.idecoPayAge - outCfg.startAge);
   describeRule(cmp.lump);
 
   /* 併用。割合を0〜100%まで1%刻みで振って最小を探す（101回で1ミリ秒に満たない）。
@@ -1012,49 +1029,77 @@ function update() {
   }
 
   /* 各欄の最後に置く、課税口座との比較。
-	   iDeCoの出口の税金は、その額だけでは重いか軽いかが判断できない。
-	   運用中が非課税なのがiDeCoの利点なので、同じ運用益を課税口座で出して
-	   売った場合の譲渡益税と並べ、差し引きでどちらが軽いかまで出す。
-	   受け取り方ごとに運用益が違う（年金は受け取り終わるまで運用が続く）ので、
-	   gain は欄ごとに渡す */
-  function refDiff(taxByIdeco, ref) {
-    /* 差は、画面に出ている万円どうしの引き算で出す。円のまま引いてから
-		   まるめると、両方の端数の出かたで表示が1万円合わないことがある
-		   （税額も課税口座の税金も、どちらも万円にまるめて出している） */
-    const diffMan = Math.round(taxByIdeco / 10000) - Math.round(ref / 10000);
-    return {
-      cls: "ref-diff" + (diffMan < 0 ? " safe" : ""),
-      text:
-        "課税口座と比較すると" +
-        (diffMan === 0
-          ? "iDeCoはほぼ同じ"
-          : "iDeCoが <b>" +
-            fmt(Math.abs(diffMan)) +
-            "万円 " +
-            (diffMan < 0 ? "得" : "損") +
-            "</b>"),
-    };
+     iDeCoの掛金と同額ではなく、節税後の実質負担額を課税口座へ積み立て、
+     それぞれの受取方法で売却したあとの最終手取りを比べる */
+  function refHelp(id, label, detail) {
+    return (
+      label +
+      ' <span class="help" tabindex="0" aria-label="' +
+      label +
+      'の比較条件" aria-describedby="' +
+      id +
+      '">？<span class="tipbox" id="' +
+      id +
+      '" role="tooltip">' +
+      detail +
+      "</span></span>"
+    );
   }
 
-  function refLines(taxByIdeco, gain, saleYear) {
-    // 運用益が無ければ課税口座でも税金は出ないので、比べるものが無い（利回り0%など）
-    if (!(gain > 0)) return "";
-    const rate = Tax.capitalGainsTaxRate(saleYear);
-    const ref = taxableAccountTax(gain, saleYear);
-    const d = refDiff(taxByIdeco, ref);
+  function refAmount(amount, idecoNet) {
+    const diffMan = Math.round(amount / 10000) - Math.round(idecoNet / 10000);
+    const sign = diffMan > 0 ? "＋" : diffMan < 0 ? "−" : "±";
+    return yen(amount) + "（" + sign + fmt(Math.abs(diffMan)) + "万円）";
+  }
+
+  function refLines(
+    idecoNet,
+    nisaResult,
+    taxableResult,
+    contributionShare,
+    nisaContributionShare,
+    refId,
+  ) {
+    if (!(idecoNet > 0 || nisaResult.gross > 0 || taxableResult.gross > 0)) {
+      return "";
+    }
+    const taxableContributionShare = Math.max(
+      0,
+      contributionShare - nisaContributionShare,
+    );
+    const nisaDetail =
+      "実際の投資額 " +
+      yen(contributionShare) +
+      " のうち、NISAへ " +
+      yen(nisaContributionShare) +
+      "、枠を超える分を課税口座へ " +
+      yen(taxableContributionShare) +
+      " 積み立てます。受取総額は " +
+      yen(nisaResult.gross) +
+      "、NISA外の売却益税は " +
+      yen(nisaResult.tax) +
+      " です。";
+    const taxableDetail =
+      "実際の投資額 " +
+      yen(contributionShare) +
+      " の全額を課税口座へ積み立てます。受取総額は " +
+      yen(taxableResult.gross) +
+      "、売却益への税金は " +
+      yen(taxableResult.tax) +
+      " です。";
     return (
       '<div class="ref">' +
-      '<div class="ref-cap">参考：同じ額を課税口座で運用して売った場合</div>' +
+      '<div class="ref-cap">参考：同じ実質負担額（' +
+      yen(contributionShare) +
+      "）で運用した場合の手取り</div>" +
       rline(
-        "運用益 " + yen(gain) + " × " + fmtRate(rate) + "%",
-        yen(ref),
-        "dim",
+        refHelp(refId + "NisaTip", "NISA優先で運用", nisaDetail),
+        refAmount(nisaResult.net, idecoNet),
       ) +
-      '<div class="' +
-      d.cls +
-      '">' +
-      d.text +
-      "</div>" +
+      rline(
+        refHelp(refId + "TaxableTip", "課税口座のみで運用", taxableDetail),
+        refAmount(taxableResult.net, idecoNet),
+      ) +
       "</div>"
     );
   }
@@ -1088,7 +1133,15 @@ function update() {
       rline("手取り合計", yen(L.net), "total");
   } else {
     const idecoTax = L.ideco.tax + L.ideco.inhabitTax;
-    h =
+    if (hasRetire) {
+      h += retireLines(
+        L.retire.amount,
+        L.retire.deduction,
+        L.retire.tax + L.retire.inhabitTax,
+        L.adjusted === "retire",
+      );
+    }
+    h +=
       rline("iDeCoの受取額", yen(idecoAmount), "dim") +
       rline(
         "退職所得控除" + (L.adjusted === "ideco" ? "（調整後）" : ""),
@@ -1102,12 +1155,6 @@ function update() {
         hasRetire ? "sub" : "total",
       );
     if (hasRetire) {
-      h += retireLines(
-        L.retire.amount,
-        L.retire.deduction,
-        L.retire.tax + L.retire.inhabitTax,
-        L.adjusted === "retire",
-      );
       h += rline("合計", yen(L.net), "total");
     }
   }
@@ -1135,18 +1182,32 @@ function update() {
         : "",
     );
   }
-  // 一時金は受け取った時点で運用が終わるので、比べる運用益は積立期間のぶん
+  // 一時金は、課税口座も同じ受取年に全額売却する
   h += refLines(
-    L.taxByIdeco,
-    acc.gain,
-    outCfg.startYear + (outCfg.idecoPayAge - outCfg.startAge),
+    idecoAmount - L.taxByIdeco,
+    nisaLumpPayout(nisaPriority, payoutYear),
+    taxableLumpPayout(taxableEquivalent, payoutYear),
+    taxableEquivalent.netContributions,
+    nisaPriority.nisaContributions,
+    "lumpRef",
   );
   $("lumpDetail").innerHTML = h;
 
   // 年金の内訳
   const A = cmp.annuity;
   const d = A.detail;
-  let h2 = rline(
+  let h2 = "";
+  if (hasRetire) {
+    /* 年金で受け取る場合、iDeCoは退職所得控除を使わないので
+       退職金側の控除は調整されない（満額のまま） */
+    h2 += retireLines(
+      cfg.retireAmount,
+      Tax.retireDeduction(L.retireYears),
+      A.tax - d.tax,
+      false,
+    );
+  }
+  h2 += rline(
     "1年あたりの受取額",
     man(d.perYear) + "万円 × " + d.years + "年",
     "dim",
@@ -1172,14 +1233,6 @@ function update() {
     rline("税額（" + d.years + "年の合計）", "−" + yen(d.tax), "dim") +
     rline("iDeCoの手取り", yen(d.net), hasRetire ? "sub" : "total");
   if (hasRetire) {
-    /* 年金で受け取る場合、iDeCoは退職所得控除を使わないので
-		   退職金側の控除は調整されない（満額のまま） */
-    h2 += retireLines(
-      cfg.retireAmount,
-      Tax.retireDeduction(L.retireYears),
-      A.tax - d.tax,
-      false,
-    );
     h2 += rline("合計", yen(A.net), "total");
   }
   h2 += idecoTaxRow(A.taxByIdeco);
@@ -1192,14 +1245,24 @@ function update() {
   if (d.tax === 0)
     h2 +=
       '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
-  // 年金は受け取り終わるまで運用が続くので、その分の運用益も比べる相手に含める
+  // 課税口座も同じ年数で取り崩し、各年の売却益に課税する
   h2 += refLines(
-    A.taxByIdeco,
-    acc.gain + d.growth,
-    outCfg.startYear +
-      (outCfg.idecoPayAge - outCfg.startAge) +
-      outCfg.annuityYears -
-      1,
+    d.gross - A.taxByIdeco,
+    nisaAnnuityPayout(
+      nisaPriority,
+      payoutYear,
+      outCfg.annuityYears,
+      outCfg.yieldRate,
+    ),
+    taxableAnnuityPayout(
+      taxableEquivalent,
+      payoutYear,
+      outCfg.annuityYears,
+      outCfg.yieldRate,
+    ),
+    taxableEquivalent.netContributions,
+    nisaPriority.nisaContributions,
+    "annuityRef",
   );
   $("annuityDetail").innerHTML = h2;
 
@@ -1294,16 +1357,8 @@ function update() {
       (hasRetire ? "（退職金側の控除も削られません）" : "") +
       "</div>";
   }
-  /* 積立期間の運用益は、残高を割った割合でそのまま分かれる
-	   （元本も運用益も同じ比で割られるため） */
+  /* 課税口座も同じ割合で一時金部分と年金部分に分ける */
   const lumpShare = idecoAmount > 0 ? mix.lumpAmount / idecoAmount : 0;
-  if (mix.lumpAmount > 0) {
-    h3 += refLines(
-      mix.lump ? mix.lump.taxByIdeco : 0,
-      acc.gain * lumpShare,
-      outCfg.startYear + (outCfg.idecoPayAge - outCfg.startAge),
-    );
-  }
   $("mixLumpDetail").innerHTML = h3;
 
   // 年金の部分
@@ -1330,17 +1385,6 @@ function update() {
     h4 +=
       '<div class="zero-note">公的年金等控除の範囲に収まるため非課税です</div>';
   }
-  if (mix.annuityAmount > 0) {
-    // 年金部分は、割り振られた運用益に受け取り中の運用益を足したもの
-    h4 += refLines(
-      md.tax,
-      acc.gain * (1 - lumpShare) + md.growth,
-      outCfg.startYear +
-        (outCfg.idecoPayAge - outCfg.startAge) +
-        outCfg.annuityYears -
-        1,
-    );
-  }
   $("mixAnnuityDetail").innerHTML = h4;
 
   const mixDown = mix.taxByIdeco < -5000;
@@ -1355,27 +1399,99 @@ function update() {
   $("mixSumVal").innerHTML =
     man(Math.abs(mix.taxByIdeco)) + "<small>万円</small>";
 
-  /* 合計を課税口座と比べた差。上の2つの欄と同じ出し方で、割り振り全体の
-	   損得を出す。運用益は積立期間のぶん全部（割合で割っても足せば元に戻る）と、
-	   年金部分が受け取り終わるまでに増える分 */
-  const mixRef = $("mixRefDiff");
-  const mixGainAll = acc.gain + md.growth;
-  if (mixGainAll > 0) {
-    const finalSaleYear =
-      outCfg.startYear +
-      (outCfg.idecoPayAge - outCfg.startAge) +
-      outCfg.annuityYears -
-      1;
-    const d = refDiff(
-      mix.taxByIdeco,
-      taxableAccountTax(mixGainAll, finalSaleYear),
+  /* ---- 同じ家計負担での iDeCo・NISA優先・課税口座比較 ----
+     受取方法の違いで結果がぶれないよう、現在選択している併用割合と
+     年金受取年数を3方式すべてに適用する。 */
+  const idecoCompare = {
+    id: "ideco",
+    name: "iDeCo",
+    // iDeCoは節税分も掛金として運用されるため、実際の投資額は掛金総額
+    invested: acc.paid,
+    gross: mix.lumpAmount + md.gross,
+    tax: mix.taxByIdeco,
+    net: mix.lumpAmount + md.gross - mix.taxByIdeco,
+  };
+  const nisaPayout = mixedInvestmentPayout(
+    nisaPriority.taxable,
+    nisaPriority.nisaBalance,
+    payoutYear,
+    outCfg.annuityYears,
+    outCfg.yieldRate,
+    lumpShare,
+  );
+  const nisaCompare = {
+    id: "nisa",
+    name: "NISA優先",
+    invested: nisaPriority.netContributions,
+    gross: nisaPayout.gross,
+    tax: nisaPayout.tax,
+    net: nisaPayout.net,
+  };
+  const taxablePayout = mixedInvestmentPayout(
+    {
+      balance: taxableEquivalent.balance,
+      basis: taxableEquivalent.basis,
+    },
+    0,
+    payoutYear,
+    outCfg.annuityYears,
+    outCfg.yieldRate,
+    lumpShare,
+  );
+  const taxableCompare = {
+    id: "taxable",
+    name: "課税口座",
+    invested: taxableEquivalent.netContributions,
+    gross: taxablePayout.gross,
+    tax: taxablePayout.tax,
+    net: taxablePayout.net,
+  };
+  const accountRows = [idecoCompare, nisaCompare, taxableCompare];
+  const taxText = (amount) =>
+    amount < -5000 ? "−" + yen(-amount) + "（税減）" : yen(Math.max(0, amount));
+  const accountNetText = (row) => {
+    if (row.id === "ideco") return yen(row.net);
+    const diffMan =
+      Math.round(row.net / 10000) - Math.round(idecoCompare.net / 10000);
+    const sign = diffMan > 0 ? "＋" : diffMan < 0 ? "−" : "±";
+    return (
+      '<span class="account-net-main">' +
+      yen(row.net) +
+      '</span><span class="account-net-gap">（' +
+      sign +
+      fmt(Math.abs(diffMan)) +
+      "万円）</span>"
     );
-    mixRef.className = d.cls;
-    mixRef.innerHTML = d.text;
-  } else {
-    mixRef.className = "ref-diff";
-    mixRef.innerHTML = "";
-  }
+  };
+  $("accountCompareBody").innerHTML = accountRows
+    .map(
+      (row) =>
+        '<tr><th scope="row">' +
+        row.name +
+        "</th><td>" +
+        yen(row.invested) +
+        "</td><td>" +
+        yen(row.gross) +
+        "</td><td>" +
+        taxText(row.tax) +
+        '</td><td class="net">' +
+        accountNetText(row) +
+        "</td></tr>",
+    )
+    .join("");
+  $("accountCompareCost").textContent = man(taxableEquivalent.netContributions);
+  $("accountCompareLead").textContent =
+    "現在の一時金" +
+    mixPct +
+    "％・年金" +
+    (100 - mixPct) +
+    "％を3方式に共通して適用し、最終手取りを比べます。";
+  $("accountCompareNote").innerHTML =
+    "NISA優先では、実際の投資額のうち <b>" +
+    yen(nisaPriority.nisaContributions) +
+    "</b> をNISA、枠を超える <b>" +
+    yen(nisaPriority.taxableContributions) +
+    "</b> を課税口座で運用します。実際の投資額は、これから拠出する金額だけを表示し、現在残高は含めません。現在のiDeCo残高に対応する比較資産は、NISA枠を使わず課税口座にあるものとして計算します。税金欄のiDeCoは、iDeCoによって増減する税額です。退職金だけにかかる税額は比較に共通するため含めません。";
 
   let mixNote =
     "一時金にする割合を0%から100%まで1%刻みで振ったものです。" +

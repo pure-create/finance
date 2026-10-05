@@ -248,6 +248,31 @@ function accumulate(cfg, tax) {
   };
 }
 
+/**
+ * 「毎年の節税額」に表示する代表年を選ぶ。
+ * 入力した掛金が初年度の限度額で切り詰められ、その後の制度改正で
+ * 拠出額が増える場合は、増額後の最初の年を表示対象にする。
+ */
+function annualSavingHighlight(rows, requestedMonthly) {
+  if (!rows.length) return { saving: 0, year: null, startsLater: false };
+
+  const first = rows[0];
+  const requestedAnnual = Math.max(0, requestedMonthly || 0) * 12;
+  if (first.contribution < requestedAnnual) {
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i].contribution > first.contribution) {
+        return {
+          saving: rows[i].saving,
+          year: rows[i].year,
+          startsLater: true,
+        };
+      }
+    }
+  }
+
+  return { saving: first.saving, year: first.year, startsLater: false };
+}
+
 /* ---------- 出口：重複期間と退職所得控除の調整 ----------
 
    前に退職手当等を受けていると、勤続期間の重なり分だけ退職所得控除が減る
@@ -606,12 +631,11 @@ function compare(cfg, tax) {
   };
 }
 
-/* ---------- 参考：課税口座で同じ額を運用した場合 ----------
+/* ---------- 参考：同じ実質負担額を課税口座で運用した場合 ----------
 
-   出口の税額は、それだけ見ても重いか軽いかが分からない。iDeCoは
-   「運用中は非課税、受け取るときに課税」という制度なので、同じ運用益を
-   課税口座（特定口座）で出した場合にかかる譲渡益税と並べて初めて、
-   出口で払う税金の意味が読める。
+   iDeCoは掛金の所得控除で税金が軽くなるため、同じ掛金を課税口座にも入れると
+   家計から出ていく金額がそろわない。課税口座には各年の
+   「iDeCo掛金 − その年の節税額」を積み立て、同じ自己負担で比較する。
 
    売却年が2047年までは20.315%、2048年以後は20.15%。
    資産運用シミュレーターと同じ common/tax-core.js の
@@ -623,15 +647,217 @@ const TAXABLE_GAIN_TAX_RATE =
         new Date().getFullYear(),
       );
 
-/* 運用益にかかる譲渡益税。売るまで課税されないので、受け取るときに
-   一度だけ掛ける。年金や併用のように分けて受け取る場合、課税口座なら
-   取り崩すたびに課税されてその先の運用が細るが、ここでは運用益の総額に
-   一度掛けるだけにしている。課税口座を有利に見る側の簡略化なので、
-   実際の差はこれより iDeCo 寄りになる（画面の注記で断る） */
+/* 運用益にかかる譲渡益税。売却した年の税率を使う。
+   一括売却・年金形式の取り崩しは、下の各関数で売却時期に合わせて計算する */
 function taxableAccountTax(gain, year) {
   const tax =
     typeof Tax !== "undefined" ? Tax : require("../../common/tax-core.js");
   return Math.max(0, gain || 0) * tax.capitalGainsTaxRate(year);
+}
+
+/**
+ * iDeCoと同じ実質負担額を課税口座に積み立てる。
+ * idecoRows は accumulate() が返す年次データで、制度改正による限度額の変更も
+ * 年ごとに反映済み。現在残高がある場合は、課税口座にも同額がある状態から始める。
+ */
+function taxableEquivalentAccumulation(cfg, idecoRows) {
+  const rate = (cfg.yieldRate || 0) / 100;
+  const initial = Math.max(0, cfg.initialBalance || 0);
+  const initialPaid =
+    initial > 0 && cfg.initialPaid > 0 ? cfg.initialPaid : initial;
+  let balance = initial;
+  let basis = initialPaid;
+  let netContributions = 0;
+
+  for (let i = 0; i < idecoRows.length; i++) {
+    const row = idecoRows[i];
+    const contribution = Math.max(0, row.contribution - row.saving);
+    balance =
+      balance * (1 + rate) +
+      contribution * Math.pow(1 + rate, 1 - CONTRIBUTION_TIMING);
+    basis += contribution;
+    netContributions += contribution;
+  }
+
+  return {
+    balance: balance,
+    basis: basis,
+    gain: balance - basis,
+    netContributions: netContributions,
+    initialBalance: initial,
+  };
+}
+
+function commonNisaCore() {
+  if (typeof NisaRules !== "undefined") return NisaRules;
+  if (typeof require === "function")
+    return require("../../common/nisa-core.js");
+  throw new Error("NISA core is required");
+}
+
+/**
+ * iDeCoと同じ実質負担額を、NISA枠から優先して積み立てる。
+ * 現在のiDeCo残高に対応する比較資産は取得経緯を判定できないため課税口座とし、
+ * NISA枠はこれからの積立だけに使う。枠を超えた分は課税口座へ入れる。
+ */
+function nisaPriorityAccumulation(cfg, idecoRows, nisaUsed) {
+  const rules = commonNisaCore();
+  const rate = (cfg.yieldRate || 0) / 100;
+  const initial = Math.max(0, cfg.initialBalance || 0);
+  const initialPaid =
+    initial > 0 && cfg.initialPaid > 0 ? cfg.initialPaid : initial;
+  let taxableBalance = initial;
+  let taxableBasis = initialPaid;
+  let nisaBalance = 0;
+  let used = Math.max(0, nisaUsed || 0);
+  let nisaContributions = 0;
+  let taxableContributions = 0;
+
+  for (let i = 0; i < idecoRows.length; i++) {
+    const row = idecoRows[i];
+    const contribution = Math.max(0, row.contribution - row.saving);
+    const limits = rules.nisaLimits(row.year, row.age);
+    const annual = limits.annual * 10000;
+    const lifetime = limits.lifetime * 10000;
+    const room = Math.max(0, Math.min(annual, lifetime - used));
+    const toNisa = Math.min(contribution, room);
+    const toTaxable = contribution - toNisa;
+    const contributionGrowth = Math.pow(1 + rate, 1 - CONTRIBUTION_TIMING);
+
+    nisaBalance = nisaBalance * (1 + rate) + toNisa * contributionGrowth;
+    taxableBalance =
+      taxableBalance * (1 + rate) + toTaxable * contributionGrowth;
+    taxableBasis += toTaxable;
+    used += toNisa;
+    nisaContributions += toNisa;
+    taxableContributions += toTaxable;
+  }
+
+  return {
+    taxable: { balance: taxableBalance, basis: taxableBasis },
+    nisaBalance: nisaBalance,
+    nisaUsed: used,
+    nisaContributions: nisaContributions,
+    taxableContributions: taxableContributions,
+    netContributions: nisaContributions + taxableContributions,
+    balance: taxableBalance + nisaBalance,
+  };
+}
+
+// 課税口座を一括売却したときの手取り。share は口座のうち売る割合。
+function taxableLumpPayout(account, saleYear, share) {
+  const ratio = Math.min(1, Math.max(0, share === undefined ? 1 : share));
+  const gross = account.balance * ratio;
+  const basis = account.basis * ratio;
+  const gain = Math.max(0, gross - basis);
+  const tax = taxableAccountTax(gain, saleYear);
+  return { gross: gross, basis: basis, gain: gain, tax: tax, net: gross - tax };
+}
+
+/**
+ * 課税口座を年金と同じ期間で取り崩す。毎年の売却額に含まれる利益を、
+ * その時点の「含み益÷残高」で按分して譲渡益税を計算する。
+ */
+function taxableAnnuityPayout(account, startYear, years, yieldRate, share) {
+  const ratio = Math.min(1, Math.max(0, share === undefined ? 1 : share));
+  const n = Math.max(1, Math.round(years));
+  // annuityPayment() と同様、受取中の利回りが0%以下なら0%として扱う
+  const rate = Math.max(0, (yieldRate || 0) / 100);
+  let balance = account.balance * ratio;
+  let basis = account.basis * ratio;
+  const perYear = annuityPayment(balance, n, yieldRate);
+  let gross = 0;
+  let tax = 0;
+
+  for (let i = 0; i < n; i++) {
+    const withdrawal = Math.min(balance, perYear);
+    const basisRatio = balance > 0 ? basis / balance : 0;
+    const basisPart = Math.min(basis, withdrawal * basisRatio);
+    const gainPart = Math.max(0, withdrawal - basisPart);
+    tax += taxableAccountTax(gainPart, startYear + i);
+    gross += withdrawal;
+    balance = Math.max(0, balance - withdrawal);
+    basis = Math.max(0, basis - basisPart);
+    balance *= 1 + rate;
+  }
+
+  return {
+    gross: gross,
+    basis: account.basis * ratio,
+    gain: Math.max(0, gross - account.basis * ratio),
+    tax: tax,
+    net: gross - tax,
+    perYear: perYear,
+  };
+}
+
+// NISA優先口座のうち、一時金として売却する部分の手取り。
+function nisaLumpPayout(account, saleYear, share) {
+  const ratio = Math.min(1, Math.max(0, share === undefined ? 1 : share));
+  const taxable = taxableLumpPayout(account.taxable, saleYear, ratio);
+  const nisaGross = Math.max(0, account.nisaBalance || 0) * ratio;
+  return {
+    gross: taxable.gross + nisaGross,
+    tax: taxable.tax,
+    net: taxable.net + nisaGross,
+  };
+}
+
+// NISA優先口座のうち、年金と同じ期間で取り崩す部分の手取り。
+function nisaAnnuityPayout(account, startYear, years, yieldRate, share) {
+  const ratio = Math.min(1, Math.max(0, share === undefined ? 1 : share));
+  const taxable = taxableAnnuityPayout(
+    account.taxable,
+    startYear,
+    years,
+    yieldRate,
+    ratio,
+  );
+  const n = Math.max(1, Math.round(years));
+  const nisaBalance = Math.max(0, account.nisaBalance || 0) * ratio;
+  const nisaGross = annuityPayment(nisaBalance, n, yieldRate) * n;
+  return {
+    gross: taxable.gross + nisaGross,
+    tax: taxable.tax,
+    net: taxable.net + nisaGross,
+  };
+}
+
+/**
+ * 課税口座とNISA口座を、指定割合の一時金と残りの年金形式で受け取る。
+ * NISA部分は売却益非課税、課税口座部分は各売却年の税率を適用する。
+ */
+function mixedInvestmentPayout(
+  taxableAccount,
+  nisaBalance,
+  startYear,
+  years,
+  yieldRate,
+  lumpShare,
+) {
+  const ratio = Math.min(1, Math.max(0, lumpShare || 0));
+  const account = {
+    taxable: taxableAccount,
+    nisaBalance: nisaBalance,
+  };
+  const lump = nisaLumpPayout(account, startYear, ratio);
+  const annuity = nisaAnnuityPayout(
+    account,
+    startYear,
+    years,
+    yieldRate,
+    1 - ratio,
+  );
+  const gross = lump.gross + annuity.gross;
+  const tax = lump.tax + annuity.tax;
+
+  return {
+    gross: gross,
+    tax: tax,
+    net: gross - tax,
+    lump: lump,
+    annuity: annuity,
+  };
 }
 
 /* ---------- 出口：一時金と年金の併用 ----------
@@ -752,6 +978,7 @@ if (typeof module !== "undefined" && module.exports) {
     joinAgeLimit: joinAgeLimit,
     taxSaving: taxSaving,
     accumulate: accumulate,
+    annualSavingHighlight: annualSavingHighlight,
     overlapYears: overlapYears,
     adjustedDeduction: adjustedDeduction,
     isShortTenure: isShortTenure,
@@ -761,6 +988,13 @@ if (typeof module !== "undefined" && module.exports) {
     annuityTax: annuityTax,
     compare: compare,
     taxableAccountTax: taxableAccountTax,
+    taxableEquivalentAccumulation: taxableEquivalentAccumulation,
+    nisaPriorityAccumulation: nisaPriorityAccumulation,
+    taxableLumpPayout: taxableLumpPayout,
+    taxableAnnuityPayout: taxableAnnuityPayout,
+    nisaLumpPayout: nisaLumpPayout,
+    nisaAnnuityPayout: nisaAnnuityPayout,
+    mixedInvestmentPayout: mixedInvestmentPayout,
     TAXABLE_GAIN_TAX_RATE: TAXABLE_GAIN_TAX_RATE,
     mixTax: mixTax,
     bestMix: bestMix,

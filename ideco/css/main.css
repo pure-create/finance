@@ -451,7 +451,7 @@
   color: var(--idc-gain);
 }
 
-/* ---- 課税口座との比較（各欄の最後に置く参考） ----
+/* ---- NISA優先・課税口座との比較（各欄の最後に置く参考） ----
    本題はiDeCoの税額なので、結論の行（.headline）より弱く見せる。
    破線で区切って「ここから先は別の話」だと分かるようにする */
 .ref {
@@ -464,24 +464,61 @@
   color: var(--muted);
   margin-bottom: 2px;
 }
-/* 差し引きの一文。列に割らず文にするのは、「得」「損」がどちらに付くのかを
-   数字と離さないため。iDeCoが軽ければ運用益非課税が効いている（緑）、
-   重ければ出口の税金がそれを食っている（注意の色） */
-.ref-diff {
+/* ---- 同じ実質負担額での口座比較 ---- */
+.account-compare {
+  width: 100%;
+  min-width: 610px;
+  border-collapse: collapse;
   font-size: 12.5px;
-  line-height: 2;
-  color: var(--idc-warn);
-}
-/* 強めるのは「〇万円 得（損）」だけ。数字と得損が離れると読み違える */
-.ref-diff b {
-  font-size: 14px;
-  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.ref-diff.safe {
+.account-compare th,
+.account-compare td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+.account-compare thead th {
+  color: var(--text-sub);
+  font-size: 11.5px;
+  background: var(--surface-2);
+}
+.account-compare th:first-child {
+  text-align: left;
+}
+.account-compare tbody th {
+  color: var(--text);
+}
+.account-compare td.net {
   color: var(--idc-gain);
+  font-size: 15px;
+  font-weight: 700;
+}
+.account-net-main,
+.account-net-gap {
+  display: block;
+}
+.account-net-gap {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
+/* 参考欄の「？」は行全体を基準に吹き出す。半幅の結果カードでも
+   吹き出しが右端からはみ出さず、横スクロールを発生させない。 */
+.ref .rline {
+  position: relative;
+}
+.ref .help {
+  position: static;
+  vertical-align: middle;
+}
+.ref .tipbox {
+  width: 100%;
+  max-width: none;
+}
 /* 合算されて分けられない場合の断り */
 .split-note {
   font-size: 11px;
@@ -639,15 +676,6 @@
   color: var(--text);
   margin-bottom: 14px;
   row-gap: 4px;
-}
-/* 課税口座との差は、この帯の2行目。幅いっぱいの区画にして折り返させる。
-   運用益が無い条件では空になり、:empty で行ごと消える */
-.mix-sum .ref-diff {
-  flex: 0 0 100%;
-  line-height: 1.7;
-}
-.ref-diff:empty {
-  display: none;
 }
 .mix-sum .gval {
   font-size: 22px;

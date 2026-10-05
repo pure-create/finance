@@ -520,7 +520,8 @@ function calc() {
 
       // 退職所得控除額の計算
       koujo = retireDeduction(duration_tax + i);
-      result += "<td>" + koujo / 10000 + "万円</td>";
+      result +=
+        "<td class='retirement-deduction'>" + koujo / 10000 + "万円</td>";
 
       // 自己都合の調整額の計算
       if (duration + i < 10) {
