@@ -68,10 +68,16 @@ function restoreState() {
 /* 画面は掛金を円、資産額を万円で受け取る。計算部分はすべて円で扱うので、
    ここで単位をそろえる */
 function readConfig() {
+  const category = $("category").value;
   return {
-    category: $("category").value,
+    category: category,
     monthly: Math.round(num("monthly")),
-    otherPlanMonthly: Math.round(num("otherPlan")),
+    // 公務員の共済掛金相当額は告示による固定額。共有URLや保存済み入力に
+    // 0円などが残っていても、計算には必ず8,000円を使う。
+    otherPlanMonthly:
+      category === "publicSv"
+        ? PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT
+        : Math.round(num("otherPlan")),
     startAge: Math.round(num("nowAge")),
     startYear: THIS_YEAR,
     initialBalance: num("balance") * 10000,
@@ -649,9 +655,10 @@ function update() {
 
   // 利回りの表示と、区分に応じた入力欄の出し入れ
   $("yieldVal").textContent = cfg.yieldRate.toFixed(1);
-  const shared =
-    ["employee", "corporate", "publicSv"].indexOf(cfg.category) >= 0;
-  $("otherPlanField").style.display = shared ? "" : "none";
+  const companyPlan = ["employee", "corporate"].indexOf(cfg.category) >= 0;
+  $("otherPlanField").style.display = companyPlan ? "" : "none";
+  $("publicPlanField").style.display =
+    cfg.category === "publicSv" ? "" : "none";
   // 元本は今ある残高の内訳なので、残高を入れるまでは出さない
   $("balancePaidField").style.display = cfg.initialBalance > 0 ? "" : "none";
 
@@ -735,6 +742,18 @@ function update() {
   if (limitNext !== limitNow) {
     limitHtml +=
       '　→　2027年から <b class="reformed">' + fmt(limitNext) + "円/月</b>";
+    if (cfg.category === "publicSv") {
+      limitHtml +=
+        ' <span class="help" tabindex="0" aria-label="2027年以降の公務員のiDeCo上限について" aria-describedby="publicLimitTip">？' +
+        '<span class="tipbox" id="publicLimitTip" role="tooltip">' +
+        "第2号被保険者の共通上限" +
+        fmt(CONTRIBUTION_LIMITS.publicSv.reformed) +
+        "円から、国家公務員・地方公務員に一律適用される共済掛金相当額" +
+        fmt(PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT) +
+        "円を差し引くため、iDeCoの上限は" +
+        fmt(limitNext) +
+        "円/月になります。</span></span>";
+    }
   }
   $("limitNote").innerHTML = limitHtml;
 
@@ -1447,6 +1466,13 @@ function update() {
     net: taxablePayout.net,
   };
   const accountRows = [idecoCompare, nisaCompare, taxableCompare];
+  const roundedNet = (row) => Math.round(row.net / 10000);
+  const bestNet = Math.max(...accountRows.map(roundedNet));
+  const bestRows = accountRows.filter((row) => roundedNet(row) === bestNet);
+  const lowerNets = accountRows
+    .filter((row) => roundedNet(row) < bestNet)
+    .map(roundedNet);
+  const nextNet = lowerNets.length ? Math.max(...lowerNets) : bestNet;
   const taxText = (amount) =>
     amount < -5000 ? "−" + yen(-amount) + "（税減）" : yen(Math.max(0, amount));
   const accountNetText = (row) => {
@@ -1458,6 +1484,7 @@ function update() {
       '<span class="account-net-main">' +
       yen(row.net) +
       '</span><span class="account-net-gap">（' +
+      "iDeCo比 " +
       sign +
       fmt(Math.abs(diffMan)) +
       "万円）</span>"
@@ -1466,32 +1493,50 @@ function update() {
   $("accountCompareBody").innerHTML = accountRows
     .map(
       (row) =>
-        '<tr><th scope="row">' +
+        '<tr class="' +
+        (roundedNet(row) === bestNet ? "best" : "") +
+        '"><th scope="row">' +
         row.name +
-        "</th><td>" +
+        '</th><td class="net">' +
+        accountNetText(row) +
+        "</td><td>" +
         yen(row.invested) +
         "</td><td>" +
         yen(row.gross) +
         "</td><td>" +
         taxText(row.tax) +
-        '</td><td class="net">' +
-        accountNetText(row) +
         "</td></tr>",
     )
     .join("");
-  $("accountCompareCost").textContent = man(taxableEquivalent.netContributions);
+  const bestNames = bestRows.map((row) => row.name).join("・");
+  $("accountCompareSummaryLabel").innerHTML =
+    (bestRows.length > 1
+      ? "最終手取りが同じなのは "
+      : "最終手取りが最も多いのは ") +
+    "<b>" +
+    bestNames +
+    "</b>" +
+    (bestRows.length === 1 && nextNet < bestNet
+      ? '<span class="gsub">次に多い方法より ' +
+        fmt(bestNet - nextNet) +
+        "万円 多い</span>"
+      : '<span class="gsub">表示単位では同額</span>');
+  $("accountCompareSummaryVal").innerHTML =
+    fmt(bestNet) + "<small>万円</small>";
   $("accountCompareLead").textContent =
-    "現在の一時金" +
+    "これからの家計負担を各年で同じにそろえ、一時金" +
     mixPct +
     "％・年金" +
     (100 - mixPct) +
-    "％を3方式に共通して適用し、最終手取りを比べます。";
+    "％の受取方法も3方式に共通して適用した比較です。実質負担額は合計 " +
+    man(taxableEquivalent.netContributions) +
+    "万円です。";
   $("accountCompareNote").innerHTML =
     "NISA優先では、実際の投資額のうち <b>" +
     yen(nisaPriority.nisaContributions) +
     "</b> をNISA、枠を超える <b>" +
     yen(nisaPriority.taxableContributions) +
-    "</b> を課税口座で運用します。実際の投資額は、これから拠出する金額だけを表示し、現在残高は含めません。現在のiDeCo残高に対応する比較資産は、NISA枠を使わず課税口座にあるものとして計算します。税金欄のiDeCoは、iDeCoによって増減する税額です。退職金だけにかかる税額は比較に共通するため含めません。";
+    "</b> を課税口座で運用します。最終手取りを判断の中心とし、受取総額と税金はその内訳として表示しています。実際の投資額は、これから拠出する金額だけを表示し、現在残高は含めません。現在のiDeCo残高に対応する比較資産は、NISA枠を使わず課税口座にあるものとして計算します。税金欄のiDeCoは、iDeCoによって増減する税額です。退職金だけにかかる税額は比較に共通するため含めません。";
 
   let mixNote =
     "一時金にする割合を0%から100%まで1%刻みで振ったものです。" +
@@ -1509,10 +1554,8 @@ function update() {
   renderMixChart(bm);
   if (mixChart) mixChart.draw();
 
-  /* 比べるのは「iDeCoによって増える税金」。
-	   手取りで比べると、年金は受け取り終わるまで運用が続くぶん必ず多くなり、
-	   受け取り方の違いではなく運用期間の差を見ていることになってしまう。
-	   税額なら、退職所得控除の調整や公的年金等控除の効き方をそのまま比べられる */
+  /* ここからは最終手取りに差が生じる理由を確認するための税額内訳。
+	   税額の大小だけを口座選択の結論にはしない。 */
   const lumpAdd = L.taxByIdeco,
     annuityAdd = A.taxByIdeco;
   const gapTax = Math.abs(annuityAdd - lumpAdd);
@@ -1587,7 +1630,7 @@ function update() {
       "）だけを見ると年金のほうが " +
       man(netGap) +
       "万円 多くなりますが、これは年金が受け取り終わるまで運用を続ける前提によるところが大きく、" +
-      "受け取り方そのものの違いではありません。判断には上の税額の差をご覧ください。";
+      "受け取り方そのものの違いではありません。口座を選ぶ判断には、上の最終手取り比較をご覧ください。";
   } else {
     // 税額の差が運用のぶんを上回ると、手取りでも一時金が勝つ
     $("netNote").innerHTML =

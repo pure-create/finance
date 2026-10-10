@@ -33,6 +33,7 @@ const {
   mixedInvestmentPayout,
   TAXABLE_GAIN_TAX_RATE,
   LIMIT_REFORM_YEAR,
+  PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT,
   JOIN_AGE_LIMIT,
   PAYOUT_AGE_MIN,
   PAYOUT_AGE_MAX,
@@ -98,8 +99,8 @@ test("拠出限度額：2027年からは改正後の額", () => {
   );
   assert.strictEqual(
     contributionLimit("publicSv", 2027, 0, 40),
-    62000,
-    "公務員",
+    54000,
+    "公務員は共済掛金相当額8,000円を差し引く",
   );
   assert.strictEqual(
     contributionLimit("spouse", 2027, 0, 40),
@@ -141,6 +142,12 @@ test("拠出限度額：改正後の第2号は他制度の掛金を差し引い�
     23000,
     "第3号は差し引かない",
   );
+});
+
+test("拠出限度額：公務員の共済掛金相当額は入力にかかわらず8,000円固定", () => {
+  assert.strictEqual(PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT, 8000);
+  assert.strictEqual(contributionLimit("publicSv", 2027, 0, 40), 54000);
+  assert.strictEqual(contributionLimit("publicSv", 2027, 30000, 40), 54000);
 });
 
 test("拠出限度額：知らない区分は0", () => {
@@ -431,8 +438,8 @@ test("積立：元本が残高を上回るなら、含み損として運用益�
 
 test("積立：毎月ずつ積み上げた場合とほぼ一致する", () => {
   /* 年の真ん中に置くのは、毎月の積み上げの近似として妥当かの確認。
-	   利回りが高いほど差は開くが、8%でも0.5%は超えない */
-  for (const rate of [1, 3, 5, 8]) {
+	   利回りが高いほど差は開くが、画面の上限10%でも0.5%は超えない */
+  for (const rate of [1, 3, 5, 8, 10]) {
     const a = accumulate(
       Object.assign({}, baseAcc, { payAge: 65, yieldRate: rate }),
       tax,

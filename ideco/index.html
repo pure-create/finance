@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。"
+      content="同じ実質負担額でiDeCo・NISA・課税口座の最終手取りを比較。掛金の節税、運用益、受取時の税金をまとめて試算し、一時金・年金・併用の内訳も確認できます。"
     />
     <!-- 共有時の見え方（OGP）とURLの正規化。SNSの巡回はJSを実行しないため各ページに直接書く。
      og:image はツール別の1枚。版下は og/card.html（?v= で版を切り替えて書き出す） -->
@@ -20,7 +20,7 @@
     <meta property="og:title" content="iDeCoシミュレーター" />
     <meta
       property="og:description"
-      content="iDeCoの掛金による節税額と、受け取るときの税金を試算。一時金・年金・その併用を比べ、退職金との受取順序・間隔で退職所得控除がどう削られるかも分かります。"
+      content="同じ実質負担額でiDeCo・NISA・課税口座の最終手取りを比較。掛金の節税、運用益、受取時の税金をまとめて試算し、一時金・年金・併用の内訳も確認できます。"
     />
     <meta
       property="og:image"
@@ -66,7 +66,7 @@
     <link rel="stylesheet" href="../common/theme.css?v=20260815a" />
     <link rel="stylesheet" href="../common/site.css?v=20260909a" />
     <link rel="stylesheet" href="../common/card-page.css?v=20260823b" />
-    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20261006b" />
+    <link rel="stylesheet" type="text/css" href="./css/main.css?v=20261009a" />
     <link
       rel="stylesheet"
       type="text/css"
@@ -112,7 +112,7 @@
           <div class="page-title">
             <h1>iDeCoシミュレーター</h1>
             <p class="sub">
-              掛金の節税額と、受け取るときの税金を通して試算。退職金との受取順序で手取りがどう変わるかを比較します
+              同じ家計負担でiDeCo・NISA・課税口座を運用したときの最終手取りを比較。税金や控除の内訳も確認できます
             </p>
           </div>
           <div class="page-tools">
@@ -169,6 +169,29 @@
                   step="1000"
                   inputmode="numeric"
                 /><span class="unit">円/月</span></span
+              >
+            </div>
+            <div class="fld" id="publicPlanField" style="display: none">
+              <label for="publicPlan"
+                >共済掛金相当額
+                <span
+                  class="help"
+                  tabindex="0"
+                  aria-label="共済掛金相当額について"
+                  aria-describedby="publicPlanTip"
+                  >？<span class="tipbox" id="publicPlanTip" role="tooltip"
+                    >国家公務員・地方公務員の共済掛金相当額は、本人ごとの実際の掛金ではなく、厚生労働省告示により<strong>一律8,000円／月</strong>です。0円にはできません。2026年12月の改正後は、月6.2万円から8,000円を差し引いた<strong>月5.4万円</strong>がiDeCoの上限になります。</span
+                  ></span
+                >
+              </label>
+              <span class="num-in"
+                ><input
+                  type="number"
+                  id="publicPlan"
+                  value="8000"
+                  disabled
+                  aria-describedby="publicPlanTip"
+                /><span class="unit">円/月（固定）</span></span
               >
             </div>
           </div>
@@ -308,7 +331,7 @@
                 type="range"
                 id="yieldRate"
                 min="0"
-                max="8"
+                max="10"
                 step="0.1"
                 value="3"
               />
@@ -563,14 +586,64 @@
           </div>
         </div>
 
-        <!-- 入口：掛金の節税と、受け取る残高の内訳 -->
+        <!-- 主結果：同じ家計負担での最終手取り。
+       税額だけでは、運用期間が長く受取総額も増えたケースを不利と誤読しやすい。
+       そこでiDeCo・NISA・課税口座を同じ受取方法で比べた手取りを結論にする。 -->
+        <div class="card primary-result" id="accountCompareCard">
+          <p class="result-kicker">主な結果</p>
+          <h2 class="sec-title">iDeCo・NISA・課税口座の最終手取り</h2>
+          <div class="grand account-summary" aria-live="polite">
+            <span class="glabel" id="accountCompareSummaryLabel"
+              >最終手取りが最も多いのは</span
+            >
+            <span class="gval" id="accountCompareSummaryVal"
+              >0<small>万円</small></span
+            >
+          </div>
+          <p class="note" id="accountCompareLead"></p>
+          <h3 class="sub-title">3方式に共通する受取方法</h3>
+          <div class="ctrl account-payout-control">
+            <label for="mixRatio">一時金にする割合</label>
+            <div class="srow">
+              <input
+                type="range"
+                id="mixRatio"
+                min="0"
+                max="100"
+                step="1"
+                value="50"
+              />
+              <span class="sval"><span id="mixVal">50</span>%</span>
+            </div>
+          </div>
+          <div
+            class="table-scroll"
+            tabindex="0"
+            aria-label="iDeCo・NISA優先・課税口座の最終手取り比較"
+          >
+            <table class="account-compare">
+              <thead>
+                <tr>
+                  <th scope="col">運用方法</th>
+                  <th scope="col">最終手取り</th>
+                  <th scope="col">実際の投資額</th>
+                  <th scope="col">受取総額</th>
+                  <th scope="col">受取時の税金</th>
+                </tr>
+              </thead>
+              <tbody id="accountCompareBody"></tbody>
+            </table>
+          </div>
+          <p class="note" id="accountCompareNote"></p>
+        </div>
+
+        <!-- iDeCoの最終手取りができるまでの内訳。主結果の理由として示す。 -->
         <div class="card">
-          <h2 class="sec-title">掛金による節税（入口）</h2>
+          <h2 class="sec-title">掛金による節税と運用益（内訳）</h2>
           <p class="saving-line" id="savingLine"></p>
-          <!-- 受け取る残高の内訳。節税額は掛金とは別に増える額ではなく、
-         払った掛金のうち税金が軽くなって戻ってくる分なので、
-         掛金を「実質の負担」と「節税で戻る分」に割って見せる。
-         3つ（＋元の残高）を足すと、そのまま受け取る残高になる -->
+          <!-- 節税額は掛金とは別に増える額ではなく、払った掛金のうち
+         税金が軽くなって戻ってくる分なので、掛金を「実質の負担」と
+         「節税で戻る分」に分ける。3つ（＋元の残高）の合計が受取残高になる。 -->
           <div class="stack">
             <div class="stack-bar" aria-hidden="true">
               <div class="seg seg-initial" id="segInitial"></div>
@@ -588,11 +661,11 @@
           </div>
         </div>
 
-        <!-- 出口：受け取り方ごとの税額。
-       一時金・年金・その併用は、どれも「受け取るときの税金」の中の選択肢なので、
-       1枚のカードに入れて、見出しの高さでも並びが分かるようにする -->
+        <!-- 出口：受け取り方ごとの手取りと税金の内訳。
+       一時金・年金・その併用を1枚にまとめるが、税額は最終判断ではなく、
+       上の最終手取りに差が生じた理由を確認するための情報として扱う。 -->
         <div class="card" id="exitCard">
-          <h2 class="sec-title">受け取るときの税金（出口）</h2>
+          <h2 class="sec-title">受取方法ごとの手取りと税金（内訳）</h2>
           <!-- 今の受取順で、どちらの控除がどれだけ削られるか。下の数字の前提になる -->
           <p class="note rule-note" id="ruleNote"></p>
 
@@ -607,10 +680,8 @@
               <div id="annuityDetail"></div>
             </div>
           </div>
-          <!-- 比べるのは手取りではなく税額。手取りは年金のほうが多くなるが、
-         それは受け取り終わるまで運用が続くという前提の差でほぼ決まってしまい、
-         受け取り方の判断には使えない（下の netNote で断っている） -->
-          <div class="grand" aria-live="polite">
+          <!-- 税額の比較は、最終手取りの理由を確認するための補足。 -->
+          <div class="grand tax-summary" aria-live="polite">
             <span class="glabel" id="grandLabel">増える税金が少ないのは</span>
             <span class="gval" id="grandVal">0<small>万円</small></span>
           </div>
@@ -633,20 +704,6 @@
             <div class="mix-bar" aria-hidden="true">
               <div class="seg seg-lump" id="segLump"></div>
               <div class="seg seg-annuity" id="segAnnuity"></div>
-            </div>
-            <div class="ctrl">
-              <label for="mixRatio">一時金にする割合</label>
-              <div class="srow">
-                <input
-                  type="range"
-                  id="mixRatio"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value="50"
-                />
-                <span class="sval"><span id="mixVal">50</span>%</span>
-              </div>
             </div>
             <div class="best-hint" id="mixBestHint"></div>
             <div class="results">
@@ -675,33 +732,6 @@
             </div>
             <p class="note" id="mixChartNote"></p>
           </div>
-        </div>
-
-        <div class="card" id="accountCompareCard">
-          <h2 class="sec-title">
-            同じ実質負担額（<span id="accountCompareCost">0</span
-            >万円）で運用した場合
-          </h2>
-          <p class="note" id="accountCompareLead"></p>
-          <div
-            class="table-scroll"
-            tabindex="0"
-            aria-label="iDeCo・NISA優先・課税口座の最終手取り比較"
-          >
-            <table class="account-compare">
-              <thead>
-                <tr>
-                  <th scope="col">運用方法</th>
-                  <th scope="col">実際の投資額</th>
-                  <th scope="col">受取総額</th>
-                  <th scope="col">税金</th>
-                  <th scope="col">最終手取り</th>
-                </tr>
-              </thead>
-              <tbody id="accountCompareBody"></tbody>
-            </table>
-          </div>
-          <p class="note" id="accountCompareNote"></p>
         </div>
 
         <!-- グラフ -->
@@ -749,7 +779,7 @@
             ・
             併用では、一時金と年金に分ける割合を比較します。両者を別の年に受け取る組み合わせや、運営管理機関ごとの指定単位は扱いません。<br />
             ・
-            「参考：同じ実質負担額で運用した場合」は、今後の各年についてiDeCo掛金からその年の節税額を差し引いた額を、NISA優先または課税口座へ同じ時期・利回りで積み立てる比較です。現在のiDeCo残高がある場合は、比較する運用方法にも同額がある状態から始めます。一時金は受取時に全額を売却し、年金は同じ年数で取り崩して、各売却年の<a
+            「iDeCo・NISA・課税口座の最終手取り」は、今後の各年についてiDeCo掛金からその年の節税額を差し引いた額を、NISA優先または課税口座へ同じ時期・利回りで積み立てる比較です。現在のiDeCo残高がある場合は、比較する運用方法にも同額がある状態から始めます。一時金は受取時に全額を売却し、年金は同じ年数で取り崩して、各売却年の<a
               href="https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1463.htm"
               target="_blank"
               rel="noopener noreferrer"
@@ -786,7 +816,7 @@
     <script src="../common/tool-nav.js?v=20260831a"></script>
     <script src="../common/nisa-core.js?v=20261005a"></script>
     <script src="../common/tax-core.js?v=20261002a"></script>
-    <script src="./js/ideco-core.js?v=20261005d"></script>
-    <script src="./js/ideco.js?v=20261006g"></script>
+    <script src="./js/ideco-core.js?v=20261010a"></script>
+    <script src="./js/ideco.js?v=20261010b"></script>
   </body>
 </html>

@@ -15,6 +15,10 @@
    拠出する年で切り替える。改正で数字を直すときは下の表だけを見ればよい。 */
 const LIMIT_REFORM_YEAR = 2027; // この年から改正後の限度額を使う
 
+/* 国家公務員・地方公務員の共済掛金相当額。本人ごとの実額ではなく、
+   厚生労働省告示で第2号・第3号厚生年金被保険者とも月8,000円に固定される。 */
+const PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT = 8000;
+
 /* 区分ごとの月額限度額。第2号は改正後、企業型DCの事業主掛金と
    確定給付企業年金の他制度掛金相当額を差し引いた残りが使える枠になる。
 
@@ -49,6 +53,7 @@ const CONTRIBUTION_LIMITS = {
     current: 20000,
     reformed: 62000,
     sharedWithDb: true,
+    fixedOtherPlanMonthly: PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT,
     endsAt60: false,
   },
   spouse: {
@@ -132,7 +137,11 @@ function contributionLimit(category, year, otherPlanMonthly, age) {
 
   const base = reformed ? c.reformed : c.current;
   if (reformed && c.sharedWithDb) {
-    return Math.max(0, base - Math.max(0, otherPlanMonthly || 0));
+    const otherPlan =
+      c.fixedOtherPlanMonthly === undefined
+        ? Math.max(0, otherPlanMonthly || 0)
+        : c.fixedOtherPlanMonthly;
+    return Math.max(0, base - otherPlan);
   }
   return base;
 }
@@ -167,7 +176,7 @@ function taxSaving(taxableIncome, annualContribution, tax, year) {
    その年の掛金は年の真ん中にまとめて入るものとして扱う。
    年初に一括で入れると、まだ払っていない月の掛金にまで1年分の利回りが付き、
    残高が実際より多く出てしまう（利回り3%で年1.4%ほど）。
-   毎月の積み上げをそのまま回した場合との差は、利回り3%で0.1%、8%でも0.3%ほど */
+   毎月の積み上げをそのまま回した場合との差は、利回り3%で0.1%、10%でも0.5%未満 */
 const CONTRIBUTION_TIMING = 0.5; // 年の何割が過ぎた時点で入れるか
 
 /**
@@ -1001,6 +1010,8 @@ if (typeof module !== "undefined" && module.exports) {
     MIX_STEPS: MIX_STEPS,
     CONTRIBUTION_LIMITS: CONTRIBUTION_LIMITS,
     LIMIT_REFORM_YEAR: LIMIT_REFORM_YEAR,
+    PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT:
+      PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT,
     JOIN_AGE_LIMIT: JOIN_AGE_LIMIT,
     NATIONAL_PENSION_END_AGE: NATIONAL_PENSION_END_AGE,
     LATE_JOIN_CATEGORY_LIMIT: LATE_JOIN_CATEGORY_LIMIT,

@@ -533,6 +533,44 @@ test("iDeCo：掛金相当額の説明にある第2号の枠が定数と一致�
   );
 });
 
+test("iDeCo：公務員の共済掛金相当額と改正後上限が定数と一致する", () => {
+  const text = prose("ideco/index.html");
+  const m = must(
+    text,
+    /共済掛金相当額は.*一律([\d,]+)円／月.*月([\d.]+)万円がiDeCoの上限/,
+    "ideco/index.html",
+  );
+  assert.strictEqual(
+    yen(m[1]),
+    ideco.PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT,
+    "公務員の共済掛金相当額",
+  );
+  assert.strictEqual(
+    Number(m[2]) * 10000,
+    ideco.CONTRIBUTION_LIMITS.publicSv.reformed -
+      ideco.PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT,
+    "公務員の改正後上限",
+  );
+});
+
+test("iDeCo：公務員の改正後上限に計算根拠のツールチップがある", () => {
+  const js = read("ideco/js/ideco.js");
+  assert.match(js, /cfg\.category === "publicSv"/);
+  assert.match(js, /aria-describedby="publicLimitTip"/);
+  assert.match(
+    js,
+    /CONTRIBUTION_LIMITS\.publicSv\.reformed[\s\S]*PUBLIC_SERVICE_CONTRIBUTION_EQUIVALENT[\s\S]*fmt\(limitNext\)/,
+  );
+});
+
+test("iDeCo：想定利回りは10%まで選択できる", () => {
+  const html = read("ideco/index.html");
+  assert.match(
+    html,
+    /id="yieldRate"[\s\S]*?min="0"[\s\S]*?max="10"[\s\S]*?step="0\.1"/,
+  );
+});
+
 test("iDeCo：注記の改正の時期が定数と一致する", () => {
   const text = prose("ideco/index.html");
   const m = must(text, /適用は(\d{4})年1月拠出分から/, "ideco/index.html");

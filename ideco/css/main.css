@@ -428,8 +428,7 @@
 .rline.total .v {
   font-size: 15px;
 }
-/* iDeCoによって増えた税金。受け取り方を比べるときの主役なので、
-   手取りの合計より強く見せる。減る場合もあるので、その向きは色で分ける */
+/* iDeCoによって増えた税金。最終手取りの理由を確認するための内訳として示す。 */
 .rline.headline {
   border-top: 2px solid var(--border);
   margin-top: 8px;
@@ -437,7 +436,7 @@
   font-weight: 700;
 }
 .rline.headline .v {
-  font-size: 17px;
+  font-size: 15px;
 }
 .res-box.lump .rline.headline {
   color: var(--idc-out);
@@ -451,9 +450,7 @@
   color: var(--idc-gain);
 }
 
-/* ---- NISA優先・課税口座との比較（各欄の最後に置く参考） ----
-   本題はiDeCoの税額なので、結論の行（.headline）より弱く見せる。
-   破線で区切って「ここから先は別の話」だと分かるようにする */
+/* ---- NISA優先・課税口座との比較（各受取方法の補足） ---- */
 .ref {
   margin-top: 10px;
   padding-top: 8px;
@@ -465,6 +462,25 @@
   margin-bottom: 2px;
 }
 /* ---- 同じ実質負担額での口座比較 ---- */
+.primary-result {
+  border: 2px solid var(--idc-gain);
+}
+.result-kicker {
+  display: inline-block;
+  margin: 0 0 7px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--idc-gain);
+  color: var(--grand-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.account-summary {
+  margin-top: 12px;
+}
+.account-payout-control {
+  margin-bottom: 12px;
+}
 .account-compare {
   width: 100%;
   min-width: 610px;
@@ -490,6 +506,20 @@
 .account-compare tbody th {
   color: var(--text);
 }
+.account-compare tbody tr.best {
+  background: var(--idc-gain-soft);
+}
+.account-compare tbody tr.best th::after {
+  content: "最多";
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--idc-gain);
+  color: var(--grand-text);
+  font-size: 9px;
+  vertical-align: 1px;
+}
 .account-compare td.net {
   color: var(--idc-gain);
   font-size: 15px;
@@ -498,6 +528,16 @@
 .account-net-main,
 .account-net-gap {
   display: block;
+}
+
+/* 税額の結論は、口座比較の主結果より一段弱い補足として見せる。 */
+.tax-summary {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.tax-summary .gval {
+  color: var(--text-sub);
+  font-size: 24px;
 }
 .account-net-gap {
   color: var(--muted);
