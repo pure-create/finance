@@ -76,6 +76,18 @@ function incomeTaxMultiplierForYear(year) {
   );
 }
 
+/* 課税所得金額に適用する速算表の行を返す。
+   税額の説明画面でも同じ税率・控除額を表示できるよう、判定を1箇所に置く。 */
+function incomeTaxBracket(taxableIncome) {
+  var kazei = roundedTaxableIncome(taxableIncome);
+  if (kazei <= 0) return null;
+  for (var i = 0; i < INCOME_TAX_BRACKETS.length; i++) {
+    var b = INCOME_TAX_BRACKETS[i];
+    if (kazei > b.over) return b;
+  }
+  return null;
+}
+
 /* 上場株式等の譲渡益税率。本則20%のうち所得税15%にだけ、年ごとの
    復興特別所得税・防衛特別所得税を加算する。 */
 function capitalGainsTaxRate(year) {
@@ -90,16 +102,11 @@ function capitalGainsTaxRate(year) {
    ここへ渡すという違いだけ） */
 function incomeTax(taxableIncome, year) {
   var kazei = roundedTaxableIncome(taxableIncome);
-  if (kazei <= 0) return 0;
-  for (var i = 0; i < INCOME_TAX_BRACKETS.length; i++) {
-    var b = INCOME_TAX_BRACKETS[i];
-    if (kazei > b.over) {
-      return Math.floor(
-        (kazei * b.rate - b.deduction) * incomeTaxMultiplierForYear(year),
-      );
-    }
-  }
-  return 0;
+  var b = incomeTaxBracket(kazei);
+  if (!b) return 0;
+  return Math.floor(
+    (kazei * b.rate - b.deduction) * incomeTaxMultiplierForYear(year),
+  );
 }
 
 // 住民税（所得割）。都道府県4%＋市町村6%で一律10%
@@ -165,11 +172,34 @@ function retireIncome(price, koujo, years) {
    調整した控除額（iDeCoの10年ルール）もそのまま渡せる。
    years は短期退職手当等の判定用（上の retireIncome を参照） */
 function calcTax(price, koujo, years, year) {
-  var kazei = roundedTaxableIncome(retireIncome(price, koujo, years));
-  if (kazei <= 0) {
-    return { tax: 0, inhabitTax: 0 };
-  }
-  return { tax: incomeTax(kazei, year), inhabitTax: inhabitantTax(kazei) };
+  var detail = calcTaxBreakdown(price, koujo, years, year);
+  return { tax: detail.tax, inhabitTax: detail.inhabitTax };
+}
+
+/* 退職所得の税額と、画面に表示する計算根拠をまとめて返す。
+   表示側で速算表をもう一度判定すると、税率改正時に実計算と説明がずれるため、
+   税額に使った値をそのまま公開する。 */
+function calcTaxBreakdown(price, koujo, years, year) {
+  var beforeRounding = retireIncome(price, koujo, years);
+  var kazei = roundedTaxableIncome(beforeRounding);
+  var bracket = incomeTaxBracket(kazei);
+  var multiplier = incomeTaxMultiplierForYear(year);
+  var baseIncomeTax = bracket ? kazei * bracket.rate - bracket.deduction : 0;
+
+  return {
+    price: price,
+    deduction: koujo,
+    taxableIncomeBeforeRounding: beforeRounding,
+    taxableIncome: kazei,
+    rate: bracket ? bracket.rate : 0,
+    quickDeduction: bracket ? bracket.deduction : 0,
+    baseIncomeTax: baseIncomeTax,
+    incomeTaxMultiplier: multiplier,
+    reconstructionTaxRate: reconstructionRateForYear(year) - 1,
+    defenseTaxRate: defenseRateForYear(year) - 1,
+    tax: bracket ? Math.floor(baseIncomeTax * multiplier) : 0,
+    inhabitTax: inhabitantTax(kazei),
+  };
 }
 
 /* ---------- 公的年金等 ---------- */
@@ -227,6 +257,7 @@ function pensionDeduction(revenue, age) {
    （Theme や Share と同じく、window に1つだけ名前を置く形） */
 var Tax = {
   roundedTaxableIncome: roundedTaxableIncome,
+  incomeTaxBracket: incomeTaxBracket,
   incomeTax: incomeTax,
   reconstructionRateForYear: reconstructionRateForYear,
   defenseRateForYear: defenseRateForYear,
@@ -237,6 +268,7 @@ var Tax = {
   retireDeduction: retireDeduction,
   retireIncome: retireIncome,
   calcTax: calcTax,
+  calcTaxBreakdown: calcTaxBreakdown,
   pensionMiscIncome: pensionMiscIncome,
   pensionDeduction: pensionDeduction,
   SHORT_TENURE_YEARS: SHORT_TENURE_YEARS,
@@ -253,6 +285,7 @@ if (typeof window !== "undefined") window.Tax = Tax;
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     roundedTaxableIncome: roundedTaxableIncome,
+    incomeTaxBracket: incomeTaxBracket,
     incomeTax: incomeTax,
     reconstructionRateForYear: reconstructionRateForYear,
     defenseRateForYear: defenseRateForYear,
@@ -263,6 +296,7 @@ if (typeof module !== "undefined" && module.exports) {
     retireDeduction: retireDeduction,
     retireIncome: retireIncome,
     calcTax: calcTax,
+    calcTaxBreakdown: calcTaxBreakdown,
     pensionMiscIncome: pensionMiscIncome,
     pensionDeduction: pensionDeduction,
     INCOME_TAX_BRACKETS: INCOME_TAX_BRACKETS,

@@ -208,6 +208,21 @@ window.addEventListener("load", function () {
     }
   });
 
+  // 展開した計算式は、その領域をクリックしても閉じられるようにする。
+  // 「？」やリンクなど、別の操作を目的とする要素を押した場合は閉じない。
+  document.addEventListener("click", function (e) {
+    var memo = e.target.closest("tr.calc_memo.open");
+    if (!memo) return;
+    if (
+      e.target.closest(
+        "div.question, div.explain, a, button, input, select, textarea",
+      )
+    ) {
+      return;
+    }
+    memo.classList.remove("open");
+  });
+
   // タッチ端末では「ホバー」を疑似的に発火させるブラウザがあり、mouseenterで開いた直後に
   // clickのtoggleが「開いている」と誤認して閉じてしまうため、ホバー対応端末でのみhoverで開閉する
   var supportsHover =
@@ -272,7 +287,9 @@ window.addEventListener("load", function () {
 	   何についての「？」かは、印の中身が「？」の一字しかないので分からない。
 	   HTML側の aria-label（「勤続年数について」など）で補っている。 */
   var explainSeq = 0;
-  document.querySelectorAll("div.question").forEach(function (el) {
+  function bindExplainTrigger(el) {
+    if (el.dataset.explainBound === "true") return;
+
     var explain = el.nextElementSibling;
     if (!(explain && explain.classList.contains("explain"))) return;
 
@@ -320,7 +337,18 @@ window.addEventListener("load", function () {
     });
     // キーボードで次へ移ったときに、開いたままにしない
     el.addEventListener("blur", hide);
-  });
+    el.dataset.explainBound = "true";
+  }
+
+  function bindExplains(root) {
+    (root || document)
+      .querySelectorAll("div.question")
+      .forEach(bindExplainTrigger);
+  }
+
+  // 計算結果は入力のたびに作り直すため、動的に追加した「？」にも使えるようにする
+  window.bindRetireExplains = bindExplains;
+  bindExplains(document);
 
   document.addEventListener("click", function (e) {
     if (!e.target.closest("div.question")) {
@@ -364,6 +392,161 @@ window.addEventListener("load", function () {
 
   calc();
 });
+
+function numeric(value) {
+  return "<span class='numeric'>" + value + "</span>";
+}
+
+function money(value) {
+  return numeric(Number(value).toLocaleString() + "円");
+}
+
+function percent(rate) {
+  return (Math.round(rate * 100000) / 1000).toLocaleString() + "%";
+}
+
+function deductionFormula(years, amount) {
+  if (years < 2) {
+    return "最低額 " + money(amount);
+  }
+  if (years <= 20) {
+    return (
+      money(400000) + " × " + numeric(years + "年") + " ＝ " + money(amount)
+    );
+  }
+  return (
+    money(8000000) +
+    " ＋ " +
+    money(700000) +
+    " ×（" +
+    numeric(years + "年") +
+    " − 20年）＝ " +
+    money(amount)
+  );
+}
+
+function taxMultiplierExplanation(detail) {
+  var parts = ["所得税100%"];
+  if (detail.reconstructionTaxRate > 0) {
+    parts.push("復興特別所得税" + percent(detail.reconstructionTaxRate));
+  }
+  if (detail.defenseTaxRate > 0) {
+    parts.push("防衛特別所得税" + percent(detail.defenseTaxRate));
+  }
+  return parts.join(" ＋ ");
+}
+
+function detailHelp(label, help) {
+  if (!help) return label;
+  return (
+    "<span>" +
+    label +
+    "</span><div class='question calc-detail-question' aria-label='" +
+    label +
+    "の説明'>？</div><div class='explain'>" +
+    help +
+    "</div>"
+  );
+}
+
+function detailRow(label, formula, help) {
+  return (
+    "<div class='calc-detail-row'><div class='calc-detail-label'>" +
+    detailHelp(label, help) +
+    "</div><div class='calc-detail-formula'>" +
+    formula +
+    "</div></div>"
+  );
+}
+
+function taxDetailBlock(
+  title,
+  kind,
+  paymentFormula,
+  price,
+  koujo,
+  years,
+  year,
+) {
+  var detail = calcTaxBreakdown(price, koujo, undefined, year);
+  var html =
+    "<section class='calc-detail-block " + kind + "'><h3>" + title + "</h3>";
+
+  html += detailRow("退職手当", paymentFormula);
+
+  var taxableHelp =
+    "退職所得控除額：" +
+    deductionFormula(years, koujo) +
+    "<br>控除後の金額を2分の1にし、1,000円未満を切り捨てます。";
+
+  if (detail.taxableIncome <= 0) {
+    html += detailRow(
+      "課税退職所得",
+      "（" + money(price) + " − " + money(koujo) + "）× 1/2 ＝ " + money(0),
+      taxableHelp +
+        "<br>今回は退職手当が退職所得控除額以下のため課税されません。",
+    );
+    html += detailRow(
+      "税金",
+      "所得税等 " + money(0) + " ／ 住民税 " + money(0),
+      "課税退職所得が0円のため、所得税等・住民税ともに0円です。",
+    );
+  } else {
+    var taxableFormula =
+      "（" +
+      money(price) +
+      " − " +
+      money(koujo) +
+      "）× 1/2 ＝ " +
+      money(detail.taxableIncomeBeforeRounding);
+    if (detail.taxableIncomeBeforeRounding !== detail.taxableIncome) {
+      taxableFormula += " → " + money(detail.taxableIncome);
+    }
+    html += detailRow("課税退職所得", taxableFormula, taxableHelp);
+
+    var taxHelp =
+      "所得税等：（" +
+      money(detail.taxableIncome) +
+      " × " +
+      percent(detail.rate) +
+      " − 速算控除 " +
+      money(detail.quickDeduction) +
+      "）× " +
+      numeric(detail.incomeTaxMultiplier.toFixed(3)) +
+      " ＝ " +
+      money(detail.tax) +
+      "<br>係数" +
+      detail.incomeTaxMultiplier.toFixed(3) +
+      "の内訳：" +
+      taxMultiplierExplanation(detail) +
+      "。1円未満を切り捨てます。<br>住民税：" +
+      money(detail.taxableIncome) +
+      " × 10% ＝ " +
+      money(detail.inhabitTax) +
+      "（都道府県民税4%＋市町村民税6%）";
+
+    html += detailRow(
+      "税金",
+      "所得税等 " +
+        money(detail.tax) +
+        " ／ 住民税 " +
+        money(detail.inhabitTax),
+      taxHelp,
+    );
+  }
+
+  html += detailRow(
+    "手取額",
+    money(price) +
+      " − " +
+      money(detail.tax) +
+      " − " +
+      money(detail.inhabitTax) +
+      " ＝ " +
+      money(price - detail.tax - detail.inhabitTax),
+  );
+  return html + "</section>";
+}
 
 function calc() {
   var tyoseiPriceEl = document.getElementById("tyosei_price");
@@ -603,62 +786,64 @@ function calc() {
       }
 
       result += "</tr>";
-      memo = "";
+      memo = "<div class='calc-detail-grid'>";
 
       var baseSalaryMemo =
-        "<span class='numeric'>" +
-        baseSalaryValue.toLocaleString() +
-        "</span>(" +
+        money(baseSalaryValue) +
+        "（" +
         (window.SALARY_LABEL || "給料月額") +
-        ")";
+        "）";
 
-      if (age + i < 60) {
-        memo +=
-          "自己都合: " +
+      if (own_price > 0) {
+        var ownPaymentFormula =
           baseSalaryMemo +
-          " × <span class='numeric'>" +
-          getRate(own_rate, duration + i) +
-          "</span>(支給率) ＋ ";
+          " × " +
+          numeric(getRate(own_rate, duration + i)) +
+          "（支給率）＋ ";
         if (duration + i < 10) {
-          memo += "<span class='numeric'>0</span>(9年以下のため調整額なし)";
+          ownPaymentFormula += money(0) + "（9年以下のため調整額なし）";
         } else if (duration + i < 25) {
-          memo +=
-            "<span class='numeric'>" +
-            tyosei_price_own.toLocaleString() +
-            "</span>(調整額 ※10年以上25年未満のため2分の1減額)";
+          ownPaymentFormula +=
+            money(tyosei_price_own) +
+            "（調整額・10年以上25年未満のため2分の1減額）";
         } else {
-          memo +=
-            "<span class='numeric'>" +
-            tyosei_price_own.toLocaleString() +
-            "</span>(調整額)";
+          ownPaymentFormula += money(tyosei_price_own) + "（調整額）";
         }
-        memo +=
-          " = <span class='numeric'>" +
-          own_price.toLocaleString() +
-          "</span><br />";
+        ownPaymentFormula += " ＝ " + money(own_price);
+        memo += taxDetailBlock(
+          "自己都合",
+          "own",
+          ownPaymentFormula,
+          own_price,
+          koujo,
+          duration_tax + i,
+          stdYear + i,
+        );
       }
 
-      if (age + i >= teinen || (age + i >= teinen - 10 && duration + i >= 25)) {
-        memo += "定年・勧奨: " + baseSalaryMemo + " × ";
-        memo +=
-          "<span class='numeric'>" +
-          getRate(compulsory_rate, duration + i) +
-          "</span>(支給率) ＋ ";
-
+      if (compulsory_price > 0) {
+        var compulsoryPaymentFormula =
+          baseSalaryMemo +
+          " × " +
+          numeric(getRate(compulsory_rate, duration + i)) +
+          "（支給率）＋ ";
         if (duration + i < 5) {
-          memo += "<span class='numeric'>0</span>(4年以下のため調整額なし)";
+          compulsoryPaymentFormula += money(0) + "（4年以下のため調整額なし）";
         } else {
-          memo +=
-            "<span class='numeric'>" +
-            tyosei_price.toLocaleString() +
-            "</span>(調整額)";
+          compulsoryPaymentFormula += money(tyosei_price) + "（調整額）";
         }
-        memo +=
-          " = <span class='numeric'>" +
-          compulsory_price.toLocaleString() +
-          "</span><br />";
+        compulsoryPaymentFormula += " ＝ " + money(compulsory_price);
+        memo += taxDetailBlock(
+          "定年・勧奨",
+          "mandatory",
+          compulsoryPaymentFormula,
+          compulsory_price,
+          koujo,
+          duration_tax + i,
+          stdYear + i,
+        );
       }
-      memo += "計算結果に端数(小数点以下）が出る場合は切り捨て";
+      memo += "</div>";
       result +=
         "<tr class='calc_memo'><td colspan='13'><div class='calc_memo_inner'>" +
         memo +
@@ -677,6 +862,8 @@ function calc() {
     resultEl.innerHTML =
       "<tr><td colspan='13'>必要な項目を入力するとここに計算結果が表示されます</td></tr>";
   }
+
+  if (window.bindRetireExplains) window.bindRetireExplains(resultEl);
 
   Share.refreshQr();
   inputs.save();

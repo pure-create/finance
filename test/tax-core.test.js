@@ -14,6 +14,7 @@ const {
   retireDeduction,
   retireIncome,
   calcTax,
+  calcTaxBreakdown,
   pensionMiscIncome,
   pensionDeduction,
   INHABITANT_TAX_RATE,
@@ -210,6 +211,37 @@ test("退職所得の税額：所得税の速算表と同じ表を使ってい�
     incomeTax(40000000),
     "40%の上限",
   );
+});
+
+test("退職所得の計算内訳は実際の税額と同じ税率・控除額を返す", () => {
+  // 支給2,300万円、控除1,500万円 → 課税退職所得400万円
+  const r = calcTaxBreakdown(23000000, 15000000, undefined, 2026);
+  assert.strictEqual(r.taxableIncomeBeforeRounding, 4000000);
+  assert.strictEqual(r.taxableIncome, 4000000);
+  assert.strictEqual(r.rate, 0.2);
+  assert.strictEqual(r.quickDeduction, 427500);
+  assert.strictEqual(r.baseIncomeTax, 372500);
+  assert.strictEqual(r.incomeTaxMultiplier, 1.021);
+  assert.ok(Math.abs(r.reconstructionTaxRate - 0.021) < 1e-12);
+  assert.strictEqual(r.defenseTaxRate, 0);
+  assert.strictEqual(r.tax, calcTax(23000000, 15000000, undefined, 2026).tax);
+  assert.strictEqual(r.inhabitTax, 400000);
+});
+
+test("退職所得の計算内訳は2027年以後の付加税を分けて返す", () => {
+  const r = calcTaxBreakdown(23000000, 15000000, undefined, 2027);
+  assert.ok(Math.abs(r.reconstructionTaxRate - 0.011) < 1e-12);
+  assert.ok(Math.abs(r.defenseTaxRate - 0.01) < 1e-12);
+  assert.strictEqual(r.incomeTaxMultiplier, 1.021);
+});
+
+test("退職所得の計算内訳は非課税の場合も表示用の0を返す", () => {
+  const r = calcTaxBreakdown(5000000, 8000000, undefined, 2026);
+  assert.strictEqual(r.taxableIncome, 0);
+  assert.strictEqual(r.rate, 0);
+  assert.strictEqual(r.quickDeduction, 0);
+  assert.strictEqual(r.tax, 0);
+  assert.strictEqual(r.inhabitTax, 0);
 });
 
 /* ---------- 短期退職手当等（勤続5年以下） ---------- */
